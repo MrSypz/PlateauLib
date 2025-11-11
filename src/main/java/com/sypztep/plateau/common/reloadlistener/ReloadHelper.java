@@ -6,11 +6,13 @@ import com.google.gson.stream.JsonReader;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -119,13 +121,14 @@ public final class ReloadHelper {
     private static <K> K resolveTarget(String filePath, ResourceLocation identifier, Registry<K> registry, Function<String, ResourceLocation> idExtractor, String dataType, Logger logger, AtomicInteger errorCount) {
         ResourceLocation entryId = idExtractor.apply(filePath);
 
-        K target = registry.get(entryId);
-        if (target == null) {
+        Optional<Holder.Reference<K>> holderOpt = registry.get(entryId);
+        if (holderOpt.isEmpty()) {
             logger.warn("Unknown {} '{}' in file '{}'", dataType, entryId, identifier);
             errorCount.incrementAndGet();
             return null;
         }
-        return target;
+
+        return holderOpt.get().value();
     }
 }
 
