@@ -6,7 +6,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.phys.Vec3;
-
+@Deprecated(forRemoval = true)
 public final class Vec3dCodecs {
     public static final Codec<Vec3> VEC3D_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.DOUBLE.fieldOf("x").forGetter(Vec3::x),
