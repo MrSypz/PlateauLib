@@ -119,7 +119,7 @@ public final class ReloadHelper {
     private static <K> K resolveTarget(String filePath, ResourceLocation identifier, Registry<K> registry, Function<String, ResourceLocation> idExtractor, String dataType, Logger logger, AtomicInteger errorCount) {
         ResourceLocation entryId = idExtractor.apply(filePath);
 
-        K target = registry.get(entryId);
+        K target = registry.getValue(entryId);
         if (target == null) {
             logger.warn("Unknown {} '{}' in file '{}'", dataType, entryId, identifier);
             errorCount.incrementAndGet();
