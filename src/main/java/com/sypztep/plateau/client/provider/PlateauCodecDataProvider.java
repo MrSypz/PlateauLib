@@ -9,6 +9,8 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +38,7 @@ public abstract class PlateauCodecDataProvider<T> implements DataProvider {
     }
 
     @Override
-    public CompletableFuture<?> run(CachedOutput writer) {
+    public @NotNull CompletableFuture<?> run(CachedOutput writer) {
         return this.registriesFuture.thenCompose(lookup -> {
             Map<ResourceLocation, JsonElement> entries = new HashMap<>();
             DynamicOps<JsonElement> ops = lookup.createSerializationContext(JsonOps.INSTANCE);
