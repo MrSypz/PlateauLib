@@ -11,7 +11,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import com.google.gson.JsonElement;
@@ -26,7 +26,7 @@ public final class ReloadHelper {
     // SIMPLE MODE - Direct JsonObject processing
     // Fast for prototyping and simple structures
     // ============================================
-    public static <K> void processJsonResourcesSimple(ResourceManager manager, String folder, Registry<K> registry, Predicate<JsonObject> validator, Function<String, ResourceLocation> idExtractor, BiConsumer<K, JsonObject> processor, String dataType, Logger logger) {
+    public static <K> void processJsonResourcesSimple(ResourceManager manager, String folder, Registry<K> registry, Predicate<JsonObject> validator, Function<String, Identifier> idExtractor, BiConsumer<K, JsonObject> processor, String dataType, Logger logger) {
         AtomicInteger loadedCount = new AtomicInteger();
         AtomicInteger errorCount = new AtomicInteger();
 
@@ -71,7 +71,7 @@ public final class ReloadHelper {
     // COMPLEX MODE - Codec-based processing
     // Type-safe, validated, production-ready
     // ============================================
-    public static <K, V> void processJsonResourcesComplex(ResourceManager manager, String folder, Registry<K> registry, Codec<V> codec, Function<String, ResourceLocation> idExtractor, BiConsumer<K, V> processor, String dataType, Logger logger) {
+    public static <K, V> void processJsonResourcesComplex(ResourceManager manager, String folder, Registry<K> registry, Codec<V> codec, Function<String, Identifier> idExtractor, BiConsumer<K, V> processor, String dataType, Logger logger) {
         AtomicInteger loadedCount = new AtomicInteger();
         AtomicInteger errorCount = new AtomicInteger();
 
@@ -104,20 +104,20 @@ public final class ReloadHelper {
         }
     }
 
-    public static Function<String, ResourceLocation> createDefaultIdExtractor() {
+    public static Function<String, Identifier> createDefaultIdExtractor() {
         return filePath -> {
             String pathWithoutExt = filePath.substring(0, filePath.length() - 5);
             int folderIndex = pathWithoutExt.indexOf("/");
             if (folderIndex >= 0) {
                 String remaining = pathWithoutExt.substring(folderIndex + 1);
-                return ResourceLocation.parse(remaining.replace("/", ":"));
+                return Identifier.parse(remaining.replace("/", ":"));
             }
-            return ResourceLocation.parse(pathWithoutExt);
+            return Identifier.parse(pathWithoutExt);
         };
     }
 
-    private static <K> K resolveTarget(String filePath, ResourceLocation identifier, Registry<K> registry, Function<String, ResourceLocation> idExtractor, String dataType, Logger logger, AtomicInteger errorCount) {
-        ResourceLocation entryId = idExtractor.apply(filePath);
+    private static <K> K resolveTarget(String filePath, Identifier identifier, Registry<K> registry, Function<String, Identifier> idExtractor, String dataType, Logger logger, AtomicInteger errorCount) {
+        Identifier entryId = idExtractor.apply(filePath);
 
         K target = registry.getValue(entryId);
         if (target == null) {

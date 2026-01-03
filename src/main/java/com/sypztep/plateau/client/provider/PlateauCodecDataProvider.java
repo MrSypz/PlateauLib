@@ -8,7 +8,7 @@ import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -40,10 +40,10 @@ public abstract class PlateauCodecDataProvider<T> implements DataProvider {
     @Override
     public @NotNull CompletableFuture<?> run(CachedOutput writer) {
         return this.registriesFuture.thenCompose(lookup -> {
-            Map<ResourceLocation, JsonElement> entries = new HashMap<>();
+            Map<Identifier, JsonElement> entries = new HashMap<>();
             DynamicOps<JsonElement> ops = lookup.createSerializationContext(JsonOps.INSTANCE);
 
-            BiConsumer<ResourceLocation, T> provider = (id, value) -> {
+            BiConsumer<Identifier, T> provider = (id, value) -> {
                 JsonElement json = this.convert(id, value, ops);
                 JsonElement existingJson = entries.put(id, json);
 
@@ -57,22 +57,22 @@ public abstract class PlateauCodecDataProvider<T> implements DataProvider {
         });
     }
 
-    protected abstract void configure(BiConsumer<ResourceLocation, T> provider, HolderLookup.Provider lookup);
+    protected abstract void configure(BiConsumer<Identifier, T> provider, HolderLookup.Provider lookup);
 
-    private JsonElement convert(ResourceLocation id, T value, DynamicOps<JsonElement> ops) {
+    private JsonElement convert(Identifier id, T value, DynamicOps<JsonElement> ops) {
         return this.codec.encodeStart(ops, value)
                 .mapError(message -> "Invalid entry %s: %s".formatted(id, message))
                 .getOrThrow();
     }
 
-    private CompletableFuture<?> write(CachedOutput writer, Map<ResourceLocation, JsonElement> entries) {
+    private CompletableFuture<?> write(CachedOutput writer, Map<Identifier, JsonElement> entries) {
         return CompletableFuture.allOf(entries.entrySet().stream().map(entry -> {
             Path path = this.getCustomPath(entry.getKey());
             return DataProvider.saveStable(writer, entry.getValue(), path);
         }).toArray(CompletableFuture[]::new));
     }
 
-    private Path getCustomPath(ResourceLocation id) {
+    private Path getCustomPath(Identifier id) {
         return this.dataOutput.getOutputFolder()
                 .resolve("data")
                 .resolve(modId)

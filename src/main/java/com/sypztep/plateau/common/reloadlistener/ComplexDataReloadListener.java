@@ -10,14 +10,14 @@ import java.util.Map;
 
 public abstract class ComplexDataReloadListener<K, V, E> implements ResourceManagerReloadListener {
 
-    private final String resourceLocation;
+    private final String Identifier;
     private final Registry<K> registry;
     private final Codec<V> codec;
     private final String logName;
 
-    protected ComplexDataReloadListener(String resourceLocation,
+    protected ComplexDataReloadListener(String Identifier,
                                         Registry<K> registry, Codec<V> codec, String logName) {
-        this.resourceLocation = resourceLocation;
+        this.Identifier = Identifier;
         this.registry = registry;
         this.codec = codec;
         this.logName = logName;
@@ -29,7 +29,7 @@ public abstract class ComplexDataReloadListener<K, V, E> implements ResourceMana
 
         ReloadHelper.processJsonResourcesComplex(
                 manager,
-                resourceLocation,
+                Identifier,
                 registry,
                 codec,
                 ReloadHelper.createDefaultIdExtractor(),

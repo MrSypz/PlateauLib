@@ -11,13 +11,13 @@ import java.util.function.Predicate;
 
 public abstract class SimpleDataReloadListener<K, E> implements ResourceManagerReloadListener {
 
-    private final String resourceLocation;
+    private final String Identifier;
     private final Registry<K> registry;
     private final String logName;
 
-    protected SimpleDataReloadListener(String resourceLocation,
+    protected SimpleDataReloadListener(String Identifier,
                                        Registry<K> registry, String logName) {
-        this.resourceLocation = resourceLocation;
+        this.Identifier = Identifier;
         this.registry = registry;
         this.logName = logName;
     }
@@ -28,7 +28,7 @@ public abstract class SimpleDataReloadListener<K, E> implements ResourceManagerR
 
         ReloadHelper.processJsonResourcesSimple(
                 manager,
-                resourceLocation,
+                Identifier,
                 registry,
                 getValidator(),
                 ReloadHelper.createDefaultIdExtractor(),
