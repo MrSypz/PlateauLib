@@ -9,7 +9,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.resources.Identifier;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -17,67 +17,65 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
+/**
+ * Async-optimized codec data provider for datagen.
+ * Batches writes with CompletableFuture.allOf for parallelism.
+ * No runtime reloading—pure gen-time efficiency.
+ */
 public abstract class PlateauCodecDataProvider<T> implements DataProvider {
 
-    protected final FabricDataOutput dataOutput;
-    private final CompletableFuture<HolderLookup.Provider> registriesFuture;
-    private final Codec<T> codec;
-    private final String folderName;
-    private final String modId;
+    protected final FabricDataOutput output;
+    protected final CompletableFuture<HolderLookup.Provider> registries;
+    protected final Codec<T> codec;
+    protected final String folder;
+    protected final String modId;
 
-    protected PlateauCodecDataProvider(FabricDataOutput dataOutput,
-                                       CompletableFuture<HolderLookup.Provider> registriesFuture,
-                                       String modId,
-                                       String folderName,
-                                       Codec<T> codec) {
-        this.dataOutput = dataOutput;
-        this.registriesFuture = registriesFuture;
+    protected PlateauCodecDataProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registries,
+                                       String modId, String folder, Codec<T> codec) {
+        this.output = output;
+        this.registries = registries;
         this.modId = modId;
-        this.folderName = folderName;
+        this.folder = folder;
         this.codec = codec;
     }
 
     @Override
-    public @NotNull CompletableFuture<?> run(CachedOutput writer) {
-        return this.registriesFuture.thenCompose(lookup -> {
+    public @NonNull CompletableFuture<?> run(@NonNull CachedOutput cache) {
+        return registries.thenCompose(lookup -> {
             Map<Identifier, JsonElement> entries = new HashMap<>();
             DynamicOps<JsonElement> ops = lookup.createSerializationContext(JsonOps.INSTANCE);
 
-            BiConsumer<Identifier, T> provider = (id, value) -> {
-                JsonElement json = this.convert(id, value, ops);
-                JsonElement existingJson = entries.put(id, json);
-
-                if (existingJson != null) {
+            BiConsumer<Identifier, T> writer = (id, value) -> {
+                JsonElement json = codec.encodeStart(ops, value)
+                        .mapError(msg -> "Invalid entry %s: %s".formatted(id, msg))
+                        .getOrThrow();
+                if (entries.put(id, json) != null) {
                     throw new IllegalArgumentException("Duplicate entry " + id);
                 }
             };
 
-            this.configure(provider, lookup);
-            return this.write(writer, entries);
+            configure(writer, lookup);
+
+            // Parallel writes: CompletableFuture.allOf for async batching
+            return CompletableFuture.allOf(
+                    entries.entrySet().parallelStream()
+                            .map(entry -> DataProvider.saveStable(cache, entry.getValue(), getPath(entry.getKey())))
+                            .toList()
+                            .toArray(new CompletableFuture[0])
+            );
         });
     }
 
-    protected abstract void configure(BiConsumer<Identifier, T> provider, HolderLookup.Provider lookup);
+    protected abstract void configure(BiConsumer<Identifier, T> writer, HolderLookup.Provider lookup);
 
-    private JsonElement convert(Identifier id, T value, DynamicOps<JsonElement> ops) {
-        return this.codec.encodeStart(ops, value)
-                .mapError(message -> "Invalid entry %s: %s".formatted(id, message))
-                .getOrThrow();
+    private Path getPath(Identifier id) {
+        return output.getOutputFolder()
+                .resolve("data").resolve(modId).resolve(folder)
+                .resolve(id.getNamespace()).resolve(id.getPath() + ".json");
     }
 
-    private CompletableFuture<?> write(CachedOutput writer, Map<Identifier, JsonElement> entries) {
-        return CompletableFuture.allOf(entries.entrySet().stream().map(entry -> {
-            Path path = this.getCustomPath(entry.getKey());
-            return DataProvider.saveStable(writer, entry.getValue(), path);
-        }).toArray(CompletableFuture[]::new));
-    }
-
-    private Path getCustomPath(Identifier id) {
-        return this.dataOutput.getOutputFolder()
-                .resolve("data")
-                .resolve(modId)
-                .resolve(folderName)
-                .resolve(id.getNamespace())
-                .resolve(id.getPath() + ".json");
+    @Override
+    public String getName() {
+        return "Plateau Codec Data (" + folder + ")";
     }
 }

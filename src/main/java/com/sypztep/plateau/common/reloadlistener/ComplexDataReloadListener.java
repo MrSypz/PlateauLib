@@ -7,7 +7,7 @@ import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import org.slf4j.Logger;
 
 import java.util.Map;
-
+@Deprecated
 public abstract class ComplexDataReloadListener<K, V, E> implements ResourceManagerReloadListener {
 
     private final String Identifier;

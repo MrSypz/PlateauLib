@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import java.util.Map;
 import java.util.function.Predicate;
 
+@Deprecated
 public abstract class SimpleDataReloadListener<K, E> implements ResourceManagerReloadListener {
 
     private final String Identifier;
