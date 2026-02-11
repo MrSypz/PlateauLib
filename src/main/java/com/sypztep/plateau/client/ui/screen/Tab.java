@@ -1,5 +1,6 @@
 package com.sypztep.plateau.client.ui.screen;
 
+import com.sypztep.plateau.client.ui.core.UIComponent;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -20,10 +21,8 @@ public abstract class Tab {
     protected final Component label;
     @Nullable protected final Identifier icon;
 
-    // Widgets added via addWidget — full input/narration
-    private final List<GuiEventListener> trackedWidgets = new ArrayList<>();
-    // Renderables added via addRenderable — display only, tracked separately for cleanup
-    private final List<Renderable> trackedRenderables = new ArrayList<>();
+    protected final List<GuiEventListener> trackedWidgets = new ArrayList<>();
+    protected final List<UIComponent> trackedComponents = new ArrayList<>();
 
     protected PlateauScreen parentScreen;
     protected Minecraft minecraft;
@@ -42,13 +41,14 @@ public abstract class Tab {
 
     public void init(PlateauScreen screen) {
         this.parentScreen = screen;
+        trackedWidgets.clear();
+        trackedComponents.clear();
     }
 
     protected abstract void buildWidgets();
 
     /**
-     * Add a full widget — receives input, focus, narration, and renders.
-     * Added to Screen's children + renderables + narratables lists.
+     * Add a Screen widget (input + render + narration). Auto-removed on deactivate.
      */
     protected <T extends GuiEventListener & Renderable & NarratableEntry> T addWidget(T widget) {
         parentScreen.addTabWidget(widget);
@@ -57,14 +57,23 @@ public abstract class Tab {
     }
 
     /**
-     * Add a renderable-only element — renders but does NOT receive input.
-     * Not in Screen's children list, so getChildAt() skips it.
-     * Use for panels, backgrounds, decorations.
+     * Add a render-only element. Auto-removed on deactivate.
      */
     protected <T extends Renderable> T addRenderable(T renderable) {
         parentScreen.addTabRenderable(renderable);
-        trackedRenderables.add(renderable);
+        if (renderable instanceof GuiEventListener listener) {
+            trackedWidgets.add(listener);
+        }
         return renderable;
+    }
+
+    /**
+     * Add a UIComponent (PlateauLib component system). Auto-removed on deactivate.
+     */
+    protected <T extends UIComponent> T addComponent(T component) {
+        parentScreen.addComponent(component);
+        trackedComponents.add(component);
+        return component;
     }
 
     public void onActivate() {
@@ -78,22 +87,26 @@ public abstract class Tab {
             parentScreen.removeTabWidget(widget);
         }
         trackedWidgets.clear();
-        // Renderables need removal too — Screen.addRenderableOnly adds to renderables list
-        for (Renderable r : trackedRenderables) {
-            if (r instanceof GuiEventListener gel) {
-                parentScreen.removeTabWidget(gel);
-            }
+
+        for (UIComponent component : trackedComponents) {
+            parentScreen.removeComponent(component);
         }
-        trackedRenderables.clear();
+        trackedComponents.clear();
     }
 
-    void clearTrackedWidgets() {
+    /**
+     * Clear tracking lists without removing from screen.
+     * Called by TabManager.clearTracking() during screen re-init
+     * (Screen.init() already clears all children, so we just need to
+     * forget our references to avoid stale removal attempts).
+     */
+    public void clearTrackedWidgets() {
         trackedWidgets.clear();
-        trackedRenderables.clear();
-        active = false;
+        trackedComponents.clear();
     }
 
-    public void renderOverlay(GuiGraphics graphics, int mouseX, int mouseY, float delta) {}
+    public void renderOverlay(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    }
 
     public String getId() { return id; }
     public Component getLabel() { return label; }
