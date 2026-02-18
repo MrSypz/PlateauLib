@@ -1,4 +1,4 @@
-package com.sypztep.plateau.common.network;
+package com.sypztep.plateau.common;
 
 import net.minecraft.network.codec.StreamCodec;
 
