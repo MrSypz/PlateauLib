@@ -24,9 +24,7 @@ public class TextParticleGroup extends ParticleGroup<TextParticle> {
         return (submitNodeCollector, cameraRenderState) -> {
             Minecraft client = Minecraft.getInstance();
             PoseStack poseStack = new PoseStack();
-            this.particles.forEach(particle -> {
-                particle.extract(client.renderBuffers().bufferSource(), poseStack, client.font, camera, partialTick);
-            });
+            this.particles.forEach(particle -> particle.extract(client.renderBuffers().bufferSource(), poseStack, client.font, camera, partialTick));
         };
     }
 }
