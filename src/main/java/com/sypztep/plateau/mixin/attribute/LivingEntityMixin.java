@@ -1,4 +1,4 @@
-package com.sypztep.plateau.mixin;
+package com.sypztep.plateau.mixin.attribute;
 
 import com.sypztep.plateau.common.api.entity.PlateauAttributeRegistry;
 import net.minecraft.world.entity.LivingEntity;

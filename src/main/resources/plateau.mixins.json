@@ -4,8 +4,9 @@
   "package": "com.sypztep.plateau.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "LivingEntityMixin",
-    "PlayerMixin"
+    "attribute.LivingEntityMixin",
+    "attribute.PlayerMixin",
+    "effect.LivingEntityMixin"
   ],
   "client": [
   ],
