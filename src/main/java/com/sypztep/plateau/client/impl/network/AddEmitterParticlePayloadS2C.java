@@ -1,4 +1,4 @@
-package com.sypztep.plateau.common.network;
+package com.sypztep.plateau.client.impl.network;
 
 import com.sypztep.plateau.Plateau;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
