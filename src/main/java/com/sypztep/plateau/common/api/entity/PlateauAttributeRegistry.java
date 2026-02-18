@@ -50,6 +50,9 @@ public final class PlateauAttributeRegistry {
         return holder;
     }
 
+    /**
+     * Need to custom inject in mixin instead it not working :)
+     */
     public static void inject(AttributeSupplier.Builder builder, AttributeTarget target) {
         REGISTRY.get(target).forEach(builder::add);
     }

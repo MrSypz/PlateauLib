@@ -1,19 +1,19 @@
 package com.sypztep.plateau.client;
 
-import com.mojang.blaze3d.platform.InputConstants;
-import com.sypztep.plateau.client.ui.TestScreen;
+import com.sypztep.plateau.client.impl.particle.state.TextParticleGroup;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.KeyMapping;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleRendererRegistry;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
+import net.minecraft.client.particle.ParticleRenderType;
 
 public class PlateauClient implements ClientModInitializer {
 //    public static KeyMapping stats_screen = new KeyMapping("key.dominatus.debug", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_I, KeyMapping.Category.DEBUG);
-
+    public static final ParticleRenderType TEXT_PARTICLE =  new ParticleRenderType("plateau:text_particle");
     @Override
     public void onInitializeClient() {
+
+        ParticleRendererRegistry.register(TEXT_PARTICLE, TextParticleGroup::new);
+
 //        if (FabricLoader.getInstance().isDevelopmentEnvironment()) {
 //            ClientTickEvents.END_CLIENT_TICK.register(PlateauClient::onEndTick);
 //        }
