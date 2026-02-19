@@ -17,9 +17,6 @@
     ],
     "main": [
       "com.sypztep.plateau.Plateau"
-    ],
-    "plateau_attributes": [
-      "com.sypztep.plateau.common.ApexaraEntityAttributes"
     ]
   },
   "mixins": [
@@ -29,12 +26,5 @@
     "fabricloader": ">=${loader_version}",
     "fabric": "*",
     "minecraft": "${minecraft_version}"
-  },
-  "custom": {
-    "modmenu": {
-      "badges": [
-        "library"
-      ]
-    }
   }
 }
