@@ -3,8 +3,10 @@
   "id": "plateau",
   "version": "${version}",
   "name": "PlateauLib",
-  "description": "",
-  "authors": [],
+  "description": "common code that I often using when create new mods",
+  "authors": [
+    "MrSypz"
+  ],
   "contact": {},
   "license": "All-Rights-Reserved",
   "icon": "assets/plateau/icon.png",
@@ -15,6 +17,9 @@
     ],
     "main": [
       "com.sypztep.plateau.Plateau"
+    ],
+    "plateau_attributes": [
+      "com.sypztep.plateau.common.ApexaraEntityAttributes"
     ]
   },
   "mixins": [
@@ -24,5 +29,12 @@
     "fabricloader": ">=${loader_version}",
     "fabric": "*",
     "minecraft": "${minecraft_version}"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": [
+        "library"
+      ]
+    }
   }
 }
