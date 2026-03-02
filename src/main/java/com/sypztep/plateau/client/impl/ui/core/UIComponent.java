@@ -31,7 +31,13 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     protected final Minecraft minecraft;
     protected final Font font;
 
-    protected UIComponent(int x, int y, int width, int height) {
+    // Shared hover animation — eliminates duplicated hoverAnimation field in every widget
+    protected float hoverProgress = 0f;
+
+    // Per-component sound config
+    protected SoundConfig soundConfig = SoundConfig.silent();
+
+    public UIComponent(int x, int y, int width, int height) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -57,13 +63,24 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     protected abstract void renderComponent(GuiGraphics graphics, int mouseX, int mouseY, float delta);
 
     // ═══════════════════════════════════════════
-    // Animation helper
+    // Animation helpers
     // ═══════════════════════════════════════════
 
     protected static float stepAnimation(float current, boolean active, float speed) {
         if (active) return Math.min(1f, current + speed);
         else return Math.max(0f, current - speed);
     }
+
+    /**
+     * Update hover animation. Call at the top of renderComponent() to auto-track hover state.
+     */
+    protected void updateHover(int mouseX, int mouseY) {
+        boolean hovered = isMouseOver(mouseX, mouseY);
+        setHoveredCache(hovered);
+        hoverProgress = stepAnimation(hoverProgress, hovered || focused, 0.05f);
+    }
+
+    public float getHoverProgress() { return hoverProgress; }
 
     // ═══════════════════════════════════════════
     // GuiEventListener
@@ -92,29 +109,20 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     @Override
     public boolean isFocused() { return focused; }
 
-    /**
-     * Screen uses this to know the component's position for arrow key navigation.
-     * It compares rectangles to decide which component is "to the right of" or "below" the current one.
-     */
     @Override
     public ScreenRectangle getRectangle() {
         return new ScreenRectangle(x, y, width, height);
     }
 
-    /**
-     * Returning a non-null path here tells Screen "yes, I can receive focus".
-     * Without this, arrow keys and tab key skip this component entirely.
-     */
     @Override
     public @Nullable ComponentPath nextFocusPath(FocusNavigationEvent event) {
         if (!visible || !focusable) return null;
-        // If already focused, return null so focus moves to the next component
         if (focused) return null;
         return ComponentPath.leaf(this);
     }
 
     // ═══════════════════════════════════════════
-    // NarratableEntry — arrow key + tab key support
+    // NarratableEntry
     // ═══════════════════════════════════════════
 
     @Override
@@ -131,12 +139,7 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
         }
     }
 
-    /**
-     * Helper — can't check mouse position outside render, but narrationPriority
-     * is called by Screen during narration updates. Use a cached value.
-     */
     private boolean hoveredCache = false;
-
     protected void setHoveredCache(boolean hovered) { this.hoveredCache = hovered; }
     private boolean isHoveredNow() { return hoveredCache; }
 
@@ -167,4 +170,6 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     public UIComponent setDebugLabel(String label) { this.debugLabel = label; return this; }
     @Nullable public String getDebugLabel() { return debugLabel; }
     public UIComponent setNarrationMessage(Component message) { this.narrationMessage = message; return this; }
+    public UIComponent setSoundConfig(SoundConfig config) { this.soundConfig = config; return this; }
+    public SoundConfig getSoundConfig() { return soundConfig; }
 }

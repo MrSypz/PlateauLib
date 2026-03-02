@@ -49,9 +49,6 @@ public abstract class PlateauScreen extends Screen {
         removeWidget(widget);
     }
 
-    /**
-     * Content start Y — below NavBar if TabManager exists.
-     */
     public int getContentStartY() {
         if (tabManager != null) {
             return tabManager.getNavBarHeight() + 10;
@@ -61,14 +58,13 @@ public abstract class PlateauScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        graphics.fillGradient(0, 0, width, height, UITheme.SCREEN_BACKGROUND, UITheme.SCREEN_BACKGROUND);
+        int bg = UITheme.current().screenBackground();
+        graphics.fillGradient(0, 0, width, height, bg, bg);
 
         DebugOverlay.beginFrame(width, height);
 
-        // Screen renders all widgets (NavBar + tab content)
         super.render(graphics, mouseX, mouseY, delta);
 
-        // Tab overlay (tooltips, etc.)
         if (tabManager != null) {
             tabManager.renderOverlay(graphics, mouseX, mouseY, delta);
         }

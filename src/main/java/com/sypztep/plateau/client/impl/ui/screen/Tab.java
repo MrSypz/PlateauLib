@@ -20,9 +20,7 @@ public abstract class Tab {
     protected final Component label;
     @Nullable protected final Identifier icon;
 
-    // Widgets added via addWidget — full input/narration
     private final List<GuiEventListener> trackedWidgets = new ArrayList<>();
-    // Renderables added via addRenderable — display only, tracked separately for cleanup
     private final List<Renderable> trackedRenderables = new ArrayList<>();
 
     protected PlateauScreen parentScreen;
@@ -44,23 +42,18 @@ public abstract class Tab {
         this.parentScreen = screen;
     }
 
-    protected abstract void buildWidgets();
-
     /**
-     * Add a full widget — receives input, focus, narration, and renders.
-     * Added to Screen's children + renderables + narratables lists.
+     * Build widgets for this tab. Use the TabContext to avoid boilerplate
+     * layout calculations.
      */
+    protected abstract void buildWidgets(TabContext ctx);
+
     protected <T extends GuiEventListener & Renderable & NarratableEntry> T addWidget(T widget) {
         parentScreen.addTabWidget(widget);
         trackedWidgets.add(widget);
         return widget;
     }
 
-    /**
-     * Add a renderable-only element — renders but does NOT receive input.
-     * Not in Screen's children list, so getChildAt() skips it.
-     * Use for panels, backgrounds, decorations.
-     */
     protected <T extends Renderable> T addRenderable(T renderable) {
         parentScreen.addTabRenderable(renderable);
         trackedRenderables.add(renderable);
@@ -69,7 +62,8 @@ public abstract class Tab {
 
     public void onActivate() {
         active = true;
-        buildWidgets();
+        TabContext ctx = TabContext.from(parentScreen);
+        buildWidgets(ctx);
     }
 
     public void onDeactivate() {
@@ -78,7 +72,6 @@ public abstract class Tab {
             parentScreen.removeTabWidget(widget);
         }
         trackedWidgets.clear();
-        // Renderables need removal too — Screen.addRenderableOnly adds to renderables list
         for (Renderable r : trackedRenderables) {
             if (r instanceof GuiEventListener gel) {
                 parentScreen.removeTabWidget(gel);

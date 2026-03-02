@@ -1,7 +1,6 @@
 package com.sypztep.plateau.client.impl.ui.widget;
 
-import com.sypztep.plateau.client.impl.ui.core.UIColors;
-import com.sypztep.plateau.client.impl.ui.core.UIComponent;
+import com.sypztep.plateau.client.impl.ui.core.*;
 import com.sypztep.plateau.client.impl.ui.theme.UITheme;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.narration.NarratedElementType;
@@ -9,10 +8,8 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.sounds.SoundEvents;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -36,8 +33,6 @@ public class UIButton extends UIComponent {
     private float shadowIntensity = 1.0f;
     private boolean roundedCorners = true;
     private int cornerRadius = 4;
-    private boolean hoverSound = true;
-    private boolean clickSound = true;
 
     public UIButton(int x, int y, int width, int height, Component label,
                     @Nullable Identifier icon, @Nullable Consumer<UIButton> onClick) {
@@ -45,8 +40,8 @@ public class UIButton extends UIComponent {
         this.label = label;
         this.icon = icon;
         this.onClick = onClick;
-        // Auto-narration from label
         this.narrationMessage = label;
+        this.soundConfig = SoundConfig.button();
     }
 
     public UIButton(int x, int y, int width, int height, Component label,
@@ -63,14 +58,14 @@ public class UIButton extends UIComponent {
         updatePressAndScale(hovered);
 
         // Hover sound
-        if (hovered && !wasHovered && hoverSound) {
-            minecraft.getSoundManager().play(
-                    SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_HAT.value(), 1.8f));
+        if (hovered && !wasHovered) {
+            soundConfig.playHover();
         }
         wasHovered = hovered;
 
-        int bgColor = calculateBackground();
-        int textColor = calculateTextColor();
+        UITheme theme = UITheme.current();
+        int bgColor = calculateBackground(theme);
+        int textColor = calculateTextColor(theme);
 
         graphics.pose().pushMatrix();
         float scale = 1.0f + ((scaleAnimation - 1.0f) * bounceIntensity);
@@ -107,19 +102,12 @@ public class UIButton extends UIComponent {
         if (hoverAnimation > 0.3f && enabled && glowIntensity > 0) {
             int glowAlpha = (int)(40 * hoverAnimation * glowIntensity);
             int glow = UIColors.withAlpha(0xFFFFFF, glowAlpha);
-            graphics.fill(x - 1, y - 1, x + width + 1, y, glow);
-            graphics.fill(x - 1, y + height, x + width + 1, y + height + 1, glow);
-            graphics.fill(x - 1, y, x, y + height, glow);
-            graphics.fill(x + width, y, x + width + 1, y + height, glow);
+            RenderHelper.drawBorder(graphics, x - 1, y - 1, width + 2, height + 2, glow);
         }
 
-        // Focus ring — visible when navigated to via arrow keys or tab
+        // Focus ring
         if (focused && enabled) {
-            int focusColor = 0xFFFFFFFF;
-            graphics.fill(x - 2, y - 2, x + width + 2, y - 1, focusColor);
-            graphics.fill(x - 2, y + height + 1, x + width + 2, y + height + 2, focusColor);
-            graphics.fill(x - 2, y - 1, x - 1, y + height + 1, focusColor);
-            graphics.fill(x + width + 1, y - 1, x + width + 2, y + height + 1, focusColor);
+            RenderHelper.drawBorder(graphics, x - 2, y - 2, width + 4, height + 4, 0xFFFFFFFF);
         }
 
         graphics.pose().popMatrix();
@@ -164,16 +152,16 @@ public class UIButton extends UIComponent {
         graphics.drawString(font, label, textX, textY, textColor, true);
     }
 
-    private int calculateBackground() {
-        if (!enabled) return UITheme.BUTTON_BG_DISABLED;
+    private int calculateBackground(UITheme theme) {
+        if (!enabled) return theme.buttonBgDisabled();
         return UIColors.interpolate(
-                UIColors.interpolate(UITheme.BUTTON_BG, UITheme.BUTTON_BG_HOVER, hoverAnimation),
-                UITheme.BUTTON_BG_PRESSED, pressAnimation);
+                UIColors.interpolate(theme.buttonBg(), theme.buttonBgHover(), hoverAnimation),
+                theme.buttonBgPressed(), pressAnimation);
     }
 
-    private int calculateTextColor() {
-        if (!enabled) return UITheme.TEXT_DISABLED;
-        return UIColors.interpolate(UITheme.BUTTON_TEXT, UITheme.BUTTON_TEXT_HOVER, hoverAnimation);
+    private int calculateTextColor(UITheme theme) {
+        if (!enabled) return theme.textDisabled();
+        return UIColors.interpolate(theme.buttonText(), theme.buttonTextHover(), hoverAnimation);
     }
 
     @Override
@@ -185,13 +173,9 @@ public class UIButton extends UIComponent {
         return false;
     }
 
-    /**
-     * Enter/Space activates focused button — same as vanilla.
-     */
     @Override
     public boolean keyPressed(KeyEvent keyEvent) {
         if (!enabled || !focused) return false;
-        // Enter (257) or Space (32)
         if (keyEvent.key() == 257 || keyEvent.key() == 32) {
             activate();
             return true;
@@ -201,10 +185,7 @@ public class UIButton extends UIComponent {
 
     private void activate() {
         pressed = true;
-        if (clickSound) {
-            minecraft.getSoundManager().play(
-                    SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.0f));
-        }
+        soundConfig.playClick();
         if (onClick != null) onClick.accept(this);
     }
 
@@ -235,7 +216,8 @@ public class UIButton extends UIComponent {
         this.roundedCorners = rounded; this.cornerRadius = radius; return this;
     }
     public UIButton setPlaySounds(boolean hover, boolean click) {
-        this.hoverSound = hover; this.clickSound = click; return this;
+        this.soundConfig.setHoverEnabled(hover).setClickEnabled(click);
+        return this;
     }
     public boolean isEnabled() { return enabled; }
 }

@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 
 public class UILabel extends UIComponent {
     private Component text;
-    private int color = UITheme.TEXT_PRIMARY;
+    private int color = UITheme.current().textPrimary();
     private boolean shadow = true;
     private boolean centered = false;
 
@@ -16,7 +16,7 @@ public class UILabel extends UIComponent {
         this.text = text;
         this.width = font.width(text);
         this.height = font.lineHeight;
-        this.focusable = false; // labels don't take focus
+        this.focusable = false;
     }
 
     public UILabel(int x, int y, int width, Component text) {

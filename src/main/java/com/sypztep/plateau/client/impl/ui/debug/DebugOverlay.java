@@ -1,7 +1,6 @@
 package com.sypztep.plateau.client.impl.ui.debug;
 
 import com.sypztep.plateau.client.impl.ui.core.UIComponent;
-import com.sypztep.plateau.client.impl.ui.theme.UITheme;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -37,6 +36,13 @@ import java.util.List;
  */
 @Environment(EnvType.CLIENT)
 public final class DebugOverlay {
+
+    // Debug colors (not theme-dependent)
+    private static final int DEBUG_BOUNDS = 0xFFFF0000;
+    private static final int DEBUG_CONTENT = 0xFF00FF00;
+    private static final int DEBUG_PADDING = 0x3300FF00;
+    private static final int DEBUG_TEXT = 0xFFFFFF00;
+    private static final int DEBUG_TEXT_PRIMARY = 0xFFE8E8EC;
 
     public enum Mode { OFF, INSPECT, OUTLINE, GRID }
 
@@ -160,23 +166,23 @@ public final class DebugOverlay {
         int pad = c.getPadding();
 
         // ── Outer bounds (red) ──
-        drawBorder(graphics, x, y, w, h, UITheme.DEBUG_BOUNDS);
+        drawBorder(graphics, x, y, w, h, DEBUG_BOUNDS);
 
         // ── Padding zone (green translucent) ──
         if (pad > 0) {
-            graphics.fill(x + 1, y + 1, x + w - 1, y + pad, UITheme.DEBUG_PADDING);
-            graphics.fill(x + 1, y + h - pad, x + w - 1, y + h - 1, UITheme.DEBUG_PADDING);
-            graphics.fill(x + 1, y + pad, x + pad, y + h - pad, UITheme.DEBUG_PADDING);
-            graphics.fill(x + w - pad, y + pad, x + w - 1, y + h - pad, UITheme.DEBUG_PADDING);
+            graphics.fill(x + 1, y + 1, x + w - 1, y + pad, DEBUG_PADDING);
+            graphics.fill(x + 1, y + h - pad, x + w - 1, y + h - 1, DEBUG_PADDING);
+            graphics.fill(x + 1, y + pad, x + pad, y + h - pad, DEBUG_PADDING);
+            graphics.fill(x + w - pad, y + pad, x + w - 1, y + h - pad, DEBUG_PADDING);
 
             // Content area border (green)
             int cx = c.getContentX(), cy = c.getContentY();
             int cw = c.getContentWidth(), ch = c.getContentHeight();
-            drawBorder(graphics, cx, cy, cw, ch, UITheme.DEBUG_CONTENT);
+            drawBorder(graphics, cx, cy, cw, ch, DEBUG_CONTENT);
         }
 
         // ── Origin crosshair ──
-        drawBorder(graphics, x - 2, y - 2, 5, 5, UITheme.DEBUG_BOUNDS);
+        drawBorder(graphics, x - 2, y - 2, 5, 5, DEBUG_BOUNDS);
 
         // ── Distance guides to screen edges ──
         renderDistanceGuides(graphics, c);
@@ -289,12 +295,12 @@ public final class DebugOverlay {
 
         // Accent line on left edge
         graphics.fill(panelX, panelY, panelX + 2, panelY + panelH,
-                pinned ? 0xFFDD66DD : UITheme.DEBUG_TEXT);
+                pinned ? 0xFFDD66DD : DEBUG_TEXT);
 
         // Draw lines
         int ty = panelY + panelPad;
         for (InfoLine line : lines) {
-            graphics.drawString(font, line.text, panelX + panelPad + 2, ty, UITheme.TEXT_PRIMARY, false);
+            graphics.drawString(font, line.text, panelX + panelPad + 2, ty, DEBUG_TEXT_PRIMARY, false);
             ty += lineH;
         }
     }
@@ -342,9 +348,9 @@ public final class DebugOverlay {
         graphics.fill(0, barY, screenWidth, screenHeight, 0xE0000000);
         graphics.fill(0, barY, screenWidth, barY + 1, 0xFF333333);
 
-        graphics.drawString(font, left, 4, barY + 3, UITheme.TEXT_PRIMARY, false);
+        graphics.drawString(font, left, 4, barY + 3, DEBUG_TEXT_PRIMARY, false);
         graphics.drawString(font, right, screenWidth - font.width(right) - 4, barY + 3,
-                UITheme.TEXT_PRIMARY, false);
+                DEBUG_TEXT_PRIMARY, false);
     }
 
     // ═══════════════════════════════════════════

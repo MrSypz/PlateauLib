@@ -5,6 +5,7 @@ import com.sypztep.plateau.client.impl.ui.layout.ColumnLayout;
 import com.sypztep.plateau.client.impl.ui.layout.Layout;
 import com.sypztep.plateau.client.impl.ui.layout.RowLayout;
 import com.sypztep.plateau.client.impl.ui.screen.Tab;
+import com.sypztep.plateau.client.impl.ui.screen.TabContext;
 import com.sypztep.plateau.client.impl.ui.theme.UITheme;
 import com.sypztep.plateau.client.impl.ui.widget.*;
 import net.minecraft.ChatFormatting;
@@ -21,21 +22,19 @@ public class ButtonTab extends Tab {
     }
 
     @Override
-    protected void buildWidgets() {
-        int sw = parentScreen.width;
-        int sh = parentScreen.height;
-        int startY = parentScreen.getContentStartY();
+    protected void buildWidgets(TabContext ctx) {
+        int startY = ctx.contentStartY();
 
-        int marginX = Math.max(10, Layout.percent(sw, 0.05f));
-        int availW = sw - marginX * 2;
+        int marginX = Math.max(10, Layout.percent(ctx.screenWidth(), 0.05f));
+        int availW = ctx.screenWidth() - marginX * 2;
 
         // Header
-        addWidget(new UILabel(0, startY, sw, Component.literal("§eButton Examples"))
+        addWidget(new UILabel(0, startY, ctx.screenWidth(), Component.literal("\u00a7eButton Examples"))
                 .setDebugLabel("SectionHeader"));
 
         // Panel sizing
         int panelW = Layout.clampWidth(availW, 160, 400);
-        int panelX = Layout.centerX(sw, panelW);
+        int panelX = ctx.centerX(panelW);
         int panelY = startY + 18;
         int btnPad = 10;
         int btnW = panelW - btnPad * 2;
@@ -97,9 +96,9 @@ public class ButtonTab extends Tab {
 
         // Status
         int statusY = panelY + panelH + 8;
-        if (statusY + 10 > sh - 20) statusY = sh - 20;
-        statusLabel = (UILabel) new UILabel(0, statusY, sw, Component.literal("§7Press buttons above"))
-                .setColor(UITheme.TEXT_SECONDARY).setDebugLabel("StatusText");
+        if (statusY + 10 > ctx.screenHeight() - 20) statusY = ctx.screenHeight() - 20;
+        statusLabel = (UILabel) new UILabel(0, statusY, ctx.screenWidth(), Component.literal("\u00a77Press buttons above"))
+                .setColor(UITheme.current().textSecondary()).setDebugLabel("StatusText");
         addWidget(statusLabel);
         updateStatus();
 
@@ -107,12 +106,12 @@ public class ButtonTab extends Tab {
         int textY = statusY + 18;
         int textX = panelX;
 
-        if (textY + 60 < sh - 20) {
+        if (textY + 60 < ctx.screenHeight() - 20) {
             addWidget(new UIText(textX, textY, panelW, Component.literal("Hover over ")
                     .append(Component.literal("this text")
                             .withStyle(s -> s
                                     .withHoverEvent(new HoverEvent.ShowText(
-                                            Component.literal("§eTooltip works!\n§7Multiline too.")))
+                                            Component.literal("\u00a7eTooltip works!\n\u00a77Multiline too.")))
                                     .withColor(ChatFormatting.YELLOW).withUnderlined(true)))
                     .append(Component.literal(" to see a tooltip.")))
                     .setDebugLabel("TooltipText"));
@@ -122,13 +121,13 @@ public class ButtonTab extends Tab {
                     .append(Component.literal("[Modrinth]")
                             .withStyle(s -> s
                                     .withClickEvent(new ClickEvent.OpenUrl(java.net.URI.create("https://modrinth.com")))
-                                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("§7Click to open §amodrinth.com")))
+                                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("\u00a77Click to open \u00a7amodrinth.com")))
                                     .withColor(ChatFormatting.AQUA).withUnderlined(true)))
                     .append(Component.literal(" or "))
                     .append(Component.literal("[Copy my name]")
                             .withStyle(s -> s
                                     .withClickEvent(new ClickEvent.CopyToClipboard("MrSypz"))
-                                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("§7Copy §eMrSypz")))
+                                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("\u00a77Copy \u00a7eMrSypz")))
                                     .withColor(ChatFormatting.GREEN))))
                     .setDebugLabel("LinkText"));
         }
@@ -137,8 +136,8 @@ public class ButtonTab extends Tab {
     private void updateStatus() {
         if (statusLabel != null) {
             statusLabel.setText(xp <= 0f
-                    ? Component.literal("§cXP reset!")
-                    : Component.literal("§aXP: " + (int)(xp * 100) + "%"));
+                    ? Component.literal("\u00a7cXP reset!")
+                    : Component.literal("\u00a7aXP: " + (int)(xp * 100) + "%"));
         }
     }
 }
