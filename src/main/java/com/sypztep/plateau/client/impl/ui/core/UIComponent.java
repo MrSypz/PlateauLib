@@ -1,6 +1,7 @@
 package com.sypztep.plateau.client.impl.ui.core;
 
 
+import com.sypztep.plateau.client.impl.ui.behavior.ScrollBehavior;
 import com.sypztep.plateau.client.impl.ui.theme.UITheme;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -15,6 +16,7 @@ import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +42,9 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     // Per-component sound config
     protected SoundConfig soundConfig = SoundConfig.silent();
 
+    // Optional scroll behavior — when set, keyboard/mouse scroll is handled automatically
+    @Nullable protected ScrollBehavior scroll;
+
     public UIComponent(int x, int y, int width, int height) {
         this.x = x;
         this.y = y;
@@ -48,6 +53,48 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
         this.minecraft = Minecraft.getInstance();
         this.font = minecraft.font;
     }
+
+    // ═══════════════════════════════════════════
+    // Scroll — engine-level support
+    // ═══════════════════════════════════════════
+
+    /**
+     * Enable scrolling on this component. Once set, the engine handles:
+     * <ul>
+     *   <li>Mouse wheel scrolling</li>
+     *   <li>Scrollbar click/drag</li>
+     *   <li>Keyboard: Arrow up/down, Page up/down, Home/End (when focused)</li>
+     *   <li>Scrollbar rendering</li>
+     * </ul>
+     * You only need to call {@code scroll.setBounds()}, {@code scroll.setContentHeight()},
+     * {@code scroll.update()}, {@code scroll.enableScissor()}/{@code disableScissor()} in your render.
+     * <p>
+     * Override {@link #onKeyScroll(int)} for custom key behavior (e.g., item-based navigation).
+     */
+    public UIComponent enableScrolling() {
+        this.scroll = new ScrollBehavior();
+        return this;
+    }
+
+    public UIComponent enableScrolling(ScrollBehavior scroll) {
+        this.scroll = scroll;
+        return this;
+    }
+
+    @Nullable
+    public ScrollBehavior getScroll() { return scroll; }
+
+    /**
+     * Override to customize keyboard scroll step (default 20px).
+     */
+    protected int getScrollStep() { return 20; }
+
+    /**
+     * Override for custom key handling when scrolling is enabled.
+     * Return true to consume the key event.
+     * Called BEFORE the default scroll key handling.
+     */
+    protected boolean onKeyScroll(int key) { return false; }
 
     // ═══════════════════════════════════════════
     // Rendering
@@ -96,20 +143,50 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     public float getHoverProgress() { return hoverProgress; }
 
     // ═══════════════════════════════════════════
-    // GuiEventListener
+    // GuiEventListener — auto-delegates to scroll
     // ═══════════════════════════════════════════
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean bl) { return false; }
+    public boolean mouseClicked(MouseButtonEvent event, boolean bl) {
+        if (scroll != null && scroll.mouseClicked(event, bl)) return true;
+        return false;
+    }
 
     @Override
-    public boolean mouseReleased(MouseButtonEvent event) { return false; }
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (scroll != null && scroll.mouseReleased(event)) return true;
+        return false;
+    }
 
     @Override
-    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) { return false; }
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (scroll != null && scroll.mouseDragged(event)) return true;
+        return false;
+    }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) { return false; }
+    public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
+        if (scroll != null && scroll.mouseScrolled(mouseX, mouseY, vAmount)) return true;
+        return false;
+    }
+
+    @Override
+    public boolean keyPressed(KeyEvent keyEvent) {
+        if (!focused || scroll == null) return false;
+
+        // Let subclass handle first
+        if (onKeyScroll(keyEvent.key())) return true;
+
+        int key = keyEvent.key();
+        if (key == 265) { scroll.scrollBy(-getScrollStep()); return true; } // UP
+        if (key == 264) { scroll.scrollBy(getScrollStep()); return true; }  // DOWN
+        if (key == 266) { scroll.scrollBy(-(height - 20)); return true; }   // PAGE_UP
+        if (key == 267) { scroll.scrollBy(height - 20); return true; }      // PAGE_DOWN
+        if (key == 268) { scroll.scrollTo(0); return true; }                // HOME
+        if (key == 269) { scroll.scrollToEnd(); return true; }              // END
+
+        return false;
+    }
 
     @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
@@ -185,7 +262,7 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     public boolean isVisible() { return visible; }
     public void setVisible(boolean visible) { this.visible = visible; }
     public UIComponent setFocusable(boolean focusable) { this.focusable = focusable; return this; }
-public UIComponent setNarrationMessage(Component message) { this.narrationMessage = message; return this; }
+    public UIComponent setNarrationMessage(Component message) { this.narrationMessage = message; return this; }
     public UIComponent setSoundConfig(SoundConfig config) { this.soundConfig = config; return this; }
     public SoundConfig getSoundConfig() { return soundConfig; }
 }
