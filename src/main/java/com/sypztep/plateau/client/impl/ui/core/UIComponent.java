@@ -1,6 +1,7 @@
 package com.sypztep.plateau.client.impl.ui.core;
 
-import com.sypztep.plateau.client.impl.ui.debug.DebugOverlay;
+
+import com.sypztep.plateau.client.impl.ui.theme.UITheme;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -25,7 +26,6 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     protected boolean visible = true;
     protected boolean focused = false;
     protected boolean focusable = true;
-    @Nullable protected String debugLabel;
     @Nullable protected Component narrationMessage;
 
     protected final Minecraft minecraft;
@@ -33,6 +33,9 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
 
     // Shared hover animation — eliminates duplicated hoverAnimation field in every widget
     protected float hoverProgress = 0f;
+
+    // Focus animation (smooth highlight when focused via keyboard/controller)
+    protected float focusProgress = 0f;
 
     // Per-component sound config
     protected SoundConfig soundConfig = SoundConfig.silent();
@@ -44,7 +47,6 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
         this.height = height;
         this.minecraft = Minecraft.getInstance();
         this.font = minecraft.font;
-        this.debugLabel = getClass().getSimpleName();
     }
 
     // ═══════════════════════════════════════════
@@ -54,9 +56,20 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     @Override
     public final void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
         if (!visible) return;
+        focusProgress = stepAnimation(focusProgress, focused, 0.1f);
         renderComponent(graphics, mouseX, mouseY, delta);
-        if (DebugOverlay.isEnabled()) {
-            DebugOverlay.renderFor(graphics, this, mouseX, mouseY);
+    }
+
+    /**
+     * Draw a focus ring around this component. Call at the end of renderComponent()
+     * for components that want keyboard focus visibility.
+     * UIButton already has its own — this is for panels, scroll areas, etc.
+     */
+    protected void renderFocusRing(GuiGraphics graphics) {
+        if (focusProgress > 0.01f) {
+            int alpha = (int)(255 * focusProgress);
+            int color = UIColors.withAlpha(UITheme.current().textAccent(), alpha);
+            RenderHelper.drawBorder(graphics, x - 1, y - 1, width + 2, height + 2, color);
         }
     }
 
@@ -104,7 +117,12 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     }
 
     @Override
-    public void setFocused(boolean focused) { this.focused = focused; }
+    public void setFocused(boolean focused) {
+        if (focused && !this.focused && focusable) {
+            UISounds.playFocus();
+        }
+        this.focused = focused;
+    }
 
     @Override
     public boolean isFocused() { return focused; }
@@ -167,9 +185,7 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     public boolean isVisible() { return visible; }
     public void setVisible(boolean visible) { this.visible = visible; }
     public UIComponent setFocusable(boolean focusable) { this.focusable = focusable; return this; }
-    public UIComponent setDebugLabel(String label) { this.debugLabel = label; return this; }
-    @Nullable public String getDebugLabel() { return debugLabel; }
-    public UIComponent setNarrationMessage(Component message) { this.narrationMessage = message; return this; }
+public UIComponent setNarrationMessage(Component message) { this.narrationMessage = message; return this; }
     public UIComponent setSoundConfig(SoundConfig config) { this.soundConfig = config; return this; }
     public SoundConfig getSoundConfig() { return soundConfig; }
 }

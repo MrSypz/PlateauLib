@@ -29,6 +29,10 @@ public final class UISounds {
         play(SoundEvents.UI_BUTTON_CLICK.value(), 1.0f, 0.5f);
     }
 
+    public static void playFocus() {
+        play(SoundEvents.NOTE_BLOCK_HAT.value(), 2.0f, 0.3f);
+    }
+
     public static void play(@Nullable SoundEvent sound, float pitch, float volume) {
         if (!globalEnabled || sound == null) return;
         Minecraft.getInstance().getSoundManager().play(

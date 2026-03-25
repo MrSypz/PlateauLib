@@ -266,6 +266,16 @@ public final class ScrollBehavior {
         scrollTarget = Mth.clamp(target, 0, maxScroll);
     }
 
+    /** Scroll by a delta amount (positive = down, negative = up). */
+    public void scrollBy(double delta) {
+        scrollTarget = Mth.clamp(scrollTarget + delta, 0, maxScroll);
+    }
+
+    /** Scroll to the bottom. */
+    public void scrollToEnd() {
+        scrollTarget = maxScroll;
+    }
+
     /** Reset scroll to top. */
     public void resetScroll() {
         scrollTarget = 0;

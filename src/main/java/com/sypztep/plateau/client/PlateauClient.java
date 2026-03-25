@@ -18,7 +18,8 @@ import org.lwjgl.glfw.GLFW;
 
 public class PlateauClient implements ClientModInitializer {
     public static final ParticleRenderType TEXT_PARTICLE = new ParticleRenderType("text_particle");
-    public static KeyMapping stats_screen = new KeyMapping("key.dominatus.debug", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_I, KeyMapping.Category.DEBUG);
+    public static final KeyMapping TEST_SCREEN_KEY = new KeyMapping(
+            "key.plateau.test_screen", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_I, KeyMapping.Category.DEBUG);
 
     @Override
     public void onInitializeClient() {
@@ -29,11 +30,9 @@ public class PlateauClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(AddParticlePayloadS2C.ID, new AddParticlePayloadS2C.Receiver());
 
         if (FabricLoader.getInstance().isDevelopmentEnvironment()) {
-            ClientTickEvents.END_CLIENT_TICK.register(PlateauClient::onEndTick);
+            ClientTickEvents.END_CLIENT_TICK.register(client -> {
+                if (TEST_SCREEN_KEY.consumeClick()) client.setScreen(new TestScreen());
+            });
         }
-    }
-
-    private static void onEndTick(Minecraft client) {
-        if (stats_screen.consumeClick()) client.setScreen(new TestScreen());
     }
 }

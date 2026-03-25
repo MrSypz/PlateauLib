@@ -124,6 +124,8 @@ public class UINavBar extends UIComponent {
         } else {
             renderVertical(graphics, mouseX, mouseY, theme);
         }
+
+        renderFocusRing(graphics);
     }
 
     private void updateHoverAnimations(int mouseX, int mouseY) {
@@ -304,6 +306,7 @@ public class UINavBar extends UIComponent {
         if (!focused) return false;
 
         int key = keyEvent.key();
+        // Arrow keys (horizontal: left/right, vertical: up/down)
         boolean prev = (horizontal && key == 263) || (!horizontal && key == 265);
         boolean next = (horizontal && key == 262) || (!horizontal && key == 264);
 
@@ -316,12 +319,33 @@ public class UINavBar extends UIComponent {
             return true;
         }
 
+        // Enter/Space to confirm
         if (key == 257 || key == 32) {
             NavItem item = items.get(selectedIndex);
             if (item.onSelect != null) item.onSelect.accept(item.id);
             return true;
         }
 
+        return false;
+    }
+
+    /**
+     * Navigate to next/previous tab programmatically.
+     * Useful for controller bumpers (LB/RB) mapped from the screen level.
+     */
+    public boolean selectNext() {
+        if (selectedIndex < items.size() - 1) {
+            selectItem(selectedIndex + 1);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean selectPrevious() {
+        if (selectedIndex > 0) {
+            selectItem(selectedIndex - 1);
+            return true;
+        }
         return false;
     }
 

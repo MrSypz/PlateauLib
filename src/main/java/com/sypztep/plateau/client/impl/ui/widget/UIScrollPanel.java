@@ -2,6 +2,7 @@ package com.sypztep.plateau.client.impl.ui.widget;
 
 import com.sypztep.plateau.client.impl.ui.behavior.ScrollBehavior;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,7 @@ public abstract class UIScrollPanel extends UIPanel {
     public UIScrollPanel(int x, int y, int width, int height, @Nullable Component title) {
         super(x, y, width, height, title);
         setInteractable(true);
+        this.focusable = true;
     }
 
     public UIScrollPanel(int x, int y, int width, int height) {
@@ -58,6 +60,8 @@ public abstract class UIScrollPanel extends UIPanel {
         scroll.disableScissor(graphics);
 
         scroll.renderScrollbar(graphics, mouseX, mouseY);
+
+        renderFocusRing(graphics);
     }
 
     protected abstract void renderScrollContent(GuiGraphics graphics, int mouseX, int mouseY, float delta,
@@ -96,6 +100,60 @@ public abstract class UIScrollPanel extends UIPanel {
     public boolean mouseReleased(MouseButtonEvent event) {
         if (scroll.mouseReleased(event)) return true;
         return super.mouseReleased(event);
+    }
+
+    // ═══════════════════════════════════════════
+    // Keyboard navigation
+    // ═══════════════════════════════════════════
+
+    @Override
+    public boolean keyPressed(KeyEvent keyEvent) {
+        if (!focused) return false;
+
+        int key = keyEvent.key();
+        // Arrow up/down scroll by line
+        if (key == 265) { // UP
+            scroll.scrollBy(-getScrollStep());
+            return true;
+        }
+        if (key == 264) { // DOWN
+            scroll.scrollBy(getScrollStep());
+            return true;
+        }
+        // Page up/down for fast scrolling
+        if (key == 266) { // PAGE_UP
+            scroll.scrollBy(-(height - 20));
+            return true;
+        }
+        if (key == 267) { // PAGE_DOWN
+            scroll.scrollBy(height - 20);
+            return true;
+        }
+        // Home/End
+        if (key == 268) { // HOME
+            scroll.scrollTo(0);
+            return true;
+        }
+        if (key == 269) { // END
+            scroll.scrollToEnd();
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Override to customize how much each arrow key press scrolls (default 20px).
+     */
+    protected int getScrollStep() {
+        return 20;
+    }
+
+    /**
+     * Scroll to make a specific Y offset visible within the content area.
+     */
+    public void scrollToVisible(int targetY, int targetHeight) {
+        scroll.scrollToItem(targetY, targetHeight);
     }
 
     public ScrollBehavior getScrollBehavior() { return scroll; }

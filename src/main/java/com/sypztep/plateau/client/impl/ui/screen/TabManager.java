@@ -55,7 +55,6 @@ public final class TabManager {
         int navW = screen.width - 20;
 
         navBar = new UINavBar(navX, navY, navW, navBarHeight);
-        navBar.setDebugLabel("NavBar");
 
         // Add items from tabs
         for (Tab tab : tabs.values()) {
