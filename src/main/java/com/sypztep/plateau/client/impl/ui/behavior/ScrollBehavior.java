@@ -1,6 +1,6 @@
 package com.sypztep.plateau.client.impl.ui.behavior;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
@@ -24,7 +24,7 @@ import org.lwjgl.glfw.GLFW;
  * private final ScrollBehavior scroll = new ScrollBehavior();
  *
  * {@literal @}Override
- * protected void renderComponent(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+ * protected void renderComponent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
  *     scroll.setBounds(x, y, width, height);
  *     scroll.setContentHeight(totalContentHeight);
  *
@@ -113,11 +113,11 @@ public final class ScrollBehavior {
     // Scissor helpers
     // ═══════════════════════════════════════════
 
-    public void enableScissor(GuiGraphics graphics) {
+    public void enableScissor(GuiGraphicsExtractor graphics) {
         graphics.enableScissor(x, y, x + getContentWidth(), y + height);
     }
 
-    public void disableScissor(GuiGraphics graphics) {
+    public void disableScissor(GuiGraphicsExtractor graphics) {
         graphics.disableScissor();
     }
 
@@ -128,7 +128,7 @@ public final class ScrollBehavior {
     /**
      * Render the scrollbar. Call AFTER disableScissor so the scrollbar isn't clipped.
      */
-    public void renderScrollbar(GuiGraphics graphics, int mouseX, int mouseY) {
+    public void renderScrollbar(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         if (!enableScrollbar || maxScroll <= 0) return;
 
         // Hover animation
@@ -199,8 +199,8 @@ public final class ScrollBehavior {
         return false;
     }
 
-    public boolean mouseClicked(MouseButtonEvent event, boolean consumed) {
-        if (consumed) return false;
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (doubleClick) return false;
         if (event.button() == GLFW.GLFW_MOUSE_BUTTON_1 && isScrollbarHovered((int) event.x(), (int) event.y())) {
             isDragging = true;
             updateScrollFromMouse(event.y());

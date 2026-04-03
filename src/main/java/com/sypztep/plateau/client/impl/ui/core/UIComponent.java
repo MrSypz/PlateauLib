@@ -8,7 +8,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
@@ -20,6 +20,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 @Environment(EnvType.CLIENT)
 public abstract class UIComponent implements GuiEventListener, Renderable, NarratableEntry {
@@ -101,18 +102,17 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     // ═══════════════════════════════════════════
 
     @Override
-    public final void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    public final void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         if (!visible) return;
         focusProgress = stepAnimation(focusProgress, focused, 0.1f);
         renderComponent(graphics, mouseX, mouseY, delta);
     }
-
     /**
      * Draw a focus ring around this component. Call at the end of renderComponent()
      * for components that want keyboard focus visibility.
      * UIButton already has its own — this is for panels, scroll areas, etc.
      */
-    protected void renderFocusRing(GuiGraphics graphics) {
+    protected void renderFocusRing(GuiGraphicsExtractor graphics) {
         if (focusProgress > 0.01f) {
             int alpha = (int)(255 * focusProgress);
             int color = UIColors.withAlpha(UITheme.current().textAccent(), alpha);
@@ -120,7 +120,7 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
         }
     }
 
-    protected abstract void renderComponent(GuiGraphics graphics, int mouseX, int mouseY, float delta);
+    protected abstract void renderComponent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta);
 
     // ═══════════════════════════════════════════
     // Animation helpers
@@ -147,31 +147,27 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     // ═══════════════════════════════════════════
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean bl) {
-        if (scroll != null && scroll.mouseClicked(event, bl)) return true;
-        return false;
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
+        return scroll != null && scroll.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean mouseReleased(MouseButtonEvent event) {
-        if (scroll != null && scroll.mouseReleased(event)) return true;
-        return false;
+    public boolean mouseReleased(@NonNull MouseButtonEvent event) {
+        return scroll != null && scroll.mouseReleased(event);
     }
 
     @Override
-    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        if (scroll != null && scroll.mouseDragged(event)) return true;
-        return false;
+    public boolean mouseDragged(@NonNull MouseButtonEvent event, double dragX, double dragY) {
+        return scroll != null && scroll.mouseDragged(event);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
-        if (scroll != null && scroll.mouseScrolled(mouseX, mouseY, vAmount)) return true;
-        return false;
+        return scroll != null && scroll.mouseScrolled(mouseX, mouseY, vAmount);
     }
 
     @Override
-    public boolean keyPressed(KeyEvent keyEvent) {
+    public boolean keyPressed(@NonNull KeyEvent keyEvent) {
         if (!focused || scroll == null) return false;
 
         // Let subclass handle first
@@ -181,8 +177,8 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
         if (key == 265) { scroll.scrollBy(-getScrollStep()); return true; } // UP
         if (key == 264) { scroll.scrollBy(getScrollStep()); return true; }  // DOWN
         if (key == 266) { scroll.scrollBy(-(height - 20)); return true; }   // PAGE_UP
-        if (key == 267) { scroll.scrollBy(height - 20); return true; }      // PAGE_DOWN
-        if (key == 268) { scroll.scrollTo(0); return true; }                // HOME
+        if (key == 267) { scroll.scrollBy(height - 20); return true; } // PAGE_DOWN
+        if (key == 268) { scroll.scrollTo(0); return true; }          // HOME
         if (key == 269) { scroll.scrollToEnd(); return true; }              // END
 
         return false;

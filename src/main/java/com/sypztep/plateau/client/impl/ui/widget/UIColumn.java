@@ -2,7 +2,7 @@ package com.sypztep.plateau.client.impl.ui.widget;
 
 import com.sypztep.plateau.client.impl.ui.core.UIComponent;
 import net.minecraft.client.gui.ComponentPath;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
@@ -91,10 +91,10 @@ public class UIColumn extends UIComponent implements ContainerEventHandler {
     }
 
     @Override
-    protected void renderComponent(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    protected void renderComponent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         layout();
         for (Entry e : entries) {
-            e.child.render(graphics, mouseX, mouseY, delta);
+            e.child.extractRenderState(graphics, mouseX, mouseY, delta);
         }
     }
 

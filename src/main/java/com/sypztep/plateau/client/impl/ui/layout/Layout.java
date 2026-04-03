@@ -3,7 +3,7 @@ package com.sypztep.plateau.client.impl.ui.layout;
 /**
  * Static layout math helpers. Not a layout engine — just removes the
  * hardcoded arithmetic from buildWidgets().
- *
+ * <p>
  * Use these to compute positions relative to screen/parent dimensions
  * so things reposition on resize (Tab.buildWidgets is called again on resize).
  */

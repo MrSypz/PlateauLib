@@ -3,7 +3,7 @@ package com.sypztep.plateau.client.impl.ui.screen;
 import com.sypztep.plateau.client.impl.ui.widget.UINavBar;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -106,7 +106,7 @@ public final class TabManager {
     /**
      * Render tab overlay (tooltips, etc.).
      */
-    public void renderOverlay(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    public void renderOverlay(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         Tab active = getActiveTab();
         if (active != null) {
             active.renderOverlay(graphics, mouseX, mouseY, delta);

@@ -9,10 +9,9 @@ import com.sypztep.plateau.client.impl.ui.TestScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.particle.v1.ParticleRendererRegistry;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleGroupRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.ParticleRenderType;
 import org.lwjgl.glfw.GLFW;
 
@@ -23,7 +22,7 @@ public class PlateauClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        ParticleRendererRegistry.register(TEXT_PARTICLE, TextParticleGroup::new);
+        ParticleGroupRegistry.register(TEXT_PARTICLE, TextParticleGroup::new);
 
         ClientPlayNetworking.registerGlobalReceiver(AddTextParticlePayloadS2C.ID, new AddTextParticlePayloadS2C.Receiver());
         ClientPlayNetworking.registerGlobalReceiver(AddEmitterParticlePayloadS2C.ID, new AddEmitterParticlePayloadS2C.Receiver());

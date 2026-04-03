@@ -4,7 +4,7 @@ import com.sypztep.plateau.client.impl.ui.core.SoundConfig;
 import com.sypztep.plateau.client.impl.ui.core.UIColors;
 import com.sypztep.plateau.client.impl.ui.core.UIComponent;
 import com.sypztep.plateau.client.impl.ui.theme.UITheme;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.ClickEvent;
@@ -13,6 +13,7 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +68,7 @@ public class UIText extends UIComponent {
     }
 
     @Override
-    protected void renderComponent(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    protected void renderComponent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         if (dirty) rebuildLines();
 
         hoveredStyle = getStyleAt(mouseX, mouseY);
@@ -106,9 +107,9 @@ public class UIText extends UIComponent {
         for (FormattedCharSequence line : wrappedLines) {
             if (centered) {
                 int lineW = font.width(line);
-                graphics.drawString(font, line, x + (width - lineW) / 2, ty, color, shadow);
+                graphics.text(font, line, x + (width - lineW) / 2, ty, color, shadow);
             } else {
-                graphics.drawString(font, line, x, ty, color, shadow);
+                graphics.text(font, line, x, ty, color, shadow);
             }
 
             if (hasInteraction(hoveredStyle)) {
@@ -123,7 +124,7 @@ public class UIText extends UIComponent {
         }
     }
 
-    private void renderLineHighlight(GuiGraphics graphics, FormattedCharSequence line, int lineY, int mouseX, int mouseY) {
+    private void renderLineHighlight(GuiGraphicsExtractor graphics, FormattedCharSequence line, int lineY, int mouseX, int mouseY) {
         if (hoveredStyle == null) return;
 
         int[] charX = {centered ? x + (width - font.width(line)) / 2 : x};
@@ -142,7 +143,7 @@ public class UIText extends UIComponent {
         });
     }
 
-    private void renderTooltip(GuiGraphics graphics, Style style, int mouseX, int mouseY) {
+    private void renderTooltip(GuiGraphicsExtractor graphics, Style style, int mouseX, int mouseY) {
         HoverEvent hoverEvent = style.getHoverEvent();
         if (hoverEvent == null) return;
 
@@ -181,7 +182,7 @@ public class UIText extends UIComponent {
 
             int ly = ty;
             for (FormattedCharSequence tl : tooltipLines) {
-                graphics.drawString(font, tl, tx, ly, 0xFFFFFFFF, true);
+                graphics.text(font, tl, tx, ly, 0xFFFFFFFF, true);
                 ly += lineH;
             }
         }
@@ -219,7 +220,7 @@ public class UIText extends UIComponent {
     }
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean bl) {
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
         if (!isMouseOver(event.x(), event.y())) return false;
 
         Style style = getStyleAt((int) event.x(), (int) event.y());

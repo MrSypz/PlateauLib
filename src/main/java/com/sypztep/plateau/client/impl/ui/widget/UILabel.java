@@ -2,7 +2,7 @@ package com.sypztep.plateau.client.impl.ui.widget;
 
 import com.sypztep.plateau.client.impl.ui.core.UIComponent;
 import com.sypztep.plateau.client.impl.ui.theme.UITheme;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 public class UILabel extends UIComponent {
@@ -31,11 +31,11 @@ public class UILabel extends UIComponent {
     }
 
     @Override
-    protected void renderComponent(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    protected void renderComponent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         if (centered) {
-            graphics.drawCenteredString(font, text, x + width / 2, y, color);
+            graphics.centeredText(font, text, x + width / 2, y, color);
         } else {
-            graphics.drawString(font, text, x, y, color, shadow);
+            graphics.text(font, text, x, y, color, shadow);
         }
     }
 

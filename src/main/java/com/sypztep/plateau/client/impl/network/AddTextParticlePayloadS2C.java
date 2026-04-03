@@ -21,7 +21,14 @@ public record AddTextParticlePayloadS2C(int entityId, Component text, int color,
 
     public static final Type<AddTextParticlePayloadS2C> ID = new Type<>(Plateau.id("add_text_particle"));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, AddTextParticlePayloadS2C> CODEC = StreamCodec.composite(ByteBufCodecs.VAR_INT, AddTextParticlePayloadS2C::entityId, ComponentSerialization.STREAM_CODEC, AddTextParticlePayloadS2C::text, ByteBufCodecs.INT, AddTextParticlePayloadS2C::color, ByteBufCodecs.FLOAT, AddTextParticlePayloadS2C::maxSize, ByteBufCodecs.FLOAT, AddTextParticlePayloadS2C::yPos, AddTextParticlePayloadS2C::new);
+    public static final StreamCodec<RegistryFriendlyByteBuf, AddTextParticlePayloadS2C> CODEC = StreamCodec.composite(
+                    ByteBufCodecs.VAR_INT, AddTextParticlePayloadS2C::entityId,
+                    ComponentSerialization.STREAM_CODEC, AddTextParticlePayloadS2C::text,
+                    ByteBufCodecs.INT, AddTextParticlePayloadS2C::color,
+                    ByteBufCodecs.FLOAT, AddTextParticlePayloadS2C::maxSize,
+                    ByteBufCodecs.FLOAT, AddTextParticlePayloadS2C::yPos,
+                    AddTextParticlePayloadS2C::new
+            );
 
     @Override
     public Type<? extends CustomPacketPayload> type() {

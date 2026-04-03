@@ -32,10 +32,10 @@ public record AddParticlePayloadS2C(ParticleOptions particleOptions, Vec3 pos, V
     @Override
     public Type<? extends CustomPacketPayload> type() {
         return ID;
-    }public static void send(ServerPlayer receiver, ParticleOptions particle, Vec3 pos, Vec3 velocity, byte config) {
+    }
+    public static void send(ServerPlayer receiver, ParticleOptions particle, Vec3 pos, Vec3 velocity, byte config) {
         ServerPlayNetworking.send(receiver, new AddParticlePayloadS2C(particle, pos, velocity, config));
     }
-
 
     public static class Receiver implements ClientPlayNetworking.PlayPayloadHandler<AddParticlePayloadS2C> {
         @Override

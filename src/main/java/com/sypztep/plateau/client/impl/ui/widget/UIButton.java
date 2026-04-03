@@ -2,7 +2,7 @@ package com.sypztep.plateau.client.impl.ui.widget;
 
 import com.sypztep.plateau.client.impl.ui.core.*;
 import com.sypztep.plateau.client.impl.ui.theme.UITheme;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.KeyEvent;
@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.function.Consumer;
@@ -50,7 +51,7 @@ public class UIButton extends UIComponent {
     }
 
     @Override
-    protected void renderComponent(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    protected void renderComponent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         boolean hovered = isMouseOver(mouseX, mouseY) && enabled;
         setHoveredCache(hovered);
 
@@ -131,7 +132,7 @@ public class UIButton extends UIComponent {
         }
     }
 
-    private void drawContent(GuiGraphics graphics, int textColor) {
+    private void drawContent(GuiGraphicsExtractor graphics, int textColor) {
         int textW = font.width(label);
         int textX;
         int textY = y + (height - font.lineHeight) / 2;
@@ -149,7 +150,7 @@ public class UIButton extends UIComponent {
         }
 
         textY += (int)(pressAnimation * 1.5f);
-        graphics.drawString(font, label, textX, textY, textColor, true);
+        graphics.text(font, label, textX, textY, textColor, true);
     }
 
     private int calculateBackground(UITheme theme) {
@@ -165,7 +166,7 @@ public class UIButton extends UIComponent {
     }
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean bl) {
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
         if (isMouseOver(event.x(), event.y()) && event.button() == GLFW.GLFW_MOUSE_BUTTON_1 && enabled) {
             activate();
             return true;
@@ -174,7 +175,7 @@ public class UIButton extends UIComponent {
     }
 
     @Override
-    public boolean keyPressed(KeyEvent keyEvent) {
+    public boolean keyPressed(@NonNull KeyEvent keyEvent) {
         if (!enabled || !focused) return false;
         if (keyEvent.key() == 257 || keyEvent.key() == 32) {
             activate();
@@ -190,7 +191,7 @@ public class UIButton extends UIComponent {
     }
 
     @Override
-    public boolean mouseReleased(MouseButtonEvent event) {
+    public boolean mouseReleased(@NonNull MouseButtonEvent event) {
         if (event.button() == 0) pressed = false;
         return false;
     }

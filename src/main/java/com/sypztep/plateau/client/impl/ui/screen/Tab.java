@@ -3,7 +3,7 @@ package com.sypztep.plateau.client.impl.ui.screen;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
@@ -86,7 +86,7 @@ public abstract class Tab {
         active = false;
     }
 
-    public void renderOverlay(GuiGraphics graphics, int mouseX, int mouseY, float delta) {}
+    public void renderOverlay(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {}
 
     public String getId() { return id; }
     public Component getLabel() { return label; }

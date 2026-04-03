@@ -1,7 +1,7 @@
 package com.sypztep.plateau.client.impl.ui.widget;
 
 import com.sypztep.plateau.client.impl.ui.behavior.ScrollBehavior;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * <pre>
  * UIScrollPanel panel = new UIScrollPanel(10, 40, 200, 150, Component.literal("My List")) {
  *     {@literal @}Override
- *     protected void renderScrollContent(GuiGraphics graphics, int mouseX, int mouseY, float delta,
+ *     protected void renderScrollContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta,
  *                                        int contentX, int contentY, int contentWidth) {
  *         for (int i = 0; i {@literal <} items.size(); i++) {
  *             int itemY = contentY + i * 20 - getScrollOffset();
@@ -42,7 +42,7 @@ public abstract class UIScrollPanel extends UIPanel {
     }
 
     @Override
-    protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    protected void renderContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         // Calculate scroll area below header
         int scrollAreaY = getContentY();
         int scrollAreaH = y + height - scrollAreaY;
@@ -63,7 +63,7 @@ public abstract class UIScrollPanel extends UIPanel {
         renderFocusRing(graphics);
     }
 
-    protected abstract void renderScrollContent(GuiGraphics graphics, int mouseX, int mouseY, float delta,
+    protected abstract void renderScrollContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta,
                                                 int contentX, int contentY, int contentWidth);
 
     protected void setTotalContentHeight(int height) {

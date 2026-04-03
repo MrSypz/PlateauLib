@@ -38,9 +38,7 @@ public record AddEmitterParticlePayloadS2C(int entityId, ParticleType<?> particl
         @Override
         public void receive(AddEmitterParticlePayloadS2C payload, ClientPlayNetworking.Context context) {
             Entity entity = context.player().level().getEntity(payload.entityId());
-            if (entity != null) {
-                context.client().particleEngine.createTrackingEmitter(entity, (ParticleOptions) payload.particleType());
-            }
+            if (entity != null) context.client().particleEngine.createTrackingEmitter(entity, (ParticleOptions) payload.particleType());
         }
     }
 }

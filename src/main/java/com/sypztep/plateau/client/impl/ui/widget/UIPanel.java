@@ -3,7 +3,7 @@ package com.sypztep.plateau.client.impl.ui.widget;
 import com.sypztep.plateau.client.impl.ui.core.RenderHelper;
 import com.sypztep.plateau.client.impl.ui.core.UIComponent;
 import com.sypztep.plateau.client.impl.ui.theme.UITheme;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +37,7 @@ public class UIPanel extends UIComponent {
     }
 
     @Override
-    protected void renderComponent(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    protected void renderComponent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         if (interactable) {
             hoverProgress = stepAnimation(hoverProgress, super.isMouseOver(mouseX, mouseY), 0.05f);
         }
@@ -51,7 +51,7 @@ public class UIPanel extends UIComponent {
         renderContents(graphics, mouseX, mouseY, delta);
     }
 
-    protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float delta) {}
+    protected void renderContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {}
 
     @Override
     public int getContentY() {

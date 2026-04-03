@@ -4,7 +4,7 @@ import com.sypztep.plateau.client.impl.ui.core.UIColors;
 import com.sypztep.plateau.client.impl.ui.core.UIComponent;
 import com.sypztep.plateau.client.impl.ui.core.UISounds;
 import com.sypztep.plateau.client.impl.ui.theme.UITheme;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.KeyEvent;
@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -110,7 +111,7 @@ public class UINavBar extends UIComponent {
     }
 
     @Override
-    protected void renderComponent(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    protected void renderComponent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         selectionAnimPos += (selectionTargetPos - selectionAnimPos) * 0.15f;
         selectionAnimSize += (selectionTargetSize - selectionAnimSize) * 0.15f;
 
@@ -160,7 +161,7 @@ public class UINavBar extends UIComponent {
         }
     }
 
-    private void renderHorizontal(GuiGraphics graphics, int mouseX, int mouseY, UITheme theme) {
+    private void renderHorizontal(GuiGraphicsExtractor graphics, int mouseX, int mouseY, UITheme theme) {
         int ix = x + itemPadding;
         int ih = height - itemPadding * 2;
 
@@ -179,7 +180,7 @@ public class UINavBar extends UIComponent {
         }
     }
 
-    private void renderVertical(GuiGraphics graphics, int mouseX, int mouseY, UITheme theme) {
+    private void renderVertical(GuiGraphicsExtractor graphics, int mouseX, int mouseY, UITheme theme) {
         int iy = y + itemPadding;
         int iw = width - itemPadding * 2;
 
@@ -198,7 +199,7 @@ public class UINavBar extends UIComponent {
         }
     }
 
-    private void renderItem(GuiGraphics graphics, NavItem item, int ix, int iy, int iw, int ih,
+    private void renderItem(GuiGraphicsExtractor graphics, NavItem item, int ix, int iy, int iw, int ih,
                             boolean selected, float hover, UITheme theme) {
         int baseColor = selected ? 0xFFFFFFFF : theme.textSecondary();
         int hoverTarget = selected ? 0xFFFFFFFF : 0xFFE0E0E0;
@@ -222,11 +223,11 @@ public class UINavBar extends UIComponent {
             textX += iconSize + 5;
         }
 
-        graphics.drawString(font, item.label, textX, textY, textColor, true);
+        graphics.text(font, item.label, textX, textY, textColor, true);
         graphics.pose().popMatrix();
     }
 
-    private void renderItemVertical(GuiGraphics graphics, NavItem item, int ix, int iy, int iw, int ih,
+    private void renderItemVertical(GuiGraphicsExtractor graphics, NavItem item, int ix, int iy, int iw, int ih,
                                     boolean selected, float hover, UITheme theme) {
         int baseColor = selected ? 0xFFFFFFFF : theme.textSecondary();
         int hoverTarget = selected ? 0xFFFFFFFF : 0xFFE0E0E0;
@@ -253,7 +254,7 @@ public class UINavBar extends UIComponent {
             curX += iconSize + 5;
         }
 
-        graphics.drawString(font, item.label, curX, textY, textColor, true);
+        graphics.text(font, item.label, curX, textY, textColor, true);
         graphics.pose().popMatrix();
     }
 
@@ -262,7 +263,7 @@ public class UINavBar extends UIComponent {
     // ═══════════════════════════════════════════
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean bl) {
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
         if (event.button() != 0) return false;
         double mx = event.x(), my = event.y();
 
@@ -302,7 +303,7 @@ public class UINavBar extends UIComponent {
     }
 
     @Override
-    public boolean keyPressed(KeyEvent keyEvent) {
+    public boolean keyPressed(@NonNull KeyEvent keyEvent) {
         if (!focused) return false;
 
         int key = keyEvent.key();

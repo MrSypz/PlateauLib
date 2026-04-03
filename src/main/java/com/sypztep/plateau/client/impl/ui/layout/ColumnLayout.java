@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Positions a list of components in a vertical column.
  * Call {@link #apply()} after adding all components to set their positions.
- *
+ * <p>
  * Not a container — doesn't own or render the components.
  * Just computes and sets x/y on each one.
  */

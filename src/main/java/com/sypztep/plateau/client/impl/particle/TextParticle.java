@@ -10,7 +10,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleRenderType;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
@@ -76,7 +76,11 @@ public final class TextParticle extends Particle {
         super.tick();
     }
 
-    public void extract(MultiBufferSource.BufferSource bufferSource, PoseStack poseStack, Font font, Camera camera, float partialTick) {
+    public void submit(OrderedSubmitNodeCollector submitNodeCollector, PoseStack poseStack, Font font, Camera camera, float partialTick) {
+        if (this.alpha <= 0.0f || this.text.isEmpty()) {
+            return;
+        }
+
         Vec3 cameraPos = camera.position();
 
         float x = (float) (this.xo + (this.x - this.xo) * partialTick - cameraPos.x());
@@ -90,17 +94,23 @@ public final class TextParticle extends Particle {
         poseStack.scale(scale, scale, scale);
 
         int alphaInt = Math.max(1, (int) (alpha * 255));
-        int finalColor = (alphaInt << 24) | currentColor;
-
-        font.drawInBatch8xOutline(
-                Component.literal(text).getVisualOrderText(),
+        int finalColor = ARGB.color(
+                 alphaInt,
+                 ARGB.red(currentColor),
+                 ARGB.green(currentColor),
+                 ARGB.blue(currentColor)
+                );
+        submitNodeCollector.submitText(
+                poseStack,
                 -font.width(text) / 2f,
                 0,
+                Component.literal(text).getVisualOrderText(),
+                false,
+                Font.DisplayMode.NORMAL,
+                0xF000F0,
                 finalColor,
-                0xFF000000,
-                poseStack.last().pose(),
-                bufferSource,
-                0xF000F0
+                0,
+                0xFF000000
         );
 
         poseStack.popPose();

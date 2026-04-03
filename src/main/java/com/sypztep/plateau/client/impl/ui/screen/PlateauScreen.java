@@ -3,7 +3,7 @@ package com.sypztep.plateau.client.impl.ui.screen;
 import com.sypztep.plateau.client.impl.ui.theme.UITheme;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
@@ -55,15 +55,14 @@ public abstract class PlateauScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         int bg = UITheme.current().screenBackground();
         graphics.fillGradient(0, 0, width, height, bg, bg);
 
-        super.render(graphics, mouseX, mouseY, delta);
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
 
         if (tabManager != null) {
             tabManager.renderOverlay(graphics, mouseX, mouseY, delta);
         }
     }
-
 }

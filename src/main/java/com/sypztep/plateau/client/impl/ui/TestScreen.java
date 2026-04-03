@@ -8,7 +8,7 @@ import com.sypztep.plateau.client.impl.ui.screen.TabContext;
 import com.sypztep.plateau.client.impl.ui.screen.TabManager;
 import com.sypztep.plateau.client.impl.ui.theme.UITheme;
 import com.sypztep.plateau.client.impl.ui.widget.*;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 public class TestScreen extends PlateauScreen {
@@ -80,13 +80,13 @@ public class TestScreen extends PlateauScreen {
 
             UIScrollPanel leftPanel = new UIScrollPanel(0, 0, 0, 0, Component.literal("Left (40%)")) {
                 @Override
-                protected void renderScrollContent(GuiGraphics g, int mx, int my, float d,
+                protected void renderScrollContent(GuiGraphicsExtractor g, int mx, int my, float d,
                                                    int cx, int cy, int cw) {
                     UITheme theme = UITheme.current();
                     for (int i = 0; i < 20; i++) {
                         int itemY = cy + i * 22 - getScrollOffset();
                         int color = (i % 2 == 0) ? theme.textPrimary() : theme.textSecondary();
-                        g.drawString(font, "Item " + (i + 1), cx + 4, itemY + 4, color, false);
+                        g.text(font, "Item " + (i + 1), cx + 4, itemY + 4, color, false);
                     }
                     setTotalContentHeight(20 * 22);
                 }
@@ -94,14 +94,14 @@ public class TestScreen extends PlateauScreen {
 
             UIScrollPanel rightPanel = new UIScrollPanel(0, 0, 0, 0, Component.literal("Right (60%)")) {
                 @Override
-                protected void renderScrollContent(GuiGraphics g, int mx, int my, float d,
+                protected void renderScrollContent(GuiGraphicsExtractor g, int mx, int my, float d,
                                                    int cx, int cy, int cw) {
                     UITheme theme = UITheme.current();
-                    g.drawString(font, "Arrow keys scroll when focused", cx + 4, cy + 4 - getScrollOffset(),
+                    g.text(font, "Arrow keys scroll when focused", cx + 4, cy + 4 - getScrollOffset(),
                             theme.textAccent(), false);
-                    g.drawString(font, "Page Up/Down for fast scroll", cx + 4, cy + 20 - getScrollOffset(),
+                    g.text(font, "Page Up/Down for fast scroll", cx + 4, cy + 20 - getScrollOffset(),
                             theme.textSecondary(), false);
-                    g.drawString(font, "Home/End to jump", cx + 4, cy + 36 - getScrollOffset(),
+                    g.text(font, "Home/End to jump", cx + 4, cy + 36 - getScrollOffset(),
                             theme.textSecondary(), false);
 
                     for (int i = 0; i < 30; i++) {
@@ -137,7 +137,7 @@ public class TestScreen extends PlateauScreen {
             UIScrollPanel scrollPanel = new UIScrollPanel(panelX, y, panelW, panelH,
                     Component.literal("Keyboard Scrollable")) {
                 @Override
-                protected void renderScrollContent(GuiGraphics g, int mx, int my, float d,
+                protected void renderScrollContent(GuiGraphicsExtractor g, int mx, int my, float d,
                                                    int cx, int cy, int cw) {
                     UITheme theme = UITheme.current();
                     for (int i = 0; i < 50; i++) {
@@ -150,7 +150,7 @@ public class TestScreen extends PlateauScreen {
                         }
 
                         int color = hovered ? theme.textAccent() : theme.textPrimary();
-                        g.drawString(font, "Row " + (i + 1) + " — focus me with Tab, scroll with arrows",
+                        g.text(font, "Row " + (i + 1) + " — focus me with Tab, scroll with arrows",
                                 cx + 6, itemY + 4, color, false);
                     }
                     setTotalContentHeight(50 * 20);

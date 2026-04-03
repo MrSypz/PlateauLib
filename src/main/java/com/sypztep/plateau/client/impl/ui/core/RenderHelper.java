@@ -4,7 +4,7 @@ import com.sypztep.plateau.client.impl.ui.theme.UITheme;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 @Environment(EnvType.CLIENT)
@@ -15,7 +15,7 @@ public final class RenderHelper {
      * Draws a 1px border (top, bottom, left, right).
      * Replaces the 4x graphics.fill() pattern used everywhere.
      */
-    public static void drawBorder(GuiGraphics graphics, int x, int y, int w, int h, int color) {
+    public static void drawBorder(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int color) {
         graphics.fill(x, y, x + w, y + 1, color);
         graphics.fill(x, y + h - 1, x + w, y + h, color);
         graphics.fill(x, y, x + 1, y + h, color);
@@ -25,7 +25,7 @@ public final class RenderHelper {
     /**
      * Background fill + border in one call.
      */
-    public static void drawPanel(GuiGraphics graphics, int x, int y, int w, int h,
+    public static void drawPanel(GuiGraphicsExtractor graphics, int x, int y, int w, int h,
                                   int bgColor, int borderColor) {
         graphics.fill(x, y, x + w, y + h, bgColor);
         drawBorder(graphics, x, y, w, h, borderColor);
@@ -35,7 +35,7 @@ public final class RenderHelper {
      * Background + border with hover animation using current theme colors.
      * The most repeated pattern in the entire codebase.
      */
-    public static void drawPanelWithHover(GuiGraphics graphics, int x, int y, int w, int h,
+    public static void drawPanelWithHover(GuiGraphicsExtractor graphics, int x, int y, int w, int h,
                                            float hoverProgress, boolean drawBorder) {
         UITheme theme = UITheme.current();
         int bg = UIColors.interpolate(theme.panelBg(), theme.panelBgHover(), hoverProgress);
@@ -50,7 +50,7 @@ public final class RenderHelper {
      * Header bar inside a panel. Returns the header height.
      * Eliminates duplicated header rendering in UIPanel and UIScrollPanel.
      */
-    public static int drawHeader(GuiGraphics graphics, Font font, Component title,
+    public static int drawHeader(GuiGraphicsExtractor graphics, Font font, Component title,
                                   int x, int y, int width, int padding, float hoverProgress) {
         UITheme theme = UITheme.current();
         int headerH = font.lineHeight + padding * 2;
@@ -59,14 +59,14 @@ public final class RenderHelper {
         graphics.fill(x + 1, y + 1, x + width - 1, y + headerH, headerBg);
 
         int titleColor = UIColors.interpolate(theme.textAccent(), theme.textPrimary(), hoverProgress * 0.3f);
-        graphics.drawCenteredString(font, title, x + width / 2, y + padding, titleColor);
+        graphics.centeredText(font, title, x + width / 2, y + padding, titleColor);
         return headerH;
     }
 
     /**
      * Progress/HP bar with highlight effect.
      */
-    public static void drawProgressBar(GuiGraphics graphics, int x, int y, int width, int height,
+    public static void drawProgressBar(GuiGraphicsExtractor graphics, int x, int y, int width, int height,
                                         float ratio, int fillColor, int bgColor) {
         graphics.fill(x, y, x + width, y + height, bgColor);
         int fillW = (int)(width * ratio);
