@@ -94,7 +94,7 @@ public class UIButton extends UIComponent {
         int gradientH = (int)(height * 0.15f);
         if (gradientH > 0) {
             graphics.fill(x, y, x + width, y + gradientH, UIColors.lighten(bgColor, 0.2f));
-            graphics.fill(x, y + height - gradientH, x + width, y + height, UIColors.darken(bgColor, 0.2f));
+            graphics.fill(x, y + height - gradientH, x + width, y + height, ARGB.scaleRGB(bgColor, 0.2f));
         }
 
         // Content

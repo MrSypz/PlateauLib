@@ -12,8 +12,4 @@ public final class UIColors {
         int b = Math.min(255, (int)(ARGB.blue(color) + (255 - ARGB.blue(color)) * factor));
         return ARGB.color(a, r, g, b);
     }
-    // still little warper
-    public static int darken(int color, float factor) {
-        return ARGB.scaleRGB(color, 1f - factor);
-    }
 }
