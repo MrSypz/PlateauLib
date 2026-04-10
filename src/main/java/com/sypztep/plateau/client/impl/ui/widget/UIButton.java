@@ -86,15 +86,14 @@ public class UIButton extends UIComponent {
         if (roundedCorners && cornerRadius > 0) {
             graphics.fill(x + cornerRadius, y, x + width - cornerRadius, y + height, bgColor);
             graphics.fill(x, y + cornerRadius, x + width, y + height - cornerRadius, bgColor);
-        } else {
-            graphics.fill(x, y, x + width, y + height, bgColor);
-        }
+        } else RenderHelper.rectangle(graphics, x, y, width, height, bgColor);
+
 
         // Gradient
         int gradientH = (int)(height * 0.15f);
         if (gradientH > 0) {
-            graphics.fill(x, y, x + width, y + gradientH, UIColors.lighten(bgColor, 0.2f));
-            graphics.fill(x, y + height - gradientH, x + width, y + height, ARGB.scaleRGB(bgColor, 0.2f));
+            RenderHelper.rectangle(graphics, x, y, width, gradientH, UIColors.lighten(bgColor, 0.2f));
+            RenderHelper.rectangle(graphics, x, y + height - gradientH, width, gradientH, ARGB.scaleRGB(bgColor, 0.2f));
         }
 
         // Content
