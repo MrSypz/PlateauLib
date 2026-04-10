@@ -1,14 +1,12 @@
 package com.sypztep.plateau.common.api;
 
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public final class PlateauDamageTypes {
     private PlateauDamageTypes() {
@@ -23,29 +21,18 @@ public final class PlateauDamageTypes {
         return createKey(Identifier.fromNamespaceAndPath(namespace, path));
     }
 
-    public static DamageSource source(Level level, ResourceKey<DamageType> key, @Nullable Entity source, @Nullable Entity attacker) {
-        Holder.Reference<DamageType> holder = level.registryAccess()
-                .lookupOrThrow(Registries.DAMAGE_TYPE)
-                .getOrThrow(key);
-        return new DamageSource(holder, source, attacker);
+    public static void hurt(Entity entity, ResourceKey<DamageType> key, float amount) {
+        if (entity.level() instanceof ServerLevel serverLevel)
+            entity.hurtServer(serverLevel, entity.damageSources().source(key), amount);
     }
 
-    public static DamageSource source(Level level, ResourceKey<DamageType> key, @Nullable Entity attacker) {
-        Holder.Reference<DamageType> holder = level.registryAccess()
-                .lookupOrThrow(Registries.DAMAGE_TYPE)
-                .getOrThrow(key);
-        return new DamageSource(holder, attacker);
+    public static void hurt(Entity entity, ResourceKey<DamageType> key, float amount, @Nullable Entity attacker) {
+        if (entity.level() instanceof ServerLevel serverLevel)
+            entity.hurtServer(serverLevel, entity.damageSources().source(key, attacker), amount);
     }
 
-    public static DamageSource source(Level level, ResourceKey<DamageType> key) {
-        Holder.Reference<DamageType> holder = level.registryAccess()
-                .lookupOrThrow(Registries.DAMAGE_TYPE)
-                .getOrThrow(key);
-        return new DamageSource(holder);
-    }
-    public static Holder.Reference<DamageType> getHolder(Level level, ResourceKey<DamageType> key) {
-        return level.registryAccess()
-                .lookupOrThrow(Registries.DAMAGE_TYPE)
-                .getOrThrow(key);
+    public static void hurt(Entity entity, ResourceKey<DamageType> key, float amount, @Nullable Entity direct, @Nullable Entity attacker) {
+        if (entity.level() instanceof ServerLevel serverLevel)
+            entity.hurtServer(serverLevel, entity.damageSources().source(key, direct, attacker), amount);
     }
 }
