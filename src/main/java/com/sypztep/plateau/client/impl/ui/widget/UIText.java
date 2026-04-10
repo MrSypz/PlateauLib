@@ -1,7 +1,6 @@
 package com.sypztep.plateau.client.impl.ui.widget;
 
 import com.sypztep.plateau.client.impl.ui.core.SoundConfig;
-import com.sypztep.plateau.client.impl.ui.core.UIColors;
 import com.sypztep.plateau.client.impl.ui.core.UIComponent;
 import com.sypztep.plateau.client.impl.ui.theme.UITheme;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -11,6 +10,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
@@ -129,12 +129,11 @@ public class UIText extends UIComponent {
 
         int[] charX = {centered ? x + (width - font.width(line)) / 2 : x};
 
-        line.accept((index, style, codepoint) -> {
+        line.accept((_, style, codepoint) -> {
             int charW = font.width(Character.toString(codepoint));
 
             if (isSameInteraction(style, hoveredStyle)) {
-                int alpha = (int)(200 * linkHoverAnimation);
-                int underlineColor = UIColors.withAlpha(0xFFFFFF, alpha);
+                int underlineColor = ARGB.white((int)(200 * linkHoverAnimation));
                 graphics.fill(charX[0], lineY + font.lineHeight, charX[0] + charW, lineY + font.lineHeight + 1, underlineColor);
             }
 

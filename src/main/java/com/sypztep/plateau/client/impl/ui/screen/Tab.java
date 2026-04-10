@@ -9,14 +9,14 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public abstract class Tab {
-    protected final String id;
+    protected final Identifier id;
     protected final Component label;
     @Nullable protected final Identifier icon;
 
@@ -27,14 +27,14 @@ public abstract class Tab {
     protected Minecraft minecraft;
     protected boolean active = false;
 
-    public Tab(String id, Component label, @Nullable Identifier icon) {
+    public Tab(Identifier id, Component label, @Nullable Identifier icon) {
         this.id = id;
         this.label = label;
         this.icon = icon;
         this.minecraft = Minecraft.getInstance();
     }
 
-    public Tab(String id, Component label) {
+    public Tab(Identifier id, Component label) {
         this(id, label, null);
     }
 
@@ -88,7 +88,7 @@ public abstract class Tab {
 
     public void renderOverlay(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {}
 
-    public String getId() { return id; }
+    public Identifier getId() { return id; }
     public Component getLabel() { return label; }
     @Nullable public Identifier getIcon() { return icon; }
     public boolean isActive() { return active; }

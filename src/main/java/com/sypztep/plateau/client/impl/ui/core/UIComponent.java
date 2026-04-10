@@ -19,6 +19,7 @@ import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ARGB;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
@@ -114,8 +115,7 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
      */
     protected void renderFocusRing(GuiGraphicsExtractor graphics) {
         if (focusProgress > 0.01f) {
-            int alpha = (int)(255 * focusProgress);
-            int color = UIColors.withAlpha(UITheme.current().textAccent(), alpha);
+            int color = ARGB.color(focusProgress, UITheme.current().textAccent());
             RenderHelper.drawBorder(graphics, x - 1, y - 1, width + 2, height + 2, color);
         }
     }

@@ -6,7 +6,8 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,7 +104,7 @@ public class UIColumn extends UIComponent implements ContainerEventHandler {
     // ═══════════════════════════════════════════
 
     @Override
-    public List<? extends GuiEventListener> children() {
+    public @NonNull List<? extends GuiEventListener> children() {
         return children;
     }
 
@@ -129,7 +130,7 @@ public class UIColumn extends UIComponent implements ContainerEventHandler {
     public void setDragging(boolean dragging) { this.isDragging = dragging; }
 
     @Override
-    public @Nullable ComponentPath nextFocusPath(FocusNavigationEvent event) {
+    public @Nullable ComponentPath nextFocusPath(@NonNull FocusNavigationEvent event) {
         return ContainerEventHandler.super.nextFocusPath(event);
     }
 

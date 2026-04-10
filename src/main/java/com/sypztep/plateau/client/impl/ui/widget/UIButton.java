@@ -10,6 +10,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
@@ -101,8 +102,7 @@ public class UIButton extends UIComponent {
 
         // Glow
         if (hoverAnimation > 0.3f && enabled && glowIntensity > 0) {
-            int glowAlpha = (int)(40 * hoverAnimation * glowIntensity);
-            int glow = UIColors.withAlpha(0xFFFFFF, glowAlpha);
+            int glow = ARGB.white((int)(40 * hoverAnimation * glowIntensity));
             RenderHelper.drawBorder(graphics, x - 1, y - 1, width + 2, height + 2, glow);
         }
 
@@ -155,14 +155,14 @@ public class UIButton extends UIComponent {
 
     private int calculateBackground(UITheme theme) {
         if (!enabled) return theme.buttonBgDisabled();
-        return UIColors.interpolate(
-                UIColors.interpolate(theme.buttonBg(), theme.buttonBgHover(), hoverAnimation),
-                theme.buttonBgPressed(), pressAnimation);
+        return ARGB.srgbLerp(pressAnimation,
+                ARGB.srgbLerp(hoverAnimation, theme.buttonBg(), theme.buttonBgHover()),
+                theme.buttonBgPressed());
     }
 
     private int calculateTextColor(UITheme theme) {
         if (!enabled) return theme.textDisabled();
-        return UIColors.interpolate(theme.buttonText(), theme.buttonTextHover(), hoverAnimation);
+        return ARGB.srgbLerp(hoverAnimation, theme.buttonText(), theme.buttonTextHover());
     }
 
     @Override

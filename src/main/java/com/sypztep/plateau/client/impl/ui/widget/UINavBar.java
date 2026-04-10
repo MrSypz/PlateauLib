@@ -1,6 +1,5 @@
 package com.sypztep.plateau.client.impl.ui.widget;
 
-import com.sypztep.plateau.client.impl.ui.core.UIColors;
 import com.sypztep.plateau.client.impl.ui.core.UIComponent;
 import com.sypztep.plateau.client.impl.ui.core.UISounds;
 import com.sypztep.plateau.client.impl.ui.theme.UITheme;
@@ -12,6 +11,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
@@ -46,16 +46,16 @@ public class UINavBar extends UIComponent {
         super(x, y, width, height);
     }
 
-    public UINavBar addItem(String id, Component label, @Nullable Identifier icon, Consumer<String> onSelect) {
+    public UINavBar addItem(Identifier id, Component label, @Nullable Identifier icon, Consumer<Identifier> onSelect) {
         items.add(new NavItem(id, label, icon, onSelect));
         return this;
     }
 
-    public UINavBar addItem(String id, Component label, Consumer<String> onSelect) {
+    public UINavBar addItem(Identifier id, Component label, Consumer<Identifier> onSelect) {
         return addItem(id, label, null, onSelect);
     }
 
-    public void setActive(String id) {
+    public void setActive(Identifier id) {
         for (int i = 0; i < items.size(); i++) {
             if (items.get(i).id.equals(id)) {
                 selectedIndex = i;
@@ -65,7 +65,7 @@ public class UINavBar extends UIComponent {
         }
     }
 
-    public String getActiveId() {
+    public Identifier getActiveId() {
         if (selectedIndex >= 0 && selectedIndex < items.size()) {
             return items.get(selectedIndex).id;
         }
@@ -203,7 +203,7 @@ public class UINavBar extends UIComponent {
                             boolean selected, float hover, UITheme theme) {
         int baseColor = selected ? 0xFFFFFFFF : theme.textSecondary();
         int hoverTarget = selected ? 0xFFFFFFFF : 0xFFE0E0E0;
-        int textColor = UIColors.interpolate(baseColor, hoverTarget, hover);
+        int textColor = ARGB.srgbLerp(hover, baseColor, hoverTarget );
 
         int textY = iy + (ih - font.lineHeight) / 2;
         int textX = ix;
@@ -231,7 +231,7 @@ public class UINavBar extends UIComponent {
                                     boolean selected, float hover, UITheme theme) {
         int baseColor = selected ? 0xFFFFFFFF : theme.textSecondary();
         int hoverTarget = selected ? 0xFFFFFFFF : 0xFFE0E0E0;
-        int textColor = UIColors.interpolate(baseColor, hoverTarget, hover);
+        int textColor = ARGB.srgbLerp(hover, baseColor, hoverTarget);
 
         int textY = iy + (ih - font.lineHeight) / 2;
         int iconSize = 16;
@@ -396,5 +396,5 @@ public class UINavBar extends UIComponent {
     public UINavBar setItemPadding(int padding) { this.itemPadding = padding; return this; }
     public UINavBar setItemSpacing(int spacing) { this.itemSpacing = spacing; return this; }
 
-    private record NavItem(String id, Component label, @Nullable Identifier icon, Consumer<String> onSelect) {}
+    private record NavItem(Identifier id, Component label, @Nullable Identifier icon, Consumer<Identifier> onSelect) {}
 }

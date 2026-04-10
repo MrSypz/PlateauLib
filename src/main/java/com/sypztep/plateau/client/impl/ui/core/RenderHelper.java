@@ -6,6 +6,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ARGB;
 
 @Environment(EnvType.CLIENT)
 public final class RenderHelper {
@@ -38,10 +39,10 @@ public final class RenderHelper {
     public static void drawPanelWithHover(GuiGraphicsExtractor graphics, int x, int y, int w, int h,
                                            float hoverProgress, boolean drawBorder) {
         UITheme theme = UITheme.current();
-        int bg = UIColors.interpolate(theme.panelBg(), theme.panelBgHover(), hoverProgress);
+        int bg = ARGB.srgbLerp(hoverProgress,theme.panelBg(), theme.panelBgHover());
         graphics.fill(x, y, x + w, y + h, bg);
         if (drawBorder) {
-            int border = UIColors.interpolate(theme.panelBorder(), theme.panelBorderHover(), hoverProgress);
+            int border = ARGB.srgbLerp( hoverProgress, theme.panelBorder(), theme.panelBorderHover());
             RenderHelper.drawBorder(graphics, x, y, w, h, border);
         }
     }
@@ -54,11 +55,11 @@ public final class RenderHelper {
                                   int x, int y, int width, int padding, float hoverProgress) {
         UITheme theme = UITheme.current();
         int headerH = font.lineHeight + padding * 2;
-        int headerBg = UIColors.interpolate(theme.panelHeaderBg(),
-                UIColors.lighten(theme.panelHeaderBg(), 0.08f), hoverProgress);
+        int headerBg =  ARGB.srgbLerp(hoverProgress,theme.panelHeaderBg(),
+                UIColors.lighten(theme.panelHeaderBg(), 0.08f));
         graphics.fill(x + 1, y + 1, x + width - 1, y + headerH, headerBg);
 
-        int titleColor = UIColors.interpolate(theme.textAccent(), theme.textPrimary(), hoverProgress * 0.3f);
+        int titleColor = ARGB.srgbLerp(hoverProgress * 0.3f,theme.textAccent(), theme.textPrimary());
         graphics.centeredText(font, title, x + width / 2, y + padding, titleColor);
         return headerH;
     }
