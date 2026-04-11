@@ -48,6 +48,10 @@ allprojects {
     }
 }
 
+base {
+    archivesName = "PlateauLib"
+}
+
 loom {
     accessWidenerPath = file("src/main/resources/plateau.classtweaker")
 }

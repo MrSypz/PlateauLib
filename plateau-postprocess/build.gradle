@@ -4,7 +4,7 @@
 // Root's allprojects {} and subprojects {} handle all of that.
 
 base {
-    archivesName = "plateau-postprocess"
+    archivesName = "postprocess"
 }
 
 dependencies {

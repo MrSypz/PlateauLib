@@ -3,7 +3,7 @@
   "id": "plateau-postprocess",
   "version": "${version}",
 
-  "name": "plateau-postprocess",
+  "name": "PlateauLib (Post Process)",
   "description": "Some abstract for make postprocess shader for plateau",
   "authors": ["MrSypz"],
   "contact": {},
