@@ -15,8 +15,9 @@ repositories {
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    api "net.fabricmc:fabric-loader:${project.loader_version}"
+    api fabricApi.module("fabric-networking-api-v1", project.fabric_version)
+    api fabricApi.module("fabric-particles-v1", project.fabric_version)
 }
 
 processResources {
@@ -26,6 +27,7 @@ processResources {
         expand "version": inputs.properties.version
     }
 }
+
 tasks.withType(JavaCompile).configureEach {
     it.options.release = 25
 }

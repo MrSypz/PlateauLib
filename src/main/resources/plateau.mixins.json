@@ -8,8 +8,6 @@
     "PlayerMixin",
     "effect.LivingEntityMixin"
   ],
-  "client": [
-  ],
   "injectors": {
     "defaultRequire": 1
   },

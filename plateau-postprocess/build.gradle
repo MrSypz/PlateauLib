@@ -1,0 +1,10 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    api "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation fabricApi.module("fabric-rendering-v1", project.fabric_version)
+    implementation fabricApi.module("fabric-networking-api-v1", project.fabric_version)
+}
