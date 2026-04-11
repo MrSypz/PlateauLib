@@ -1,61 +1,91 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version "${loom_version}"
-    id 'maven-publish'
+    // Declared at root with apply false — submodules apply it themselves via allprojects
+    id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
 }
 
-version = project.mod_version
-group = project.maven_group
+// ── Shared config for ALL projects (root + submodules) ──────────────
+allprojects {
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+    apply plugin: 'net.fabricmc.fabric-loom'
 
-base {
-    archivesName = "plateau"
+    group   = 'com.sypztep'
+    version = project.mod_version
+
+    repositories {
+        // add shared repos here if needed
+    }
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${project.minecraft_version}"
+        api "net.fabricmc:fabric-loader:${project.loader_version}"
+        api fabricApi.module("fabric-api-base", project.fabric_version)
+    }
+
+    processResources {
+        inputs.property "version", project.version
+        filesMatching("fabric.mod.json") {
+            expand "version": inputs.properties.version
+        }
+    }
+
+    java {
+        withSourcesJar()
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        it.options.release = 21
+    }
+
+    jar {
+        inputs.property "projectName", project.name
+        from(rootProject.file("LICENSE")) {
+            rename { "${it}_${project.name}" }
+        }
+    }
 }
 
 loom {
-    accessWidenerPath = file("src/main/resources/plateau.accesswidener")
+    accessWidenerPath = file("src/main/resources/plateau.classtweaker")
 }
 
-repositories {
-}
+// ── Submodule-only config (root project excluded) ───────────────────
+subprojects {
+    version = rootProject.version
 
-dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    api "net.fabricmc:fabric-loader:${project.loader_version}"
-    api fabricApi.module("fabric-networking-api-v1", project.fabric_version)
-    api fabricApi.module("fabric-particles-v1", project.fabric_version)
-}
-
-processResources {
-    inputs.property "version", project.version
-
-    filesMatching("fabric.mod.json") {
-        expand "version": inputs.properties.version
+    // mavenJava defined HERE and only here — never inside submodule build.gradle
+    publishing {
+        publications {
+            create("mavenJava", MavenPublication) {
+                from components.java
+            }
+        }
+        repositories {
+            // e.g. maven { url = uri("../local-repo") }
+        }
     }
 }
 
-tasks.withType(JavaCompile).configureEach {
-    it.options.release = 25
-}
-
-java {
-    withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
-}
-
-jar {
-    inputs.property "projectName", project.name
-    from("LICENSE") {
-        rename { "${it}_${project.name}"}
-    }
-}
-
+// ── Root project's own publishing (separate from subprojects) ────────
 publishing {
     publications {
         create("mavenJava", MavenPublication) {
             from components.java
+
+            pom.withXml {
+                def depsNode = asNode().appendNode("dependencies")
+                subprojects.each {
+                    def dep = depsNode.appendNode("dependency")
+                    dep.appendNode("groupId",    it.group)
+                    dep.appendNode("artifactId", it.name)
+                    dep.appendNode("version",    it.version)
+                    dep.appendNode("scope",      "compile")
+                }
+            }
         }
     }
-
     repositories {
     }
 }

@@ -1,20 +1,15 @@
-plugins {
-    id 'net.fabricmc.fabric-loom' version "${loom_version}"
-}
+// ── plateau-postprocess submodule ────────────────────────────────────
+// DO NOT add a publishing {} block here.
+// DO NOT add java {}, processResources {}, or jar {} here.
+// Root's allprojects {} and subprojects {} handle all of that.
+
 base {
     archivesName = "plateau-postprocess"
 }
-dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    api "net.fabricmc:fabric-loader:${project.loader_version}"
-    implementation fabricApi.module("fabric-rendering-v1", project.fabric_version)
-    implementation fabricApi.module("fabric-networking-api-v1", project.fabric_version)
-}
 
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            from components.java
-        }
-    }
+dependencies {
+    api fabricApi.module("fabric-networking-api-v1", project.fabric_version)
+    api fabricApi.module("fabric-particles-v1", project.fabric_version)
+
+    // Depend on the root plateau module if needed:
 }
