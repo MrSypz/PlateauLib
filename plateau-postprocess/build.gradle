@@ -10,3 +10,11 @@ dependencies {
     implementation fabricApi.module("fabric-rendering-v1", project.fabric_version)
     implementation fabricApi.module("fabric-networking-api-v1", project.fabric_version)
 }
+
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            from components.java
+        }
+    }
+}
