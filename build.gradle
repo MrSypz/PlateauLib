@@ -51,6 +51,11 @@ loom {
     accessWidenerPath = file("src/main/resources/plateau.classtweaker")
 }
 
+dependencies {
+    api fabricApi.module("fabric-networking-api-v1", project.fabric_version)
+    api fabricApi.module("fabric-particles-v1", project.fabric_version)
+}
+
 // ── Submodule-only config (root project excluded) ───────────────────
 subprojects {
     version = rootProject.version
