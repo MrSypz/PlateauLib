@@ -1,7 +1,9 @@
 plugins {
     id 'net.fabricmc.fabric-loom' version "${loom_version}"
 }
-
+base {
+    archivesName = "plateau-postprocess"
+}
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     api "net.fabricmc:fabric-loader:${project.loader_version}"
