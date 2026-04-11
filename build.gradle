@@ -79,17 +79,6 @@ publishing {
     publications {
         create("mavenJava", MavenPublication) {
             from components.java
-
-            pom.withXml {
-                def depsNode = asNode().appendNode("dependencies")
-                subprojects.each {
-                    def dep = depsNode.appendNode("dependency")
-                    dep.appendNode("groupId",    it.group)
-                    dep.appendNode("artifactId", it.name)
-                    dep.appendNode("version",    it.version)
-                    dep.appendNode("scope",      "compile")
-                }
-            }
         }
     }
     repositories {
