@@ -1,4 +1,4 @@
-package com.sypztep.plateauPostprocess.client.v1.postprocess;
+package com.sypztep.plateau.client.v1.postprocess;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
@@ -8,8 +8,8 @@ import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.sypztep.plateauPostprocess.mixin.postprocess.PostChainAccessor;
-import com.sypztep.plateauPostprocess.mixin.postprocess.PostPassAccessor;
+import com.sypztep.plateau.mixin.postprocess.PostChainAccessor;
+import com.sypztep.plateau.mixin.postprocess.PostPassAccessor;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;

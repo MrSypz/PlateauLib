@@ -1,8 +1,8 @@
-package com.sypztep.plateau.client.impl.particle;
+package com.sypztep.plateau.client.v1.particle;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.sypztep.plateau.client.PlateauClient;
+import com.sypztep.plateau.client.PlateauParticlesClient;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Camera;
@@ -118,7 +118,7 @@ public final class TextParticle extends Particle {
 
     @Override
     public @NotNull ParticleRenderType getGroup() {
-        return PlateauClient.TEXT_PARTICLE;
+        return PlateauParticlesClient.TEXT_PARTICLE;
     }
 
     private float ease(float t) {

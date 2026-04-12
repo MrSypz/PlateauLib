@@ -1,4 +1,4 @@
-package com.sypztep.plateauPostprocess.mixin.postprocess;
+package com.sypztep.plateau.mixin.postprocess;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import net.minecraft.client.renderer.PostPass;

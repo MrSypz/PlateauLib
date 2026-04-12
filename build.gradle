@@ -5,12 +5,12 @@ plugins {
 
 // ── Shared config for ALL projects (root + submodules) ──────────────
 allprojects {
-    apply plugin: 'java-library'
     apply plugin: 'maven-publish'
     apply plugin: 'net.fabricmc.fabric-loom'
 
     group   = 'com.sypztep'
-    version = project.findProperty("version") ?: project.mod_version
+    def injected = project.findProperty("version")
+    version = (injected && injected != "unspecified") ? injected : project.mod_version
 
     repositories {
         // add shared repos here if needed
@@ -54,11 +54,6 @@ base {
 
 loom {
     accessWidenerPath = file("src/main/resources/plateau.classtweaker")
-}
-
-dependencies {
-    api fabricApi.module("fabric-networking-api-v1", project.fabric_version)
-    api fabricApi.module("fabric-particles-v1", project.fabric_version)
 }
 
 // ── Submodule-only config (root project excluded) ───────────────────

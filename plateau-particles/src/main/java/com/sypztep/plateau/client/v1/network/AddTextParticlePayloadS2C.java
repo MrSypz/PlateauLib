@@ -1,7 +1,7 @@
-package com.sypztep.plateau.client.impl.network;
+package com.sypztep.plateau.client.v1.network;
 
-import com.sypztep.plateau.Plateau;
-import com.sypztep.plateau.client.impl.particle.TextParticle;
+import com.sypztep.plateau.client.PlateauParticlesClient;
+import com.sypztep.plateau.client.v1.particle.TextParticle;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.Minecraft;
@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 public record AddTextParticlePayloadS2C(int entityId, Component text, int color, float maxSize,
                                         float yPos) implements CustomPacketPayload {
 
-    public static final Type<AddTextParticlePayloadS2C> ID = new Type<>(Plateau.id("add_text_particle"));
+    public static final Type<AddTextParticlePayloadS2C> ID = new Type<>(PlateauParticlesClient.id("add_text_particle"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, AddTextParticlePayloadS2C> CODEC = StreamCodec.composite(
                     ByteBufCodecs.VAR_INT, AddTextParticlePayloadS2C::entityId,

@@ -1,4 +1,4 @@
-package com.sypztep.plateauPostprocess.mixin.postprocess;
+package com.sypztep.plateau.mixin.postprocess;
 
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.client.renderer.PostPass;

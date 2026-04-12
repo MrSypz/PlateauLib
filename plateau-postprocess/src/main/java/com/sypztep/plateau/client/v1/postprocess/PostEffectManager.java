@@ -1,7 +1,7 @@
-package com.sypztep.plateauPostprocess.client.v1.postprocess;
+package com.sypztep.plateau.client.v1.postprocess;
 
 import com.mojang.blaze3d.resource.CrossFrameResourcePool;
-import com.sypztep.plateauPostprocess.client.PlateauPostprocessClient;
+import com.sypztep.plateau.client.PlateauPostprocessClient;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;

@@ -12,3 +12,4 @@ pluginManagement {
 rootProject.name = 'PlateauLib'
 
 include 'plateau-postprocess'
+include 'plateau-particles'

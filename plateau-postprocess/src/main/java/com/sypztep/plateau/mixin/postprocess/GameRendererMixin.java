@@ -1,6 +1,6 @@
-package com.sypztep.plateauPostprocess.mixin.postprocess;
+package com.sypztep.plateau.mixin.postprocess;
 
-import com.sypztep.plateauPostprocess.client.v1.postprocess.PostEffectManagerAccess;
+import com.sypztep.plateau.client.v1.postprocess.PostEffectManagerAccess;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.DeltaTracker;

@@ -12,9 +12,6 @@
   "icon": "assets/plateau/icon.png",
   "environment": "*",
   "entrypoints": {
-    "client": [
-      "com.sypztep.plateau.client.PlateauClient"
-    ],
     "main": [
       "com.sypztep.plateau.Plateau"
     ]

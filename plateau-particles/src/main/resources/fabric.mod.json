@@ -2,26 +2,23 @@
   "schemaVersion": 1,
   "id": "plateau-particles",
   "version": "${version}",
-
-  "name": "PlateauLib (Particles)",
-  "description": "Some common usage of text particle all around my project",
-  "authors": ["MrSypz"],
+  "name": "PlateauLib (Post Process)",
+  "description": "Some abstract for make postprocess shader for plateau",
+  "authors": [
+    "MrSypz"
+  ],
   "contact": {},
-
   "license": "All-Rights-Reserved",
-  "icon": "assets/plateau-postprocess/icon.png",
-
+  "icon": "assets/plateau-particles/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
-      "com.sypztep.plateau.client.PlateauPostprocessClient"
+      "com.sypztep.plateau.client.PlateauParticlesClient"
+    ],
+    "main": [
+      "com.sypztep.plateau.PlateauParticles"
     ]
   },
-
-  "mixins": [
-    "plateau-postprocess.mixins.json"
-  ],
-
   "depends": {
     "fabricloader": ">=0.18.5",
     "minecraft": "~26.1",
@@ -29,12 +26,16 @@
   },
   "custom": {
     "modmenu": {
-      "badges": [ "library" ],
+      "badges": [
+        "library"
+      ],
       "parent": {
         "id": "plateau",
         "name": "PlateauLib",
         "description": "common code that I often using when create new mods",
-        "badges": [ "library" ]
+        "badges": [
+          "library"
+        ]
       }
     }
   }
