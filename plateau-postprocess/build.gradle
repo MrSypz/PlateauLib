@@ -2,6 +2,11 @@
 // DO NOT add a publishing {} block here.
 // DO NOT add java {}, processResources {}, or jar {} here.
 // Root's allprojects {} and subprojects {} handle all of that.
+
+base {
+    archivesName = "PostProcess"
+}
+
 dependencies {
     api fabricApi.module("fabric-networking-api-v1", project.fabric_version)
 }

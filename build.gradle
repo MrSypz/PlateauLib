@@ -65,19 +65,26 @@ dependencies {
 subprojects {
     version = rootProject.version
 
-    // mavenJava defined HERE and only here — never inside submodule build.gradle
     publishing {
         publications {
             create("mavenJava", MavenPublication) {
                 from components.java
             }
         }
-        repositories {
-            // e.g. maven { url = uri("../local-repo") }
+        repositories {}
+    }
+
+    // Override artifactId AFTER submodule build.gradle has set archivesName
+    afterEvaluate {
+        publishing {
+            publications {
+                named("mavenJava", MavenPublication) {
+                    artifactId = project.base.archivesName
+                }
+            }
         }
     }
 }
-
 // ── Root project's own publishing (separate from subprojects) ────────
 publishing {
     publications {
