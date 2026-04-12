@@ -1,7 +1,7 @@
 package com.sypztep.plateau.mixin;
 
-import com.sypztep.plateau.common.api.entity.AttributeTarget;
-import com.sypztep.plateau.common.api.entity.PlateauAttributeRegistry;
+import com.sypztep.plateau.common.v1.attribute.AttributeTarget;
+import com.sypztep.plateau.common.v1.attribute.PlateauAttributeRegistry;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import org.spongepowered.asm.mixin.Mixin;

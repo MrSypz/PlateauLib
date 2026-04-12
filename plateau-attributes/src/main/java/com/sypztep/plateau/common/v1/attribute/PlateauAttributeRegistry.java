@@ -1,4 +1,4 @@
-package com.sypztep.plateau.common.api.entity;
+package com.sypztep.plateau.common.v1.attribute;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.Holder;
@@ -14,8 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 public final class PlateauAttributeRegistry {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger("Plateau");
+    private static final Logger LOGGER = LoggerFactory.getLogger("plateau-attributes");
 
     private static boolean frozen = false;
 

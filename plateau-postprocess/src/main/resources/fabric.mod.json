@@ -1,10 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "plateau-particles",
+  "id": "plateau-postprocess",
   "version": "${version}",
 
-  "name": "PlateauLib (Particles)",
-  "description": "Some common usage of text particle all around my project",
+  "name": "PlateauLib (Post Process)",
+  "description": "Some abstract for make postprocess shader for plateau",
+
   "authors": ["MrSypz"],
   "contact": {},
 
@@ -24,7 +25,7 @@
 
   "depends": {
     "fabricloader": ">=0.18.5",
-    "minecraft": "~26.1",
+    "minecraft": ">=26.1-",
     "java": ">=25"
   },
   "custom": {

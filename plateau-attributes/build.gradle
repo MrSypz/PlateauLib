@@ -1,0 +1,6 @@
+base {
+    archivesName = "Attributes"
+}
+
+dependencies {
+}

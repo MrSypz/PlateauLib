@@ -1,4 +1,4 @@
-package com.sypztep.plateau.common;
+package com.sypztep.plateau.common.v1.attribute;
 
 import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
