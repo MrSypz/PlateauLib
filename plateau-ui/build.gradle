@@ -1,0 +1,12 @@
+// ── plateau-postprocess submodule ────────────────────────────────────
+// DO NOT add a publishing {} block here.
+// DO NOT add java {}, processResources {}, or jar {} here.
+// Root's allprojects {} and subprojects {} handle all of that.
+
+base {
+    archivesName = "UI"
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/plateau-ui.classtweaker")
+}
