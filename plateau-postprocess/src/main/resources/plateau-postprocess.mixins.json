@@ -1,14 +1,14 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "com.sypztep.plateauPostprocess.mixin",
+  "package": "com.sypztep.plateau.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
   ],
   "client": [
-    "com.sypztep.plateau.postprocess.mixin.postprocess.GameRendererMixin",
-    "com.sypztep.plateau.postprocess.mixin.postprocess.PostChainAccessor",
-    "com.sypztep.plateau.postprocess.mixin.postprocess.PostPassAccessor"
+    "postprocess.GameRendererMixin",
+    "postprocess.PostChainAccessor",
+    "postprocess.PostPassAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
