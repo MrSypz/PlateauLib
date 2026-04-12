@@ -1,6 +1,7 @@
 package com.sypztep.plateauPostprocess.client;
 
 import com.sypztep.plateauPostprocess.client.v1.postprocess.PostEffectManager;
+import com.sypztep.plateauPostprocess.client.v1.postprocess.PostEffectManagerAccess;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import org.slf4j.Logger;
@@ -12,8 +13,8 @@ public class PlateauPostprocessClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        LOGGER.info("[PlateauPostprocess] Initialize post process module");
-
-        ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> PostEffectManager.closeAll());
+        LOGGER.info("[PlateauPostprocess] Initialize post process module (API v{})", PostEffectManager.API_VERSION);
+        ClientPlayConnectionEvents.DISCONNECT.register((_, _)
+                -> PostEffectManagerAccess.closeAll());
     }
 }
