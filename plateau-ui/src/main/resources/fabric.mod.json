@@ -1,29 +1,27 @@
 {
   "schemaVersion": 1,
-  "id": "plateau-attributes",
+  "id": "plateau-ui",
   "version": "${version}",
-  "name": "PlateauLib (Attributes)",
-  "description": "help to create just init attributes for both player and living entity without need mixin or manually register attribute, just create and register your attribute, then use it",
-  "authors": [
-    "MrSypz"
-  ],
+
+  "name": "PlateauLib (UI)",
+  "description": "Some abstract for my custom UI code",
+
+  "authors": [ "MrSypz" ],
   "contact": {},
+
   "license": "All-Rights-Reserved",
   "icon": "assets/plateau-particles/icon.png",
+
   "environment": "*",
   "entrypoints": {
-    "main": [
-      "com.sypztep.plateau.PlateauAttributes"
+    "client": [
+      "com.sypztep.plateau.client.PlateauUIClient"
     ]
   },
 
-  "mixins": [
-    "plateau.mixins.json"
-  ],
-
   "depends": {
     "fabricloader": ">=0.18.5",
-    "minecraft": "~26.1",
+    "minecraft": ">=26.1-",
     "java": ">=25"
   },
 

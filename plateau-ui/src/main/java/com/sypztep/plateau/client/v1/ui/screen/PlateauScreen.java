@@ -1,0 +1,68 @@
+package com.sypztep.plateau.client.v1.ui.screen;
+
+import com.sypztep.plateau.client.v1.ui.theme.UITheme;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.gui.screens.Screen;
+
+import net.minecraft.network.chat.Component;
+
+@Environment(EnvType.CLIENT)
+public abstract class PlateauScreen extends Screen {
+    protected TabManager tabManager;
+
+    protected PlateauScreen(Component title) {
+        super(title);
+    }
+
+    @Override
+    protected void init() {
+        if (tabManager != null) {
+            tabManager.clearTracking();
+        }
+
+        initComponents();
+
+        if (tabManager != null) {
+            tabManager.init();
+        }
+    }
+
+    protected abstract void initComponents();
+
+    // Bridge for Tab
+    public <T extends GuiEventListener & Renderable & NarratableEntry> T addTabWidget(T widget) {
+        return addRenderableWidget(widget);
+    }
+
+    public <T extends Renderable> T addTabRenderable(T renderable) {
+        return addRenderableOnly(renderable);
+    }
+
+    public void removeTabWidget(GuiEventListener widget) {
+        removeWidget(widget);
+    }
+
+    public int getContentStartY() {
+        if (tabManager != null) {
+            return tabManager.getNavBarHeight() + 10;
+        }
+        return 25;
+    }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        int bg = UITheme.current().screenBackground();
+        graphics.fillGradient(0, 0, width, height, bg, bg);
+
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
+
+        if (tabManager != null) {
+            tabManager.renderOverlay(graphics, mouseX, mouseY, delta);
+        }
+    }
+}

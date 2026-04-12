@@ -52,10 +52,6 @@ base {
     archivesName = "PlateauLib"
 }
 
-loom {
-    accessWidenerPath = file("src/main/resources/plateau.classtweaker")
-}
-
 // ── Submodule-only config (root project excluded) ───────────────────
 subprojects {
     version = rootProject.version
