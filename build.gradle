@@ -74,14 +74,9 @@ subprojects {
         repositories {}
     }
 
-    // Override artifactId AFTER submodule build.gradle has set archivesName
-    afterEvaluate {
-        publishing {
-            publications {
-                named("mavenJava", MavenPublication) {
-                    artifactId = project.base.archivesName
-                }
-            }
+    afterEvaluate { proj ->
+        proj.publishing.publications.named("mavenJava", MavenPublication) {
+            artifactId = proj.base.archivesName.get()
         }
     }
 }
