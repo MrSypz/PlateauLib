@@ -1,4 +1,4 @@
-package com.sypztep.plateauPostprocess.client.postprocess;
+package com.sypztep.plateauPostprocess.client.v1.postprocess;
 
 import com.mojang.blaze3d.resource.CrossFrameResourcePool;
 import com.sypztep.plateauPostprocess.client.PlateauPostprocessClient;

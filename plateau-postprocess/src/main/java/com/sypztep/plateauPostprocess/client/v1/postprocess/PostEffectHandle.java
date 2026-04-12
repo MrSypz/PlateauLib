@@ -1,4 +1,4 @@
-package com.sypztep.plateauPostprocess.client.postprocess;
+package com.sypztep.plateauPostprocess.client.v1.postprocess;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

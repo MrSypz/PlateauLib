@@ -10,7 +10,7 @@ allprojects {
     apply plugin: 'net.fabricmc.fabric-loom'
 
     group   = 'com.sypztep'
-    version = project.mod_version
+    version = project.findProperty("version") ?: project.mod_version
 
     repositories {
         // add shared repos here if needed
