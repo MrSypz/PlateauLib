@@ -30,17 +30,8 @@
 
   "custom": {
     "modmenu": {
-      "badges": [
-        "library"
-      ],
-      "parent": {
-        "id": "plateau",
-        "name": "PlateauLib",
-        "description": "common code that I often using when create new mods",
-        "badges": [
-          "library"
-        ]
-      }
+      "badges": ["library", "client"],
+      "parent": "plateau"
     }
   }
 }

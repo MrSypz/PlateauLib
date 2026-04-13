@@ -24,20 +24,10 @@
     "minecraft": ">=26.1-",
     "java": ">=25"
   },
-
   "custom": {
     "modmenu": {
-      "badges": [
-        "library"
-      ],
-      "parent": {
-        "id": "plateau",
-        "name": "PlateauLib",
-        "description": "common code that I often using when create new mods",
-        "badges": [
-          "library"
-        ]
-      }
+      "badges": ["library"],
+      "parent": "plateau"
     }
   }
 }
