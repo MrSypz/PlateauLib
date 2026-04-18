@@ -14,7 +14,7 @@ public class PlateauPostprocessClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         LOGGER.info("[PlateauPostprocess] Initialize post process module (API v{})", PostEffectManager.API_VERSION);
-        ClientPlayConnectionEvents.DISCONNECT.register((_, _)
-                -> PostEffectManagerAccess.closeAll());
+        ClientPlayConnectionEvents.DISCONNECT.register((_, client)
+                -> client.execute(PostEffectManagerAccess::closeAll));
     }
 }

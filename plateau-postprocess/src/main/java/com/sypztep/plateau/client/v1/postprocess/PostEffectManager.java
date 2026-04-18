@@ -102,7 +102,6 @@ public final class PostEffectManager {
      */
     static void closeAll() {
         for (PostEffectHandle handle : HANDLES) handle.getOnClose().run();
-        HANDLES.clear();
         PlateauPostprocessClient.LOGGER.info("[PostEffect v{}] Closed all layers", API_VERSION);
         POOL.close();
     }
