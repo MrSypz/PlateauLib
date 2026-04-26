@@ -1,6 +1,6 @@
-package com.sypztep.plateau.client.v1.network;
+package com.sypztep.plateau.common.v1.network;
 
-import com.sypztep.plateau.client.PlateauParticlesClient;
+import com.sypztep.plateau.PlateauParticles;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleOptions;
@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
  */
 public record AddParticlePayloadS2C(ParticleOptions particleOptions, Vec3 pos, Vec3 velocity,
                                     byte config) implements CustomPacketPayload {
-    public static final Type<AddParticlePayloadS2C> ID = new Type<>(PlateauParticlesClient.id("add_particle"));
+    public static final Type<AddParticlePayloadS2C> ID = new Type<>(PlateauParticles.id("add_particle"));
     public static final StreamCodec<RegistryFriendlyByteBuf, AddParticlePayloadS2C> CODEC = StreamCodec.composite(
             ParticleTypes.STREAM_CODEC, AddParticlePayloadS2C::particleOptions,
             Vec3.STREAM_CODEC, AddParticlePayloadS2C::pos,

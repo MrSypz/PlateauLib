@@ -1,6 +1,6 @@
-package com.sypztep.plateau.client.v1.network;
+package com.sypztep.plateau.common.v1.network;
 
-import com.sypztep.plateau.client.PlateauParticlesClient;
+import com.sypztep.plateau.PlateauParticles;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.particles.ParticleOptions;
@@ -15,7 +15,7 @@ import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.NonNull;
 
 public record AddEmitterParticlePayloadS2C(int entityId, ParticleType<?> particleType) implements CustomPacketPayload {
-    public static final Type<AddEmitterParticlePayloadS2C> ID = new Type<>(PlateauParticlesClient.id("add_emitter_particle"));
+    public static final Type<AddEmitterParticlePayloadS2C> ID = new Type<>(PlateauParticles.id("add_emitter_particle"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, AddEmitterParticlePayloadS2C> CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT,
