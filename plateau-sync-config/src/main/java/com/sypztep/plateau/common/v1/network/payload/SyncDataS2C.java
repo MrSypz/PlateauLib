@@ -116,7 +116,7 @@ public record SyncDataS2C(Map<String, String> receivedData, int masterHash) impl
                 int appliedMasterHash = ConfigSyncRegistry.masterHash();
                 if (appliedMasterHash != packet.masterHash()) {
                     PlateauSyncConfig.LOGGER.warn(
-                            "[ConfigSync] Applied master hash does not match server's "
+                            "Applied master hash does not match server's "
                             + "(applied={} server={}) — proceeding anyway; server will verify",
                             appliedMasterHash, packet.masterHash());
                 }

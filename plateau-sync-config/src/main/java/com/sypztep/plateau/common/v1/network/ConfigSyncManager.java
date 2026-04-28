@@ -131,7 +131,7 @@ public final class ConfigSyncManager {
         int masterHash = ConfigSyncRegistry.masterHash(currentHashes);
 
         PlateauSyncConfig.LOGGER.info(
-                "[ConfigSync] Sync started for {} (namespaces={}, masterHash={})",
+                "Sync started for {} (namespaces={}, masterHash={})",
                 player.getName().getString(), ConfigSyncRegistry.namespaces(), masterHash);
 
         SyncHelloS2C.send(player, currentHashes);
@@ -186,7 +186,7 @@ public final class ConfigSyncManager {
             } else {
                 // ── Stale fast path: hash mismatch, upgrade to slow path ─────
                 PlateauSyncConfig.LOGGER.info(
-                        "[ConfigSync] Fast-path hash mismatch for {} (clientHash={} serverHash={}) "
+                        "Fast-path hash mismatch for {} (clientHash={} serverHash={}) "
                         + "— sending full config",
                         player.getName().getString(), packet.masterHash(), expectedMasterHash);
                 pendingPlayers.put(player.getUUID(), new PlayerSyncEntry(entry.realGameMode(), SyncState.AWAITING_ACK));
@@ -196,7 +196,7 @@ public final class ConfigSyncManager {
         } else {
             // ── Slow path: send only the namespaces the client asked for ─────
             PlateauSyncConfig.LOGGER.info(
-                    "[ConfigSync] Sending data for [{}] to {}",
+                    "Sending data for [{}] to {}",
                     String.join(", ", packet.missing()), player.getName().getString());
             pendingPlayers.put(player.getUUID(), new PlayerSyncEntry(entry.realGameMode(), SyncState.AWAITING_ACK));
             SyncDataS2C.send(player, packet.missing());
@@ -220,11 +220,11 @@ public final class ConfigSyncManager {
         int expectedMasterHash = ConfigSyncRegistry.masterHash();
         if (packet.masterHash() != expectedMasterHash) {
             PlateauSyncConfig.LOGGER.warn(
-                    "[ConfigSync] Ack hash mismatch from {} (clientHash={} serverHash={}) — kicking",
+                    "Ack hash mismatch from {} (clientHash={} serverHash={}) — kicking",
                     player.getName().getString(), packet.masterHash(), expectedMasterHash);
             pendingPlayers.remove(player.getUUID());
             player.connection.disconnect(Component.literal(
-                    "[ConfigSync] Config sync failed — please rejoin. "
+                    "Config sync failed — please rejoin. "
                     + "If this repeats, report it to the server admin."));
             return;
         }
@@ -246,7 +246,7 @@ public final class ConfigSyncManager {
         pendingPlayers.remove(player.getUUID());
         player.setGameMode(realGameMode);
         PlateauSyncConfig.LOGGER.info(
-                "[ConfigSync] Sync complete for {} — restored {}",
+                "Sync complete for {} — restored {}",
                 player.getName().getString(), realGameMode.getName());
     }
 
@@ -268,7 +268,7 @@ public final class ConfigSyncManager {
                     PlayerSyncEntry timedOutEntry = pendingPlayers.get(playerUuid);
                     if (timedOutEntry != null) {
                         PlateauSyncConfig.LOGGER.warn(
-                                "[ConfigSync] Handshake timeout for {} after {}s — releasing from spectator",
+                                "Handshake timeout for {} after {}s — releasing from spectator",
                                 player.getName().getString(), TIMEOUT_SECONDS);
                         unfreeze(player, timedOutEntry.realGameMode());
                     }

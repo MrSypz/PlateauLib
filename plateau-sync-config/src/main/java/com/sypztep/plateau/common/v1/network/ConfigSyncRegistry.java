@@ -206,11 +206,11 @@ public final class ConfigSyncRegistry {
 
         if (REGISTRY.containsKey(namespace))
             throw new IllegalStateException(
-                    "[ConfigSync] Namespace already registered: '" + namespace + "'. "
+                    "Namespace already registered: '" + namespace + "'. "
                     + "Each mod may only register once. Check for duplicate register() calls.");
 
         REGISTRY.put(namespace, new Entry<>(namespace, instanceSupplier, configClass, configApplier, configHasher));
-        PlateauSyncConfig.LOGGER.debug("[ConfigSync] Registered config namespace '{}'", namespace);
+        PlateauSyncConfig.LOGGER.debug("Registered config namespace '{}'", namespace);
     }
 
     // -------------------------------------------------------------------------

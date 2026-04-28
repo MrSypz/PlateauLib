@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 public final class PlateauAttributeRegistry {
-    private static final Logger LOGGER = LoggerFactory.getLogger("plateau-attributes");
+    private static final Logger LOGGER = LoggerFactory.getLogger("PlateauAttributes");
 
     private static boolean frozen = false;
 

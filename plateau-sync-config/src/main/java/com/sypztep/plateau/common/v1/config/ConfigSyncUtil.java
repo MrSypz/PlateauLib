@@ -82,7 +82,7 @@ public final class ConfigSyncUtil {
                 field.set(destination, field.get(source));
             } catch (IllegalAccessException exception) {
                 PlateauSyncConfig.LOGGER.error(
-                        "[ConfigSync] Failed to copy @RequireSync field '{}' on {} — skipping",
+                        "Failed to copy @RequireSync field '{}' on {} — skipping",
                         field.getName(), source.getClass().getSimpleName(), exception);
             }
         }
@@ -111,7 +111,7 @@ public final class ConfigSyncUtil {
                 result = 31 * result + Objects.hashCode(field.get(config));
             } catch (IllegalAccessException exception) {
                 PlateauSyncConfig.LOGGER.error(
-                        "[ConfigSync] Failed to hash @RequireSync field '{}' on {} — using 0",
+                        "Failed to hash @RequireSync field '{}' on {} — using 0",
                         field.getName(), config.getClass().getSimpleName(), exception);
             }
         }

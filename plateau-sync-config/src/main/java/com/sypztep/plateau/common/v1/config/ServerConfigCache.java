@@ -146,7 +146,7 @@ public final class ServerConfigCache {
      */
     public static void evict(String serverAddress) {
         memoryCache.remove(serverAddress);
-        PlateauSyncConfig.LOGGER.debug("[ConfigSync] Evicted cache for '{}'", serverAddress);
+        PlateauSyncConfig.LOGGER.debug("Evicted cache for '{}'", serverAddress);
     }
 
     // -------------------------------------------------------------------------
@@ -175,14 +175,14 @@ public final class ServerConfigCache {
                 return parsed != null ? parsed : new LinkedHashMap<>();
             } catch (IOException ioException) {
                 PlateauSyncConfig.LOGGER.warn(
-                        "[ConfigSync] Could not read cache file for '{}': {}",
+                        "Could not read cache file for '{}': {}",
                         address, ioException.getMessage());
                 return new LinkedHashMap<>();
             } catch (Exception parseException) {
                 // Catches JsonSyntaxException / IllegalStateException from stale/corrupt formats.
                 // Safe to treat as a miss — server will send fresh data on slow path.
                 PlateauSyncConfig.LOGGER.warn(
-                        "[ConfigSync] Cache file for '{}' is unreadable ({}), resetting.",
+                        "Cache file for '{}' is unreadable ({}), resetting.",
                         address, parseException.getMessage());
                 deleteSilently(cachePath);
                 return new LinkedHashMap<>();
@@ -204,7 +204,7 @@ public final class ServerConfigCache {
             Files.writeString(cachePath, GSON.toJson(entries), StandardCharsets.UTF_8);
         } catch (IOException ioException) {
             PlateauSyncConfig.LOGGER.error(
-                    "[ConfigSync] Failed to write cache file for '{}': {}",
+                    "Failed to write cache file for '{}': {}",
                     serverAddress, ioException.getMessage());
         }
     }

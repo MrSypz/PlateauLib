@@ -84,10 +84,10 @@ public record SyncHelloS2C(Map<String, Integer> hashes) implements CustomPacketP
      * Namespaces that are missing or stale are collected into a {@code missing} list.
      *
      * <p>If {@code missing} is empty, replies with {@link SyncResponseC2S#fast} (fast path).
-     * Otherwise replies with {@link SyncResponseC2S#slow} listing which namespaces to send.
+     * Otherwise, replies with {@link SyncResponseC2S#slow} listing which namespaces to send.
      *
      * <p><b>Thread note:</b> The cache validity check runs off the render thread (Netty).
-     * The apply + send is wrapped in {@code client.execute()} to run on the render thread.
+     * To apply + send is wrapped in {@code client.execute()} to run on the render thread.
      */
     public static class Receiver implements ClientPlayNetworking.PlayPayloadHandler<SyncHelloS2C> {
 
