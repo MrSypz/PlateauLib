@@ -1,0 +1,7 @@
+base {
+    archivesName = "SyncConfig"
+}
+
+dependencies {
+    api fabricApi.module("fabric-networking-api-v1", project.fabric_version)
+}

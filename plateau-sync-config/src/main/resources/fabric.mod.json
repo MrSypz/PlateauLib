@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "plateau-sync-config",
+  "version": "${version}",
+
+  "name": "PlateauLib (Sync Config)",
+  "description": "Some abstract for make postprocess shader for plateau",
+
+  "authors": ["MrSypz"],
+  "contact": {},
+
+  "license": "All-Rights-Reserved",
+  "icon": "assets/plateau-sync-config/icon.png",
+
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+        "com.sypztep.plateau.client.PlateauSyncConfigClient"
+    ],
+    "main": [
+        "com.sypztep.plateau.PlateauSyncConfig"
+    ]
+  },
+
+  "depends": {
+    "fabricloader": ">=0.18.5",
+    "minecraft": ">=26.1-",
+    "java": ">=25"
+  },
+  "custom": {
+    "modmenu": {
+      "parent": "plateau"
+    }
+  }
+}

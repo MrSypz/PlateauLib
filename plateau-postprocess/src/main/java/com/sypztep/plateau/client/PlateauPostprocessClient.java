@@ -8,12 +8,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PlateauPostprocessClient implements ClientModInitializer {
-    public static final String MODID = "plateau_postprocess";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MODID);
+    public static final Logger LOGGER = LoggerFactory.getLogger("PlateauPostprocess");
 
     @Override
     public void onInitializeClient() {
-        LOGGER.info("[PlateauPostprocess] Initialize post process module (API v{})", PostEffectManager.API_VERSION);
+        LOGGER.info("[Postprocess] Initialize post process module (API v{})", PostEffectManager.API_VERSION);
         ClientPlayConnectionEvents.DISCONNECT.register((_, client)
                 -> client.execute(PostEffectManagerAccess::closeAll));
     }

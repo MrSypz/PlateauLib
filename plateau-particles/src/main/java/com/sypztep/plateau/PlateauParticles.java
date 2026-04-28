@@ -14,6 +14,8 @@ public class PlateauParticles implements ModInitializer {
     }
     @Override
     public void onInitialize() {
+
+
         PayloadTypeRegistry.clientboundPlay().register(AddTextParticlePayloadS2C.ID, AddTextParticlePayloadS2C.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(AddEmitterParticlePayloadS2C.ID, AddEmitterParticlePayloadS2C.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(AddParticlePayloadS2C.ID, AddParticlePayloadS2C.CODEC);
