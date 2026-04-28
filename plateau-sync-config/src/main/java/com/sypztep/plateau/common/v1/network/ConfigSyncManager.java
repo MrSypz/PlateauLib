@@ -5,6 +5,7 @@ import com.sypztep.plateau.common.v1.network.payload.SyncAckC2S;
 import com.sypztep.plateau.common.v1.network.payload.SyncDataS2C;
 import com.sypztep.plateau.common.v1.network.payload.SyncHelloS2C;
 import com.sypztep.plateau.common.v1.network.payload.SyncResponseC2S;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -122,6 +123,20 @@ public final class ConfigSyncManager {
      * @param server the running {@link MinecraftServer} instance (used to schedule the timeout on the server thread)
      */
     public static void onPlayerJoin(ServerPlayer player, MinecraftServer server) {
+        if (ConfigSyncRegistry.namespaces().isEmpty()) {
+            PlateauSyncConfig.LOGGER.info(
+                    "No configs registered — skipping handshake for {}",
+                    player.getName().getString());
+            return;
+        }
+
+        if (!ServerPlayNetworking.canSend(player, SyncHelloS2C.ID)) {
+            PlateauSyncConfig.LOGGER.info(
+                    "{} does not have the sync lib — skipping handshake",
+                    player.getName().getString());
+            return;
+        }
+
         GameType realGameMode = player.gameMode.getGameModeForPlayer();
         pendingPlayers.put(player.getUUID(), new PlayerSyncEntry(realGameMode, SyncState.AWAITING_RESPONSE));
         player.setGameMode(GameType.SPECTATOR);

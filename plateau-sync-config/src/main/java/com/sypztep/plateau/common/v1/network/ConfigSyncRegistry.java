@@ -156,7 +156,11 @@ public final class ConfigSyncRegistry {
 
         long elapsedMs = (System.nanoTime() - start) / 1_000_000;
 
-        LOGGER.info("Bootstrapped {} namespace(s) from {} entrypoint(s) in {} ms: [{}]",
+        if (REGISTRY.isEmpty())
+            LOGGER.warn("No configs registered — lib is installed but no entrypoints declared. "
+                    + "Players will join normally with no sync. ms: [{}]", elapsedMs);
+        else
+            LOGGER.info("Bootstrapped {} namespace(s) from {} entrypoint(s) in {} ms: [{}]",
                 REGISTRY.size(), entrypoints.size(), elapsedMs,
                 String.join(", ", REGISTRY.keySet()));
     }
