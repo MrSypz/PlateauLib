@@ -3,6 +3,8 @@ package com.sypztep.plateau.common.v1.network;
 import com.google.gson.Gson;
 import com.sypztep.plateau.PlateauSyncConfig;
 import com.sypztep.plateau.common.v1.config.ConfigSyncUtil;
+import com.sypztep.plateau.common.v1.config.RequireSync;
+import com.sypztep.plateau.common.v1.config.SyncConfig;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,7 +25,7 @@ import java.util.function.ToIntFunction;
  * <hr>
  * <h3>Quickstart — preferred 3-argument form:</h3>
  *
- * <p>If your config uses {@link com.sypztep.plateau.common.v1.config.RequireSync @RequireSync}
+ * <p>If your config uses {@link RequireSync @RequireSync}
  * on its fields (which is the recommended pattern), the library can derive the applier and
  * hasher automatically. Use the short overload:
  *
@@ -67,8 +69,8 @@ import java.util.function.ToIntFunction;
  * from any thread. {@link #applyBatch} must be called on the client render thread; this is
  * enforced by the library's packet receivers.
  *
- * @see com.sypztep.plateau.common.v1.config.SyncConfig @SyncConfig
- * @see com.sypztep.plateau.common.v1.config.RequireSync @RequireSync
+ * @see SyncConfig @SyncConfig
+ * @see RequireSync @RequireSync
  * @see ConfigSyncUtil
  */
 public final class ConfigSyncRegistry {
@@ -143,7 +145,7 @@ public final class ConfigSyncRegistry {
      * applier and hasher provided by this library.
      *
      * <p>This is the <b>recommended overload</b> for any config that uses
-     * {@link com.sypztep.plateau.common.v1.config.RequireSync @RequireSync} on its fields.
+     * {@link RequireSync @RequireSync} on its fields.
      * You do not need to write {@code applyFrom()}, {@code hashCode()}, or manage a
      * {@code syncedFromServer} flag yourself — the library handles all of that.
      *
@@ -180,7 +182,7 @@ public final class ConfigSyncRegistry {
      * <p>Use this overload when you need custom apply or hash logic — for example, if your
      * config has post-apply side effects or uses a different hashing strategy.
      *
-     * <p>For most configs annotated with {@link com.sypztep.plateau.common.v1.config.RequireSync @RequireSync},
+     * <p>For most configs annotated with {@link RequireSync @RequireSync},
      * the 3-argument overload is simpler and preferred.
      *
      * <p>Must be called during mod initialization, before any player joins the server.
