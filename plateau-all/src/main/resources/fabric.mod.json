@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "plateau-all",
+  "version": "${version}",
+  "name": "PlateauLib (All)",
+  "description": "All PlateauLib modules bundled into one Fabric library jar.",
+  "authors": [
+    "MrSypz"
+  ],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "environment": "*",
+  "depends": {
+    "fabricloader": ">=0.18.5",
+    "minecraft": ">=26.1-",
+    "java": ">=25",
+    "plateau": ">=${version}",
+    "plateau-attributes": ">=${version}",
+    "plateau-particles": ">=${version}",
+    "plateau-postprocess": ">=${version}",
+    "plateau-sync-config": ">=${version}",
+    "plateau-ui": ">=${version}"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": ["library"]
+    }
+  }
+}

@@ -1,0 +1,23 @@
+base {
+    archivesName = "PlateauLib-All"
+}
+
+dependencies {
+    api project(":")
+    include project(":")
+
+    api project(":plateau-attributes")
+    include project(":plateau-attributes")
+
+    api project(":plateau-particles")
+    include project(":plateau-particles")
+
+    api project(":plateau-postprocess")
+    include project(":plateau-postprocess")
+
+    api project(":plateau-sync-config")
+    include project(":plateau-sync-config")
+
+    api project(":plateau-ui")
+    include project(":plateau-ui")
+}
