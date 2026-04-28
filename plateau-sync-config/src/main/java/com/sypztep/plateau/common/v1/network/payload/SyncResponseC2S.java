@@ -36,7 +36,7 @@ public record SyncResponseC2S(List<String> missing, int masterHash) implements C
 
     public static final StreamCodec<FriendlyByteBuf, SyncResponseC2S> CODEC = StreamCodec.composite(
             ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list()), SyncResponseC2S::missing,
-            ByteBufCodecs.VAR_INT,                                  SyncResponseC2S::masterHash,
+            ByteBufCodecs.VAR_INT, SyncResponseC2S::masterHash,
             SyncResponseC2S::new
     );
 

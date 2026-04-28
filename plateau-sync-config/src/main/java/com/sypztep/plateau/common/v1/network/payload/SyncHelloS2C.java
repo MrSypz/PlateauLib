@@ -5,7 +5,6 @@ import com.sypztep.plateau.common.v1.config.ServerConfigCache;
 import com.sypztep.plateau.common.v1.network.ConfigSyncRegistry;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -32,11 +31,8 @@ import java.util.*;
  * @param hashes a map of {@code namespace → current config hash}, one entry per registered config
  */
 public record SyncHelloS2C(Map<String, Integer> hashes) implements CustomPacketPayload {
-
     public static final Type<SyncHelloS2C> ID = new Type<>(PlateauSyncConfig.id("sync_hello"));
-
     /**
-     * Manual codec for the namespace→hash map.
      * Format: [varInt count] [utf namespace, varInt hash] × count
      */
     public static final StreamCodec<FriendlyByteBuf, SyncHelloS2C> CODEC = StreamCodec.of(
@@ -94,8 +90,6 @@ public record SyncHelloS2C(Map<String, Integer> hashes) implements CustomPacketP
         @Override
         public void receive(SyncHelloS2C packet, ClientPlayNetworking.@NonNull Context ctx) {
             String serverAddress = Objects.requireNonNull(ctx.client().getCurrentServer()).ip;
-
-            // Check caches off the render thread — this is a read-only operation
             List<String> missingNamespaces = new ArrayList<>();
             packet.hashes().forEach((namespace, serverHash) -> {
                 if (!ServerConfigCache.isValid(serverAddress, namespace, serverHash))

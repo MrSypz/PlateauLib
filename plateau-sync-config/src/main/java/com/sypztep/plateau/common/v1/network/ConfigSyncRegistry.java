@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import com.sypztep.plateau.PlateauSyncConfig;
 import com.sypztep.plateau.common.v1.config.ConfigSyncUtil;
 import com.sypztep.plateau.common.v1.config.RequireSync;
-import com.sypztep.plateau.common.v1.config.SyncConfig;
+import com.sypztep.plateau.common.v1.config.SyncConfigEntrypoint;
+import net.fabricmc.loader.api.FabricLoader;
+import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,83 +17,93 @@ import java.util.function.ToIntFunction;
 /**
  * Central registry for the universal server→client config sync system.
  *
- * <p>Any mod that depends on this library registers its server config here once
- * during mod initialization. The sync system then batches <em>all</em> registered
- * configs into a single handshake per player join — regardless of how many mods
- * have registered. Joining a server with 10 mods costs one player freeze, one
- * {@code SyncHelloS2C}, one {@code SyncResponseC2S}, and optionally one
- * {@code SyncDataS2C} + {@code SyncAckC2S}. Not 10 of each.
+ * <p>Any mod that depends on this library registers its server config by implementing
+ * {@link SyncConfigEntrypoint} and declaring it in {@code fabric.mod.json}.
+ * The lib bootstraps all registrations automatically — no call to
+ * {@link #register} inside your own {@code onInitialize()} is needed.
  *
- * <hr>
- * <h3>Quickstart — preferred 3-argument form:</h3>
+ * <h3>Quickstart:</h3>
  *
- * <p>If your config uses {@link RequireSync @RequireSync}
- * on its fields (which is the recommended pattern), the library can derive the applier and
- * hasher automatically. Use the short overload:
- *
+ * <p><b>1. Implement {@link SyncConfigEntrypoint}:</b>
  * <pre>{@code
- * // In your ModInitializer.onInitialize():
- * ConfigSyncRegistry.register(
- *     MyMod.MODID,               // namespace — must be unique, use your mod ID
- *     MyServerConfig::getInstance, // how to get the live singleton
- *     MyServerConfig.class         // class token for Gson deserialization
- * );
+ * public class MyConfigEntrypoint implements SyncConfigEntrypoint {
+ *     @Override
+ *     public void registerSyncConfigs() {
+ *         ConfigSyncRegistry.register(
+ *             MyMod.MODID,
+ *             MyServerConfig::getInstance,
+ *             MyServerConfig.class
+ *         );
+ *     }
+ * }
  * }</pre>
  *
- * <h3>Advanced 5-argument form:</h3>
- *
- * <p>Use the full overload when you need custom apply or hash logic:
+ * <p><b>or the Config class itself</b></p>
  *
  * <pre>{@code
- * ConfigSyncRegistry.register(
- *     MyMod.MODID,
- *     MyServerConfig::getInstance,
- *     MyServerConfig.class,
- *     receivedConfig -> {
- *         MyServerConfig.applyFrom(receivedConfig);
- *         MyServerConfig.setSyncedFromServer(true); // optional legacy flag
- *     },
- *     ConfigSyncUtil::syncHashCode
- * );
+ * // Config class implements the entrypoint itself
+ * public final class MyServerConfig implements SyncConfigEntrypoint {
+ *
+ *     public static MyServerConfig getInstance() { return HANDLER.instance(); }
+ *
+ *     @Override
+ *     public void registerSyncConfigs() {
+ *         ConfigSyncRegistry.register(
+ *             MyMod.MODID,
+ *             MyServerConfig::getInstance,
+ *             MyServerConfig.class
+ *         );
+ *     }
+ * }
  * }</pre>
+ *
+ * <p><b>2. Declare it in {@code fabric.mod.json}:</b>
+ * <pre>{@code
+ * "entrypoints": {
+ *     "plateau-sync-config": [
+ *         "com.example.mymod.MyConfigEntrypoint"
+ *     ]
+ * }
+ * }</pre>
+ *
+ * <p>That's it. The lib calls your entrypoint during its own init, before any player joins.
  *
  * <h3>Checking sync status:</h3>
- *
  * <pre>{@code
  * if (ConfigSyncRegistry.isSyncedFromServer(MyMod.MODID)) {
  *     // client is using server-provided values
  * }
  * }</pre>
  *
- * <hr>
- * <p><b>Thread safety:</b> {@link #REGISTRY} is written only during mod init (single-threaded)
- * and read afterwards. {@link #syncedNamespaces} is a concurrent set and safe to read/write
- * from any thread. {@link #applyBatch} must be called on the client render thread; this is
- * enforced by the library's packet receivers.
- *
- * @see SyncConfig @SyncConfig
- * @see RequireSync @RequireSync
+ * @see SyncConfigEntrypoint
  * @see ConfigSyncUtil
  */
 public final class ConfigSyncRegistry {
 
-    private ConfigSyncRegistry() {}
+    private ConfigSyncRegistry() {
+    }
 
     private static final Gson GSON = new Gson();
+    private static final Logger LOGGER = PlateauSyncConfig.LOGGER;
+
+    /**
+     * Guards against double-bootstrap (e.g. integrated server + client both calling init).
+     */
+    private static boolean bootstrapped = false;
 
     // -------------------------------------------------------------------------
     // Internal entry — one per registered namespace
     // -------------------------------------------------------------------------
 
     /**
-     * Internal record holding everything the sync system needs for one registered config.
+     * Holds everything the sync system needs for one registered config namespace.
      *
-     * @param <GenericConfig> the config type
-     * @param namespace       unique key for this config in all packets and cache files
+     * @param <GenericConfig>  the config type
+     * @param namespace        unique key used in all packets and cache files
      * @param instanceSupplier supplier of the live server-side singleton
-     * @param configClass     class token used by Gson to deserialize received JSON
-     * @param configApplier   how to apply a freshly deserialized value; runs on the render thread
-     * @param configHasher    how to produce a hash of the live config; used for fast-path comparison
+     * @param configClass      class token used by Gson to deserialize received JSON
+     * @param configApplier    how to apply a deserialized value; runs on the render thread
+     * @param configHasher     how to hash the live config; must be deterministic
      */
     record Entry<GenericConfig>(
             String namespace,
@@ -100,20 +112,14 @@ public final class ConfigSyncRegistry {
             Consumer<GenericConfig> configApplier,
             ToIntFunction<GenericConfig> configHasher
     ) {
-        /** Returns the hash of the current live config value. */
         int currentHash() {
             return configHasher.applyAsInt(instanceSupplier.get());
         }
 
-        /** Serializes the current live config value to a JSON string. */
         String toJson() {
             return GSON.toJson(instanceSupplier.get());
         }
 
-        /**
-         * Deserializes {@code json} and passes the result to {@code configApplier}.
-         * The unchecked cast is safe because the entry's type parameters are consistent.
-         */
         @SuppressWarnings("unchecked")
         static void applyJson(Entry<?> entry, String json) {
             Entry<Object> cast = (Entry<Object>) entry;
@@ -121,46 +127,55 @@ public final class ConfigSyncRegistry {
         }
     }
 
-    /**
-     * The main registry map. Uses {@link LinkedHashMap} to preserve insertion order;
-     * master hash computation uses {@link TreeMap} for alphabetical determinism.
-     *
-     * <p>Written only during mod initialization (before any player joins).
-     * Read concurrently afterwards from packet handler threads and the server thread.
-     */
     private static final Map<String, Entry<?>> REGISTRY = new LinkedHashMap<>();
-
-    /**
-     * Tracks which namespaces have been applied from a server in the current session.
-     * Written by {@link #applyBatch} and cleared by {@link #clearSyncedState}.
-     */
     private static final Set<String> syncedNamespaces = ConcurrentHashMap.newKeySet();
 
     // -------------------------------------------------------------------------
-    // Registration — public API
+    // Bootstrap — called once by PlateauSyncConfig.onInitialize()
     // -------------------------------------------------------------------------
 
     /**
-     * Registers a config for server→client sync using the standard {@link RequireSync}-based
-     * applier and hasher provided by this library.
+     * Loads all {@link SyncConfigEntrypoint} implementations declared under
+     * {@code "plateau-sync-config"} in consumer mods' {@code fabric.mod.json},
+     * then calls {@link SyncConfigEntrypoint#registerSyncConfigs()} on each.
      *
-     * <p>This is the <b>recommended overload</b> for any config that uses
-     * {@link RequireSync @RequireSync} on its fields.
-     * You do not need to write {@code applyFrom()}, {@code hashCode()}, or manage a
-     * {@code syncedFromServer} flag yourself — the library handles all of that.
-     *
-     * <p>Must be called during mod initialization, before any player joins the server.
+     * <p>Mirrors the pattern used by {@code PlateauAttributeRegistry.bootstrap()}.
+     * Called automatically by the lib — consumer mods must not call this.
+     * Safe to call multiple times; subsequent calls are no-ops.
+     */
+    public static void bootstrap() {
+        if (bootstrapped) return;
+
+        long start = System.nanoTime();
+
+        List<SyncConfigEntrypoint> entrypoints = FabricLoader.getInstance()
+                .getEntrypoints("plateau-sync-config", SyncConfigEntrypoint.class);
+
+        entrypoints.forEach(SyncConfigEntrypoint::registerSyncConfigs);
+        bootstrapped = true;
+
+        long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+
+        LOGGER.info("Bootstrapped {} namespace(s) from {} entrypoint(s) in {} ms: [{}]",
+                REGISTRY.size(), entrypoints.size(), elapsedMs,
+                String.join(", ", REGISTRY.keySet()));
+    }
+
+    // -------------------------------------------------------------------------
+    // Registration — called from SyncConfigEntrypoint implementations
+    // -------------------------------------------------------------------------
+
+    /**
+     * Registers a config using the standard {@link RequireSync }
      *
      * @param <GenericConfig>  the config type; inferred from the arguments
-     * @param namespace        unique key for this config — use your mod ID (e.g. {@code "temporature"}).
-     *                         Changing this after release will invalidate all existing client caches.
-     * @param instanceSupplier a {@link Supplier} that returns the <em>live server-side singleton</em>
-     *                         (e.g. {@code MyServerConfig::getInstance}). Called on demand — do not
-     *                         pass a captured snapshot.
-     * @param configClass      the {@link Class} token for {@code GenericConfig}, used by Gson to
-     *                         deserialize the received JSON on the client
-     *                         (e.g. {@code MyServerConfig.class})
+     * @param namespace        unique key — use your mod ID (e.g. {@code "temporature"})
+     * @param instanceSupplier returns the live server-side singleton (e.g. {@code MyConfig::getInstance})
+     * @param configClass      the {@link Class} token for {@code GenericConfig} (e.g. {@code MyConfig.class})
      * @throws IllegalStateException if {@code namespace} is already registered
+     * RequireSync-based applier and hasher. This is the recommended overload.
+     *
+     * <p>Call this from your {@link SyncConfigEntrypoint#registerSyncConfigs()} implementation.
      */
     public static <GenericConfig> void register(
             String namespace,
@@ -177,26 +192,17 @@ public final class ConfigSyncRegistry {
     }
 
     /**
-     * Registers a config for server→client sync with explicit applier and hasher functions.
+     * Registers a config with explicit applier and hasher functions.
      *
-     * <p>Use this overload when you need custom apply or hash logic — for example, if your
-     * config has post-apply side effects or uses a different hashing strategy.
-     *
-     * <p>For most configs annotated with {@link RequireSync @RequireSync},
-     * the 3-argument overload is simpler and preferred.
-     *
-     * <p>Must be called during mod initialization, before any player joins the server.
+     * <p>Use this overload when you need custom apply or hash logic.
+     * For most configs annotated with {@code @RequireSync}, the 3-argument overload is preferred.
      *
      * @param <GenericConfig>  the config type; inferred from the arguments
-     * @param namespace        unique key for this config — use your mod ID
-     * @param instanceSupplier a {@link Supplier} that returns the live server-side singleton
-     * @param configClass      the {@link Class} token for {@code GenericConfig}, used by Gson
-     * @param configApplier    a {@link Consumer} that applies a freshly deserialized config value
-     *                         to the live singleton. Called on the <b>client render thread</b>.
-     * @param configHasher     a {@link ToIntFunction} that produces an {@code int} hash of the config.
-     *                         Must be deterministic and produce the same result on both server and client
-     *                         for the same logical config state. {@link ConfigSyncUtil#syncHashCode}
-     *                         satisfies this requirement for {@link RequireSync}-annotated fields.
+     * @param namespace        unique key — use your mod ID
+     * @param instanceSupplier returns the live server-side singleton
+     * @param configClass      the {@link Class} token for {@code GenericConfig}
+     * @param configApplier    applies a deserialized config to the live singleton; runs on render thread
+     * @param configHasher     produces a deterministic {@code int} hash of the config
      * @throws IllegalStateException if {@code namespace} is already registered
      */
     public static <GenericConfig> void register(
@@ -209,28 +215,19 @@ public final class ConfigSyncRegistry {
         if (REGISTRY.containsKey(namespace))
             throw new IllegalStateException(
                     "Namespace already registered: '" + namespace + "'. "
-                    + "Each mod may only register once. Check for duplicate register() calls.");
+                            + "Each mod may only call register() once per namespace.");
 
         REGISTRY.put(namespace, new Entry<>(namespace, instanceSupplier, configClass, configApplier, configHasher));
-        PlateauSyncConfig.LOGGER.debug("Registered config namespace '{}'", namespace);
+        LOGGER.debug("Registered namespace '{}'", namespace);
     }
 
     // -------------------------------------------------------------------------
-    // Sync state — public API
+    // Sync state
     // -------------------------------------------------------------------------
 
     /**
      * Returns {@code true} if the config for {@code namespace} was applied from a server
-     * during the current session, rather than loaded from the local config file.
-     *
-     * <p>Useful for gating client-side behavior that depends on whether the server
-     * has overridden the local defaults — for example, disabling a local config screen.
-     *
-     * <pre>{@code
-     * if (ConfigSyncRegistry.isSyncedFromServer(MyMod.MODID)) {
-     *     // using server config — don't let player change these values locally
-     * }
-     * }</pre>
+     * during the current play session.
      *
      * @param namespace the namespace to check; typically your mod ID
      * @return {@code true} if this namespace has been synced from the server this session
@@ -240,29 +237,19 @@ public final class ConfigSyncRegistry {
     }
 
     /**
-     * Clears the set of namespaces marked as synced from the server.
-     *
-     * <p>Called automatically by the library on client disconnect.
-     * Consumer mods do not need to call this directly.
+     * Clears all synced-from-server flags.
+     * Called automatically on client disconnect — consumer mods do not need this.
      */
     public static void clearSyncedState() {
         syncedNamespaces.clear();
     }
 
     // -------------------------------------------------------------------------
-    // Internal helpers — used by the network layer; not part of public API
+    // Internal helpers — network layer only
     // -------------------------------------------------------------------------
 
     /**
-     * Returns a snapshot of every registered namespace mapped to its current hash.
-     *
-     * <p>Used by the server when building {@code SyncHelloS2C} and by
-     * {@link #masterHash()} when computing the combined hash. The snapshot is
-     * collected at call time; callers that need a consistent view should capture
-     * this result and pass it to {@link #masterHash(Map)} rather than calling
-     * {@link #masterHash()} separately.
-     *
-     * @return an unmodifiable, insertion-ordered map of namespace → current hash
+     * Snapshot of every registered namespace mapped to its current hash.
      */
     public static Map<String, Integer> collectHashes() {
         Map<String, Integer> snapshot = new LinkedHashMap<>(REGISTRY.size());
@@ -271,52 +258,26 @@ public final class ConfigSyncRegistry {
     }
 
     /**
-     * Computes a single deterministic master hash across all registered configs.
-     *
-     * <p>Namespaces are iterated in alphabetical order (via {@link TreeMap}) so the
-     * result is the same regardless of registration order. Both server and client must
-     * compute the master hash using identical inputs for the fast-path comparison to work.
-     *
-     * <p>Prefer {@link #masterHash(Map)} when you have already called {@link #collectHashes()}
-     * to avoid a redundant second round of hash computation.
-     *
-     * @return the combined master hash of all registered configs
+     * Single deterministic master hash across all registered configs.
+     * Uses alphabetical namespace order — deterministic regardless of registration order.
+     * Prefer {@link #masterHash(Map)} if you already have the hash map.
      */
     public static int masterHash() {
         return masterHash(collectHashes());
     }
 
     /**
-     * Computes the master hash from an already-collected hash map.
-     *
-     * <p>This overload exists so that the server can collect hashes once for the
-     * {@code SyncHelloS2C} packet and reuse the same values for the master hash
-     * logged at join time, without triggering a second round of hash computation.
-     *
-     * <p>The client uses this overload to compute its local master hash from the
-     * hashes received in the {@code SyncHelloS2C} packet, ensuring both sides
-     * use exactly the same values.
-     *
-     * @param hashes a map of namespace → individual hash (e.g. from {@link #collectHashes()})
-     * @return the combined master hash, computed in alphabetical namespace order
+     * Computes master hash from an already-collected snapshot.
      */
     public static int masterHash(Map<String, Integer> hashes) {
         int result = 1;
-        // TreeMap enforces alphabetical order — deterministic regardless of insertion order
-        for (int individualHash : new TreeMap<>(hashes).values()) {
+        for (int individualHash : new TreeMap<>(hashes).values())
             result = 31 * result + individualHash;
-        }
         return result;
     }
 
     /**
-     * Serializes the configs for the requested namespaces to JSON strings.
-     *
-     * <p>Used by the server when building a {@code SyncDataS2C} packet.
-     * Unknown namespaces (not present in the registry) are silently skipped.
-     *
-     * @param namespaces the namespace keys to serialize
-     * @return an unmodifiable, insertion-ordered map of namespace → JSON string
+     * Serializes only the requested namespaces to JSON. Unknown namespaces are skipped.
      */
     public static Map<String, String> serializeFor(Collection<String> namespaces) {
         Map<String, String> result = new LinkedHashMap<>(namespaces.size());
@@ -328,17 +289,10 @@ public final class ConfigSyncRegistry {
     }
 
     /**
-     * Applies a batch of namespace→JSON pairs on the client and marks each applied
-     * namespace as synced from the server.
+     * Applies received namespace→JSON pairs on the client and marks each as synced.
+     * <b>Must be called on the client render thread.</b>
      *
-     * <p><b>Must be called on the client render thread.</b> The library's packet
-     * receivers wrap calls to this method in {@code client.execute()} — consumer mods
-     * do not need to do this themselves.
-     *
-     * <p>Unknown namespaces (not present in the registry) are silently skipped,
-     * which is safe when a server has a mod the client does not.
-     *
-     * @param receivedData a map of namespace → JSON string, as received in {@code SyncDataS2C}
+     * @param receivedData namespace → config JSON, as received in {@code SyncDataS2C}
      */
     public static void applyBatch(Map<String, String> receivedData) {
         receivedData.forEach((namespace, json) -> {
@@ -351,11 +305,7 @@ public final class ConfigSyncRegistry {
     }
 
     /**
-     * Returns an unmodifiable view of all registered namespace keys.
-     *
-     * <p>Used by the server to enumerate all configs when a client requests a full sync.
-     *
-     * @return the set of all registered namespaces, in insertion order
+     * Unmodifiable view of all registered namespace keys, in insertion order.
      */
     public static Set<String> namespaces() {
         return Collections.unmodifiableSet(REGISTRY.keySet());

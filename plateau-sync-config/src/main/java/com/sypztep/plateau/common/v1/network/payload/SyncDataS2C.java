@@ -33,16 +33,14 @@ import java.util.*;
  *   <li>Sends {@link SyncAckC2S} echoing the server's master hash.</li>
  * </ol>
  *
- * @param receivedData  a map of {@code namespace → serialized config JSON}
- * @param masterHash    the server's master hash at the time this packet was built;
- *                      echoed back by the client in {@link SyncAckC2S}
+ * @param receivedData a map of {@code namespace → serialized config JSON}
+ * @param masterHash   the server's master hash at the time this packet was built;
+ *                     echoed back by the client in {@link SyncAckC2S}
  */
 public record SyncDataS2C(Map<String, String> receivedData, int masterHash) implements CustomPacketPayload {
-
     public static final Type<SyncDataS2C> ID = new Type<>(PlateauSyncConfig.id("sync_data"));
 
     /**
-     * Manual codec for the namespace→JSON map.
      * Format: [varInt count] [utf namespace, utf json] × count, [varInt masterHash]
      */
     public static final StreamCodec<FriendlyByteBuf, SyncDataS2C> CODEC = StreamCodec.of(
@@ -64,16 +62,18 @@ public record SyncDataS2C(Map<String, String> receivedData, int masterHash) impl
     );
 
     @Override
-    public @NonNull Type<? extends CustomPacketPayload> type() { return ID; }
+    public @NonNull Type<? extends CustomPacketPayload> type() {
+        return ID;
+    }
 
     /**
      * Server-side helper. Serializes the requested namespaces from the registry and
      * sends the packet to {@code player}.
      *
-     * @param player               the player to send the data to
-     * @param requestedNamespaces  the namespaces to include; typically from
-     *                             {@link SyncResponseC2S#missing()} or all registered namespaces
-     *                             on a stale fast-path fallback
+     * @param player              the player to send the data to
+     * @param requestedNamespaces the namespaces to include; typically from
+     *                            {@link SyncResponseC2S#missing()} or all registered namespaces
+     *                            on a stale fast-path fallback
      */
     public static void send(ServerPlayer player, Collection<String> requestedNamespaces) {
         ServerPlayNetworking.send(player, new SyncDataS2C(
@@ -117,7 +117,7 @@ public record SyncDataS2C(Map<String, String> receivedData, int masterHash) impl
                 if (appliedMasterHash != packet.masterHash()) {
                     PlateauSyncConfig.LOGGER.warn(
                             "Applied master hash does not match server's "
-                            + "(applied={} server={}) — proceeding anyway; server will verify",
+                                    + "(applied={} server={}) — proceeding anyway; server will verify",
                             appliedMasterHash, packet.masterHash());
                 }
 

@@ -19,7 +19,6 @@ import java.lang.annotation.*;
  *
  * <h3>Example:</h3>
  * <pre>{@code
- * @SyncConfig(namespace = MyMod.MODID)
  * public final class MyServerConfig {
  *
  *     @SerialEntry @RequireSync
@@ -34,7 +33,6 @@ import java.lang.annotation.*;
  * }
  * }</pre>
  *
- * @see SyncConfig
  * @see ConfigSyncUtil
  */
 @Retention(RetentionPolicy.RUNTIME)

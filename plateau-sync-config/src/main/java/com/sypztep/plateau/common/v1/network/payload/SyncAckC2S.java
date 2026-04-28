@@ -21,9 +21,7 @@ import org.jspecify.annotations.NonNull;
  * @param masterHash the master hash echoed from {@link SyncDataS2C#masterHash()}
  */
 public record SyncAckC2S(int masterHash) implements CustomPacketPayload {
-
     public static final Type<SyncAckC2S> ID = new Type<>(PlateauSyncConfig.id("sync_ack"));
-
     public static final StreamCodec<FriendlyByteBuf, SyncAckC2S> CODEC =
             StreamCodec.composite(ByteBufCodecs.VAR_INT, SyncAckC2S::masterHash, SyncAckC2S::new);
 

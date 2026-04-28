@@ -1,7 +1,7 @@
 package com.sypztep.plateau;
 
-import com.sypztep.plateau.client.PlateauSyncConfigClient;
 import com.sypztep.plateau.common.v1.network.ConfigSyncManager;
+import com.sypztep.plateau.common.v1.network.ConfigSyncRegistry;
 import com.sypztep.plateau.common.v1.network.payload.SyncAckC2S;
 import com.sypztep.plateau.common.v1.network.payload.SyncDataS2C;
 import com.sypztep.plateau.common.v1.network.payload.SyncHelloS2C;
@@ -23,9 +23,9 @@ public class PlateauSyncConfig implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        ConfigSyncRegistry.bootstrap();
         registerPayloads();
         registerEvents();
-        LOGGER.info("Initialized — waiting for consumer mods to register configs.");
     }
 
     private static void registerPayloads() {

@@ -1,6 +1,7 @@
 package com.sypztep.plateau.common.v1.config;
 
 import com.sypztep.plateau.PlateauSyncConfig;
+import com.sypztep.plateau.common.v1.network.ConfigSyncRegistry;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
