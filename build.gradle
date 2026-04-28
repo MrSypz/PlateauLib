@@ -53,13 +53,6 @@ base {
 }
 
 // ── Bundle all submodules into root JAR (Jar-in-Jar, like Fabric API) ──
-dependencies {
-    subprojects.forEach {
-        api project(":${it.name}")
-        include project(":${it.name}")
-    }
-}
-
 // ── Submodule-only config (root project excluded) ───────────────────
 subprojects {
     version = rootProject.version

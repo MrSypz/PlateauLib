@@ -7,6 +7,10 @@ base {
     archivesName = "UI"
 }
 
+dependencies {
+    api project(":")
+}
+
 loom {
     accessWidenerPath = file("src/main/resources/plateau-ui.classtweaker")
 }

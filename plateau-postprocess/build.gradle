@@ -8,5 +8,6 @@ base {
 }
 
 dependencies {
+    api project(":")
     api fabricApi.module("fabric-networking-api-v1", project.fabric_version)
 }
