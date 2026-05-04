@@ -116,7 +116,7 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     protected void renderFocusRing(GuiGraphicsExtractor graphics) {
         if (focusProgress > 0.01f) {
             int color = ARGB.color(focusProgress, UITheme.current().textAccent());
-            RenderHelper.drawBorder(graphics, x - 1, y - 1, width + 2, height + 2, color);
+            RenderHelper.border(graphics, x - 1, y - 1, width + 2, height + 2, color);
         }
     }
 
@@ -201,7 +201,7 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
     public boolean isFocused() { return focused; }
 
     @Override
-    public ScreenRectangle getRectangle() {
+    public @NonNull ScreenRectangle getRectangle() {
         return new ScreenRectangle(x, y, width, height);
     }
 

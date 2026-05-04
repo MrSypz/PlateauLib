@@ -269,14 +269,12 @@ public class UINavBar extends UIComponent {
 
         if (horizontal) {
             int ix = x + itemPadding;
-            int iy = y + itemPadding;
-            int ih = height - itemPadding * 2;
 
             for (int i = 0; i < items.size(); i++) {
                 NavItem item = items.get(i);
                 int iw = getItemWidth(item);
 
-                if (mx >= ix && mx < ix + iw && my >= iy && my < iy + ih) {
+                if (mx >= ix && mx < ix + iw && my >= y && my < y + height) {
                     selectItem(i);
                     return true;
                 }
