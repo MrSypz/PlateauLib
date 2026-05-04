@@ -1,7 +1,9 @@
 package com.sypztep.plateau.client.v2.ui.widget;
 
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
+import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
+import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -21,10 +23,13 @@ public class SpacerComponent extends BaseComponent {
     }
 
     @Override
-    public int determineHorizontalContentSize(int space) { return 0; }
-    @Override
-    public int determineVerticalContentSize(int space)   { return 0; }
-
-    @Override
     public void draw(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {}
+
+    @Override public SpacerComponent padding(Insets padding)  { super.padding(padding); return this; }
+    @Override public SpacerComponent margins(Insets margins)  { super.margins(margins); return this; }
+    @Override public SpacerComponent surface(Surface surface) { super.surface(surface); return this; }
+    @Override public SpacerComponent id(String id)            { super.id(id);           return this; }
+    @Override public SpacerComponent visible(boolean visible) { super.visible(visible); return this; }
+    @Override public SpacerComponent sizing(Sizing h, Sizing v){ super.sizing(h, v);    return this; }
+    @Override public SpacerComponent sizing(Sizing both)      { super.sizing(both);     return this; }
 }

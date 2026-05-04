@@ -4,7 +4,9 @@ import com.sypztep.plateau.client.v1.ui.core.RenderHelper;
 import com.sypztep.plateau.client.v1.ui.core.UISounds;
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
+import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
+import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -94,7 +96,7 @@ public class ButtonComponent extends BaseComponent {
     }
 
     @Override
-    public NarrationPriority narrationPriority() {
+    public @NonNull NarrationPriority narrationPriority() {
         if (focused) return NarrationPriority.FOCUSED;
         if (isMouseOver(minecraft.mouseHandler.xpos(), minecraft.mouseHandler.ypos())) return NarrationPriority.HOVERED;
         return NarrationPriority.NONE;
@@ -111,4 +113,12 @@ public class ButtonComponent extends BaseComponent {
     public ButtonComponent enabled(boolean enabled)                    { this.enabled = enabled; return this; }
     public ButtonComponent label(Component label)                      { this.label = label; return this; }
     public boolean isEnabled()                                         { return enabled; }
+
+    @Override public ButtonComponent padding(Insets padding)  { super.padding(padding); return this; }
+    @Override public ButtonComponent margins(Insets margins)  { super.margins(margins); return this; }
+    @Override public ButtonComponent surface(Surface surface) { super.surface(surface); return this; }
+    @Override public ButtonComponent id(String id)            { super.id(id);           return this; }
+    @Override public ButtonComponent visible(boolean visible) { super.visible(visible); return this; }
+    @Override public ButtonComponent sizing(Sizing h, Sizing v){ super.sizing(h, v);    return this; }
+    @Override public ButtonComponent sizing(Sizing both)      { super.sizing(both);     return this; }
 }

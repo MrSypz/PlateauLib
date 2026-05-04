@@ -3,6 +3,7 @@ package com.sypztep.plateau.client.v2.ui.layout;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
 import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
+import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -11,6 +12,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -49,7 +51,7 @@ public class FlowLayout extends BaseComponent {
     }
 
     public FlowLayout children(BaseComponent... components) {
-        for (BaseComponent c : components) children.add(c);
+        Collections.addAll(children, components);
         return this;
     }
 
@@ -61,6 +63,15 @@ public class FlowLayout extends BaseComponent {
     public FlowLayout gap(int gap)               { this.gap = gap; return this; }
     public FlowLayout crossAlign(Align align)    { this.crossAlign = align; return this; }
     public List<BaseComponent> getChildren()     { return children; }
+
+    // Override fluent base methods to preserve FlowLayout return type in chains
+    @Override public FlowLayout padding(Insets padding)   { super.padding(padding);  return this; }
+    @Override public FlowLayout margins(Insets margins)   { super.margins(margins);  return this; }
+    @Override public FlowLayout surface(Surface surface)  { super.surface(surface);  return this; }
+    @Override public FlowLayout id(String id)             { super.id(id);            return this; }
+    @Override public FlowLayout visible(boolean visible)  { super.visible(visible);  return this; }
+    @Override public FlowLayout sizing(Sizing h, Sizing v){ super.sizing(h, v);      return this; }
+    @Override public FlowLayout sizing(Sizing both)       { super.sizing(both);      return this; }
 
     // ── Layout ───────────────────────────────────────────────
 
@@ -114,8 +125,8 @@ public class FlowLayout extends BaseComponent {
         float fillUnit = totalFillWeight > 0 ? (float) remaining / totalFillWeight : 0;
 
         for (int i = 0; i < vis.size(); i++) {
-            if (vis.get(i).verticalSizing() instanceof Sizing.Fill f) {
-                heights[i] = Math.max(0, (int)(f.weight() * fillUnit));
+            if (vis.get(i).verticalSizing() instanceof Sizing.Fill(int weight)) {
+                heights[i] = Math.max(0, (int)(weight * fillUnit));
             }
         }
 
@@ -167,8 +178,8 @@ public class FlowLayout extends BaseComponent {
         float fillUnit = totalFillWeight > 0 ? (float) remaining / totalFillWeight : 0;
 
         for (int i = 0; i < vis.size(); i++) {
-            if (vis.get(i).horizontalSizing() instanceof Sizing.Fill f) {
-                widths[i] = Math.max(0, (int)(f.weight() * fillUnit));
+            if (vis.get(i).horizontalSizing() instanceof Sizing.Fill(int weight)) {
+                widths[i] = Math.max(0, (int)(weight * fillUnit));
             }
         }
 

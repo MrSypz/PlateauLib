@@ -2,7 +2,9 @@ package com.sypztep.plateau.client.v2.ui.widget;
 
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
+import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
+import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -49,4 +51,12 @@ public class LabelComponent extends BaseComponent {
     public LabelComponent secondary()  { return color(UITheme.current().textSecondary()); }
     public LabelComponent accent()     { return color(UITheme.current().textAccent()); }
     public LabelComponent disabled()   { return color(UITheme.current().textDisabled()); }
+
+    @Override public LabelComponent padding(Insets padding)  { super.padding(padding); return this; }
+    @Override public LabelComponent margins(Insets margins)  { super.margins(margins); return this; }
+    @Override public LabelComponent surface(Surface surface) { super.surface(surface); return this; }
+    @Override public LabelComponent id(String id)            { super.id(id);           return this; }
+    @Override public LabelComponent visible(boolean visible) { super.visible(visible); return this; }
+    @Override public LabelComponent sizing(Sizing h, Sizing v){ super.sizing(h, v);    return this; }
+    @Override public LabelComponent sizing(Sizing both)      { super.sizing(both);     return this; }
 }

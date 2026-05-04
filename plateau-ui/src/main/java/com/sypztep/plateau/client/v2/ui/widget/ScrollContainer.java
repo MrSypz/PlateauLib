@@ -2,7 +2,9 @@ package com.sypztep.plateau.client.v2.ui.widget;
 
 import com.sypztep.plateau.client.v1.ui.behavior.ScrollBehavior;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
+import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
+import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -11,6 +13,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -47,7 +50,7 @@ public class ScrollContainer extends BaseComponent {
     }
 
     public ScrollContainer children(BaseComponent... components) {
-        for (BaseComponent c : components) children.add(c);
+        Collections.addAll(children, components);
         return this;
     }
 
@@ -57,6 +60,15 @@ public class ScrollContainer extends BaseComponent {
     }
 
     public ScrollContainer gap(int gap) { this.gap = gap; return this; }
+
+    // Override fluent base methods to preserve ScrollContainer return type in chains
+    @Override public ScrollContainer padding(Insets padding)  { super.padding(padding); return this; }
+    @Override public ScrollContainer margins(Insets margins)  { super.margins(margins); return this; }
+    @Override public ScrollContainer surface(Surface surface) { super.surface(surface); return this; }
+    @Override public ScrollContainer id(String id)            { super.id(id);           return this; }
+    @Override public ScrollContainer visible(boolean visible) { super.visible(visible); return this; }
+    @Override public ScrollContainer sizing(Sizing h, Sizing v){ super.sizing(h, v);    return this; }
+    @Override public ScrollContainer sizing(Sizing both)      { super.sizing(both);     return this; }
 
     // ── Layout ───────────────────────────────────────────────
 
