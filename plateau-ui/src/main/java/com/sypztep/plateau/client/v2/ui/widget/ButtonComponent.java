@@ -51,7 +51,7 @@ public class ButtonComponent extends BaseComponent {
     protected boolean isFocusable() { return enabled; }
 
     @Override
-    public void draw(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+    public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         boolean hovered = enabled && isMouseOver(mouseX, mouseY);
         hoverProgress = stepAnimation(hoverProgress, hovered || (focused && enabled), 0.1f);
 

@@ -32,7 +32,7 @@ public class LabelComponent extends BaseComponent {
     public int determineVerticalContentSize(int space)   { return font.lineHeight; }
 
     @Override
-    public void draw(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+    public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (centered) {
             int textX = x + (width - font.width(text)) / 2;
             int textY = y + (height - font.lineHeight) / 2;

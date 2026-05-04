@@ -118,7 +118,7 @@ public class ScrollContainer extends BaseComponent {
     // ── Rendering ─────────────────────────────────────────────
 
     @Override
-    public void draw(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+    public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         scroll.setBounds(x, y, width, height);
         scroll.setContentHeight(contentHeight);
         scroll.update(delta);

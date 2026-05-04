@@ -72,14 +72,14 @@ public abstract class BaseComponent implements GuiEventListener, Renderable, Nar
     // ── Rendering ────────────────────────────────────────────
 
     @Override
-    public final void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+    public final void extractRenderState(@NonNull GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (!visible) return;
-        surface.draw(g, x, y, width, height);
-        draw(g, mouseX, mouseY, delta);
+        surface.extract(g, x, y, width, height);
+        extract(g, mouseX, mouseY, delta);
     }
 
     /** Override to render this component's content. Surface is already drawn before this is called. */
-    public abstract void draw(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta);
+    public abstract void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta);
 
     // ── Animation helpers ─────────────────────────────────────
 

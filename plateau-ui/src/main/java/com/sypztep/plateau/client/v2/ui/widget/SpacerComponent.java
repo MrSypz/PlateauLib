@@ -23,7 +23,7 @@ public class SpacerComponent extends BaseComponent {
     }
 
     @Override
-    public void draw(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {}
+    public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {}
 
     @Override public SpacerComponent padding(Insets padding)  { super.padding(padding); return this; }
     @Override public SpacerComponent margins(Insets margins)  { super.margins(margins); return this; }

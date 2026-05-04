@@ -49,7 +49,7 @@ public class SeparatorComponent extends BaseComponent {
     public int determineVerticalContentSize(int space)   { return axis == Axis.HORIZONTAL ? 1 : space; }
 
     @Override
-    public void draw(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+    public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         int c = color != -1 ? color : UITheme.current().panelBorder();
         g.fill(x, y, x + width, y + height, c);
     }

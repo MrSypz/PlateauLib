@@ -7,7 +7,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 @FunctionalInterface
 public interface Surface {
 
-    void draw(GuiGraphicsExtractor graphics, int x, int y, int width, int height);
+    void extract(GuiGraphicsExtractor graphics, int x, int y, int width, int height);
 
     Surface NONE = (g, x, y, w, h) -> {};
 
@@ -33,6 +33,6 @@ public interface Surface {
     }
 
     default Surface andThen(Surface next) {
-        return (g, x, y, w, h) -> { this.draw(g, x, y, w, h); next.draw(g, x, y, w, h); };
+        return (g, x, y, w, h) -> { this.extract(g, x, y, w, h); next.extract(g, x, y, w, h); };
     }
 }

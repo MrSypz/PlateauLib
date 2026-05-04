@@ -303,7 +303,7 @@ public class FlowLayout extends BaseComponent {
     // ── Rendering ─────────────────────────────────────────────
 
     @Override
-    public void draw(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+    public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         for (BaseComponent child : children) {
             if (child.isVisible()) {
                 child.extractRenderState(g, mouseX, mouseY, delta);
