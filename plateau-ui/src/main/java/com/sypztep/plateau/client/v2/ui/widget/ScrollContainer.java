@@ -8,9 +8,12 @@ import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.PreeditEvent;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -145,6 +148,14 @@ public class ScrollContainer extends BaseComponent {
     // ── Input ─────────────────────────────────────────────────
 
     @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        double adjustedY = mouseY + scroll.getScrollOffset();
+        for (BaseComponent c : children) {
+            if (c.isVisible()) c.mouseMoved(mouseX, adjustedY);
+        }
+    }
+
+    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
         if (!isMouseOver(mouseX, mouseY)) return false;
         return scroll.mouseScrolled(mouseX, mouseY, vAmount);
@@ -194,6 +205,14 @@ public class ScrollContainer extends BaseComponent {
         if (key == 267) { scroll.scrollBy( height - 20);  return true; } // PAGE_DOWN
         if (key == 268) { scroll.scrollTo(0);             return true; } // HOME
         if (key == 269) { scroll.scrollToEnd();           return true; } // END
+        return false;
+    }
+
+    @Override
+    public boolean charTyped(@NonNull CharacterEvent event) {
+        for (BaseComponent c : children) {
+            if (c.isVisible() && c.charTyped(event)) return true;
+        }
         return false;
     }
 

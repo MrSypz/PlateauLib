@@ -7,9 +7,12 @@ import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.PreeditEvent;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -314,6 +317,13 @@ public class FlowLayout extends BaseComponent {
     // ── Input — forward to children ───────────────────────────
 
     @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        for (BaseComponent c : children) {
+            if (c.isVisible()) c.mouseMoved(mouseX, mouseY);
+        }
+    }
+
+    @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
         for (int i = children.size() - 1; i >= 0; i--) {
             BaseComponent c = children.get(i);
@@ -351,6 +361,30 @@ public class FlowLayout extends BaseComponent {
     public boolean keyPressed(@NonNull KeyEvent keyEvent) {
         for (BaseComponent c : children) {
             if (c.isVisible() && c.keyPressed(keyEvent)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean keyReleased(@NonNull KeyEvent keyEvent) {
+        for (BaseComponent c : children) {
+            if (c.isVisible() && c.keyReleased(keyEvent)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean charTyped(@NonNull CharacterEvent event) {
+        for (BaseComponent c : children) {
+            if (c.isVisible() && c.charTyped(event)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean preeditUpdated(@Nullable PreeditEvent event) {
+        for (BaseComponent c : children) {
+            if (c.isVisible() && c.preeditUpdated(event)) return true;
         }
         return false;
     }
