@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plateau UI Theme Editor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style type="text/tailwindcss">
+    .btn {
+      @apply border border-[#050607] bg-[#2b2b2b] text-[#d0d0d4] px-[10px] py-[6px] cursor-pointer min-h-[30px]
+             hover:border-[var(--border-hot)] hover:text-[#e8d8b6] hover:bg-[#34302a] transition-colors;
+    }
+    .btn.danger:hover {
+      border-color: var(--danger);
+      color: #ffdada;
+    }
+    .field {
+      @apply grid items-center gap-2;
+      grid-template-columns: 160px 44px 1fr;
+    }
+    .color-row {
+      @apply grid gap-[6px];
+      grid-template-columns: 1fr 74px;
+    }
+    .editor-section {
+      @apply border border-[var(--border)] bg-[#15161c] mb-[10px];
+    }
+    .editor-summary {
+      @apply cursor-pointer py-[9px] px-[10px] text-[var(--accent)] font-bold
+             bg-[#111219] border-b border-[var(--border)] select-none;
+    }
+    .editor-grid {
+      @apply grid grid-cols-1 gap-2 p-[10px];
+    }
+    .editor-label {
+      @apply text-[var(--muted)] whitespace-nowrap overflow-hidden text-ellipsis;
+    }
+    .editor-swatch {
+      @apply w-[42px] h-[26px] border border-[var(--border)] bg-black;
+    }
+  </style>
+
+  <style>
+    :root {
+      --bg: #0f0f12;
+      --panel: #18191f;
+      --panel-2: #202129;
+      --border: #30313a;
+      --border-hot: #c8a96a;
+      --text: #e8e8ec;
+      --muted: #9a9aa2;
+      --disabled: #5a5a62;
+      --accent: #c8a96a;
+      --danger: #d56b6b;
+      --code: #111216;
+      --input: #101116;
+      --shadow: rgba(0, 0, 0, 0.45);
+    }
+
+    button, input, textarea, select { font: inherit; }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      background: var(--input);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      outline: none;
+    }
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    textarea:focus { border-color: var(--border-hot); }
+
+    input[type="color"] {
+      width: 100%;
+      height: 31px;
+      border: 1px solid var(--border);
+      background: var(--input);
+      padding: 0;
+      cursor: pointer;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 300px;
+      resize: none;
+      border: 0;
+      background: var(--code);
+      color: var(--text);
+      padding: 10px;
+      outline: none;
+      font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .preview-button::before {
+      content: "";
+      position: absolute;
+      inset: 1px 1px 3px 1px;
+      border: 1px solid #444;
+      pointer-events: none;
+    }
+    .preview-button::after {
+      content: "";
+      position: absolute;
+      left: 1px; right: 1px; bottom: 2px;
+      height: 2px;
+      background: #333;
+      pointer-events: none;
+    }
+
+    details summary::-webkit-details-marker { display: none; }
+
+    @media (max-width: 980px) {
+      .app-grid { grid-template-columns: 1fr !important; }
+      .panel-col { min-height: auto !important; }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-[var(--bg)] text-[var(--text)] text-sm">
+
+  <div class="app-grid grid gap-[14px] p-[14px] min-h-screen"
+       style="grid-template-columns: minmax(360px, 520px) minmax(420px, 1fr);">
+
+    <!-- ── Left: Editor ── -->
+    <section class="panel-col bg-[var(--panel)] border border-[var(--border)] shadow-[0_12px_40px_var(--shadow)] min-w-0 flex flex-col overflow-hidden"
+             style="min-height: calc(100vh - 28px);">
+
+      <div class="flex gap-2 p-[10px] border-b border-[var(--border)] bg-[#14151b] items-center flex-wrap">
+        <div class="font-bold text-[var(--accent)] mr-auto tracking-[0.03em]">Plateau UI Theme Editor</div>
+
+        <!-- Preset theme buttons -->
+        <button class="btn" id="loadDark">Dark</button>
+        <button class="btn" id="loadLegacy">Legacy</button>
+
+        <label class="btn">
+          Import
+          <input class="hidden" id="fileInput" type="file" accept=".json,application/json" />
+        </label>
+
+        <button class="btn" id="downloadBtn">Download</button>
+      </div>
+
+      <div class="overflow-auto p-[10px]" id="editor"></div>
+    </section>
+
+    <!-- ── Right: Preview + JSON ── -->
+    <section class="panel-col bg-[var(--panel)] border border-[var(--border)] shadow-[0_12px_40px_var(--shadow)] min-w-0 flex flex-col overflow-hidden"
+             style="min-height: calc(100vh - 28px);">
+
+      <div class="flex gap-2 p-[10px] border-b border-[var(--border)] bg-[#14151b] items-center flex-wrap">
+        <div class="font-bold text-[var(--accent)] mr-auto tracking-[0.03em]">Preview</div>
+        <button class="btn" id="copyBtn">Copy JSON</button>
+        <button class="btn danger" id="syncFromJsonBtn">Apply JSON Text</button>
+      </div>
+
+      <!-- Live preview pane -->
+      <div class="p-[18px] overflow-auto flex-1 bg-[#101014]">
+        <div class="min-h-full p-5 border border-black" id="previewScreen">
+          <div class="border border-black p-3 max-w-[760px] mx-auto" id="previewPanel">
+            <div class="p-[10px] -mx-3 -mt-3 mb-3 text-center font-bold" id="previewHeader">Theme Preview</div>
+
+            <div class="font-bold mb-1" id="previewPrimary">Primary text / title</div>
+            <div class="mb-1" id="previewSecondary">Secondary text / description</div>
+            <div id="previewDisabled">Disabled text / unavailable option</div>
+
+            <div class="flex gap-2 my-[10px] flex-wrap">
+              <div class="preview-button min-w-[120px] h-7 relative grid place-items-center border border-black bg-[#222] text-[#ddd]"
+                   id="btnNormal">Normal</div>
+              <div class="preview-button min-w-[120px] h-7 relative grid place-items-center border border-black bg-[#222] text-[#ddd] -translate-y-0.5"
+                   id="btnHover">Hover</div>
+              <div class="preview-button min-w-[120px] h-7 relative grid place-items-center border border-black bg-[#222] text-[#ddd] translate-y-px"
+                   id="btnPressed">Pressed</div>
+              <div class="preview-button min-w-[120px] h-7 relative grid place-items-center border border-black bg-[#222] text-[#ddd]"
+                   id="btnDisabled">Disabled</div>
+            </div>
+
+            <div class="h-3 border border-black mt-3 relative" id="previewProgress">
+              <div class="absolute top-[2px] bottom-[2px] left-[2px] w-[62%]" id="previewProgressFill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- JSON output -->
+      <div class="grid border-t border-[var(--border)]" style="grid-template-rows: auto 1fr; min-height: 300px;">
+        <div class="py-2 px-[10px] text-[var(--muted)] bg-[#14151b] border-b border-[var(--border)] flex justify-between gap-[10px]">
+          <span>Generated JSON</span>
+          <span id="status">Ready</span>
+        </div>
+        <textarea id="jsonOutput" spellcheck="false"></textarea>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    /* ═══════════════════════════════════════════════
+       PRESET THEMES
+    ═══════════════════════════════════════════════ */
+
+    const darkTheme = {
+      "screen_background": "#F0101014",
+      "panel": { "bg": "#FF18191F", "bg_hover": "#FF22242A", "border": "#FF050607", "border_hover": "#FF3A3428", "header_bg": "#FF141419" },
+      "text": { "primary": "#FFE8E8EC", "secondary": "#FF96969C", "disabled": "#FF505056", "accent": "#FFC8A96A" },
+      "button": {
+        "bg":       { "normal": "#FF2B2B2B", "hover": "#FF34302A", "pressed": "#FF1D1B18", "disabled": "#FF171717" },
+        "border":   { "normal": "#FF050607", "hover": "#FF050607", "pressed": "#FF030405", "disabled": "#FF030405" },
+        "underline":{ "normal": "#FF282828", "hover": "#FF383838", "pressed": "#FF232323", "disabled": "#FF0D0D0D" },
+        "outline":  { "normal": "#FF444444", "hover": "#FFC0AE88", "pressed": "#FF6F6553", "disabled": "#FF1A1A1A" },
+        "text":     { "normal": "#FFD0D0D4", "hover": "#FFE8D8B6" }
+      },
+      "nav": { "bg": "#FF151519", "indicator": "#FFC8A96A" },
+      "progress": { "bg": "#FF151515", "border": "#FF050607", "fill": "#FFC8A96A" },
+      "animation": { "hover_speed": 1.0, "hover_speed_fast": 0.2 }
+    };
+
+    const legacyTheme = {
+      "screen_background": "#F0121212",
+      "panel": { "bg": "#FF1A1A1A", "bg_hover": "#FF222222", "border": "#FF424242", "border_hover": "#FF6D6D6D", "header_bg": "#FF212121" },
+      "text": { "primary": "#FFFFFFFF", "secondary": "#FFAAAAAA", "disabled": "#FF666666", "accent": "#FFFFD700" },
+      "button": {
+        "bg":       { "normal": "#FF2B2B2B", "hover": "#FF34302A", "pressed": "#FF1D1B18", "disabled": "#FF171717" },
+        "border":   { "normal": "#FF050607", "hover": "#FF050607", "pressed": "#FF030405", "disabled": "#FF030405" },
+        "underline":{ "normal": "#FF282828", "hover": "#FF383838", "pressed": "#FF232323", "disabled": "#FF0D0D0D" },
+        "outline":  { "normal": "#FF444444", "hover": "#FFC0AE88", "pressed": "#FF6F6553", "disabled": "#FF1A1A1A" },
+        "text":     { "normal": "#FFD0D0D4", "hover": "#FFE8D8B6" }
+      },
+      "nav": { "bg": "#FF1E1E1E", "indicator": "#FFFFCC00" },
+      "progress": { "bg": "#FF333333", "border": "#FF555555", "fill": "#FF7FBD3E" },
+      "animation": { "hover_speed": 1.0, "hover_speed_fast": 0.2 }
+    };
+
+    /* ═══════════════════════════════════════════════
+       SCHEMA
+    ═══════════════════════════════════════════════ */
+    const schema = [
+      { title: "Screen", fields: [["screen_background","color"]] },
+      { title: "Panel",  fields: [["panel.bg","color"],["panel.bg_hover","color"],["panel.border","color"],["panel.border_hover","color"],["panel.header_bg","color"]] },
+      { title: "Text",   fields: [["text.primary","color"],["text.secondary","color"],["text.disabled","color"],["text.accent","color"]] },
+      { title: "Button / Background", fields: [["button.bg.normal","color"],["button.bg.hover","color"],["button.bg.pressed","color"],["button.bg.disabled","color"]] },
+      { title: "Button / Border",     fields: [["button.border.normal","color"],["button.border.hover","color"],["button.border.pressed","color"],["button.border.disabled","color"]] },
+      { title: "Button / Underline",  fields: [["button.underline.normal","color"],["button.underline.hover","color"],["button.underline.pressed","color"],["button.underline.disabled","color"]] },
+      { title: "Button / Outline",    fields: [["button.outline.normal","color"],["button.outline.hover","color"],["button.outline.pressed","color"],["button.outline.disabled","color"]] },
+      { title: "Button / Text",       fields: [["button.text.normal","color"],["button.text.hover","color"]] },
+      { title: "Nav",      fields: [["nav.bg","color"],["nav.indicator","color"]] },
+      { title: "Progress", fields: [["progress.bg","color"],["progress.border","color"],["progress.fill","color"]] },
+      { title: "Animation",fields: [["animation.hover_speed","number"],["animation.hover_speed_fast","number"]] }
+    ];
+
+    let theme = structuredClone(darkTheme);
+    const editor    = document.getElementById("editor");
+    const jsonOutput= document.getElementById("jsonOutput");
+    const statusEl  = document.getElementById("status");
+
+    /* ── Utilities ── */
+    function getPath(obj, path) { return path.split(".").reduce((c,k) => c[k], obj); }
+    function setPath(obj, path, value) {
+      const parts = path.split("."), last = parts.pop();
+      parts.reduce((c,k) => c[k], obj)[last] = value;
+    }
+    function normalizeArgb(v) {
+      let s = String(v||"").trim().toUpperCase();
+      if (!s.startsWith("#")) s = "#" + s;
+      if (/^#[0-9A-F]{6}$/.test(s)) return "#FF" + s.slice(1);
+      if (/^#[0-9A-F]{8}$/.test(s)) return s;
+      return "#FFFF00FF";
+    }
+    function argbToRgb(v) { return "#" + normalizeArgb(v).slice(3); }
+    function rgbToArgb(rgb, prevArgb) {
+      return "#" + normalizeArgb(prevArgb).slice(1,3) + rgb.replace("#","").toUpperCase();
+    }
+    function prettyName(path) { return path.replaceAll("."," / ").replaceAll("_"," "); }
+    function css(argb) {
+      const s = normalizeArgb(argb);
+      const a = parseInt(s.slice(1,3),16)/255,
+            r = parseInt(s.slice(3,5),16),
+            g = parseInt(s.slice(5,7),16),
+            b = parseInt(s.slice(7,9),16);
+      return `rgba(${r},${g},${b},${a.toFixed(3)})`;
+    }
+    function setStatus(text, error=false) {
+      statusEl.textContent = text;
+      statusEl.style.color = error ? "var(--danger)" : "var(--muted)";
+    }
+
+    /* ── Build editor (Tailwind classes on generated elements) ── */
+    function buildEditor() {
+      editor.innerHTML = "";
+      for (const section of schema) {
+        const details = document.createElement("details");
+        details.open = true;
+        details.className = "editor-section";
+
+        const summary = document.createElement("summary");
+        summary.className = "editor-summary";
+        summary.textContent = section.title;
+        details.appendChild(summary);
+
+        const grid = document.createElement("div");
+        grid.className = "editor-grid";
+
+        for (const [path, type] of section.fields) {
+          const field = document.createElement("div");
+          field.className = "field";
+
+          const label = document.createElement("div");
+          label.className = "editor-label";
+          label.title = path;
+          label.textContent = prettyName(path);
+
+          if (type === "color") {
+            const swatch = document.createElement("div");
+            swatch.className = "editor-swatch";
+
+            const row = document.createElement("div");
+            row.className = "color-row";
+
+            const text  = document.createElement("input"); text.type  = "text";
+            const color = document.createElement("input"); color.type = "color";
+
+            text.value  = normalizeArgb(getPath(theme, path));
+            color.value = argbToRgb(text.value);
+
+            const sync = (next, fromPicker=false) => {
+              const old   = getPath(theme, path);
+              const value = fromPicker ? rgbToArgb(next, old) : normalizeArgb(next);
+              setPath(theme, path, value);
+              text.value  = value;
+              color.value = argbToRgb(value);
+              swatch.style.background = argbToRgb(value);
+              updateAll(false);
+            };
+
+            text.addEventListener("input",  () => sync(text.value, false));
+            color.addEventListener("input", () => sync(color.value, true));
+            swatch.style.background = argbToRgb(text.value);
+
+            row.appendChild(text);
+            row.appendChild(color);
+            field.appendChild(label);
+            field.appendChild(swatch);
+            field.appendChild(row);
+          } else {
+            const spacer = document.createElement("div");
+            const input  = document.createElement("input");
+            input.type = "number"; input.step = "0.01";
+            input.value = getPath(theme, path);
+            input.addEventListener("input", () => {
+              setPath(theme, path, Number(input.value));
+              updateAll(false);
+            });
+            field.appendChild(label);
+            field.appendChild(spacer);
+            field.appendChild(input);
+          }
+
+          grid.appendChild(field);
+        }
+
+        details.appendChild(grid);
+        editor.appendChild(details);
+      }
+    }
+
+    /* ── Preview ── */
+    function applyPreview() {
+      const s  = id => document.getElementById(id);
+      s("previewScreen").style.background  = css(theme.screen_background);
+      s("previewPanel").style.background   = css(theme.panel.bg);
+      s("previewPanel").style.borderColor  = css(theme.panel.border);
+      s("previewHeader").style.background  = css(theme.panel.header_bg);
+      s("previewHeader").style.color       = css(theme.text.accent);
+      s("previewPrimary").style.color      = css(theme.text.primary);
+      s("previewSecondary").style.color    = css(theme.text.secondary);
+      s("previewDisabled").style.color     = css(theme.text.disabled);
+      styleButton(s("btnNormal"),   "normal");
+      styleButton(s("btnHover"),    "hover");
+      styleButton(s("btnPressed"),  "pressed");
+      styleButton(s("btnDisabled"), "disabled");
+      s("previewProgress").style.background   = css(theme.progress.bg);
+      s("previewProgress").style.borderColor  = css(theme.progress.border);
+      s("previewProgressFill").style.background = css(theme.progress.fill);
+    }
+
+    function styleButton(el, state) {
+      const b = theme.button;
+      el.style.background  = css(b.bg[state]);
+      el.style.borderColor = css(b.border[state]);
+      el.style.color = state === "disabled"
+        ? css(theme.text.disabled)
+        : css(state === "hover" ? b.text.hover : b.text.normal);
+      el.style.boxShadow = `inset 0 0 0 1px ${css(b.outline[state])}`;
+    }
+
+    function updateJson() { jsonOutput.value = JSON.stringify(theme, null, 2); }
+
+    function updateAll(rebuild=true) {
+      if (rebuild) buildEditor();
+      updateJson();
+      applyPreview();
+      setStatus("Ready");
+    }
+
+    function loadTheme(next) { theme = structuredClone(next); updateAll(true); }
+
+    function applyJsonText() {
+      try {
+        theme = JSON.parse(jsonOutput.value);
+        updateAll(true);
+        setStatus("JSON applied");
+      } catch(e) { setStatus("Invalid JSON: " + e.message, true); }
+    }
+
+    function downloadTheme() {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(theme,null,2)],{type:"application/json"}));
+      a.download = "theme.json"; a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    async function copyJson() {
+      await navigator.clipboard.writeText(JSON.stringify(theme,null,2));
+      setStatus("Copied JSON");
+    }
+
+    /* ── Event wiring ── */
+    document.getElementById("loadDark").addEventListener("click",    () => loadTheme(darkTheme));
+    document.getElementById("loadLegacy").addEventListener("click",  () => loadTheme(legacyTheme));
+    document.getElementById("downloadBtn").addEventListener("click",    downloadTheme);
+    document.getElementById("copyBtn").addEventListener("click",        copyJson);
+    document.getElementById("syncFromJsonBtn").addEventListener("click",applyJsonText);
+
+    document.getElementById("fileInput").addEventListener("change", async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        theme = JSON.parse(await file.text());
+        updateAll(true);
+        setStatus("Imported: " + file.name);
+      } catch(err) { setStatus("Import failed: " + err.message, true); }
+    });
+
+    jsonOutput.addEventListener("input", () => setStatus("JSON edited manually"));
+
+    updateAll(true);
+  </script>
+</body>
+</html>
