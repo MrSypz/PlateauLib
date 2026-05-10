@@ -99,16 +99,19 @@ public class UIRow extends UIComponent implements ContainerEventHandler {
     public @Nullable GuiEventListener getFocused() { return focused; }
 
     @Override
-    public void setFocused(@Nullable GuiEventListener listener) { this.focused = listener; }
+    public void setFocused(@Nullable GuiEventListener listener) {
+        if (this.focused != null) this.focused.setFocused(false);
+        this.focused = listener;
+        if (listener != null) listener.setFocused(true);
+    }
 
     @Override
     public void setFocused(boolean focused) {
-        super.setFocused(focused);
-        if (!focused && this.focused != null) {
-            this.focused.setFocused(false);
-            this.focused = null;
-        }
+        if (!focused) setFocused((GuiEventListener) null);
     }
+
+    @Override
+    public boolean isFocused() { return focused != null; }
 
     @Override
     public boolean isDragging() { return isDragging; }

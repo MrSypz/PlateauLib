@@ -118,7 +118,7 @@ public class UINavBar extends UIComponent {
         updateHoverAnimations(mouseX, mouseY);
 
         UITheme theme = UITheme.current();
-        graphics.fill(x, y, x + width, y + height, theme.navBg());
+        graphics.fill(x, y, x + width, y + height, theme.nav().bg());
 
         if (horizontal) {
             renderHorizontal(graphics, mouseX, mouseY, theme);
@@ -167,7 +167,7 @@ public class UINavBar extends UIComponent {
 
         graphics.fill((int) selectionAnimPos, y + height - 3,
                 (int) (selectionAnimPos + selectionAnimSize), y + height,
-                theme.navIndicator());
+                theme.nav().indicator());
 
         for (int i = 0; i < items.size(); i++) {
             NavItem item = items.get(i);
@@ -186,7 +186,7 @@ public class UINavBar extends UIComponent {
 
         graphics.fill(x, (int) selectionAnimPos, x + 3,
                 (int) (selectionAnimPos + selectionAnimSize),
-                theme.navIndicator());
+                theme.nav().indicator());
 
         for (int i = 0; i < items.size(); i++) {
             NavItem item = items.get(i);
@@ -201,7 +201,7 @@ public class UINavBar extends UIComponent {
 
     private void renderItem(GuiGraphicsExtractor graphics, NavItem item, int ix, int iy, int iw, int ih,
                             boolean selected, float hover, UITheme theme) {
-        int baseColor = selected ? 0xFFFFFFFF : theme.textSecondary();
+        int baseColor = selected ? 0xFFFFFFFF : theme.text().secondary();
         int hoverTarget = selected ? 0xFFFFFFFF : 0xFFE0E0E0;
         int textColor = ARGB.srgbLerp(hover, baseColor, hoverTarget );
 
@@ -229,7 +229,7 @@ public class UINavBar extends UIComponent {
 
     private void renderItemVertical(GuiGraphicsExtractor graphics, NavItem item, int ix, int iy, int iw, int ih,
                                     boolean selected, float hover, UITheme theme) {
-        int baseColor = selected ? 0xFFFFFFFF : theme.textSecondary();
+        int baseColor = selected ? 0xFFFFFFFF : theme.text().secondary();
         int hoverTarget = selected ? 0xFFFFFFFF : 0xFFE0E0E0;
         int textColor = ARGB.srgbLerp(hover, baseColor, hoverTarget);
 

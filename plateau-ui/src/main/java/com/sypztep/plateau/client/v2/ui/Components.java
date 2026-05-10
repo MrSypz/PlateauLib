@@ -6,6 +6,8 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Component;
 
+import java.util.function.Consumer;
+
 /**
  * Factory methods for leaf v2 UI components.
  * <pre>{@code
@@ -25,8 +27,8 @@ public final class Components {
 
     public static ButtonComponent button(Component label)                                          { return new ButtonComponent(label); }
     public static ButtonComponent button(String label)                                             { return new ButtonComponent(Component.literal(label)); }
-    public static ButtonComponent button(Component label, java.util.function.Consumer<ButtonComponent> onClick) { return new ButtonComponent(label).onClick(onClick); }
-    public static ButtonComponent button(String label,    java.util.function.Consumer<ButtonComponent> onClick) { return new ButtonComponent(Component.literal(label)).onClick(onClick); }
+    public static ButtonComponent button(Component label, Consumer<ButtonComponent> onClick) { return new ButtonComponent(label).onClick(onClick); }
+    public static ButtonComponent button(String label,    Consumer<ButtonComponent> onClick) { return new ButtonComponent(Component.literal(label)).onClick(onClick); }
 
     public static SpacerComponent spacer(int size)                      { return new SpacerComponent(size); }
     public static SpacerComponent spacer(Sizing horizontal, Sizing vertical) { return new SpacerComponent(horizontal, vertical); }

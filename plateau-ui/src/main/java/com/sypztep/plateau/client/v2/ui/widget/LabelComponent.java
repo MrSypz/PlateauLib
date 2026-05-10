@@ -21,7 +21,7 @@ public class LabelComponent extends BaseComponent {
 
     public LabelComponent(Component text) {
         this.text  = text;
-        this.color = UITheme.current().textPrimary();
+        this.color = UITheme.current().text().primary();
         this.horizontalSizing = Sizing.content();
         this.verticalSizing   = Sizing.content();
     }
@@ -48,9 +48,9 @@ public class LabelComponent extends BaseComponent {
     public LabelComponent shadow(boolean shadow)   { this.shadow = shadow; return this; }
     public LabelComponent centered(boolean v)      { this.centered = v; return this; }
 
-    public LabelComponent secondary()  { return color(UITheme.current().textSecondary()); }
-    public LabelComponent accent()     { return color(UITheme.current().textAccent()); }
-    public LabelComponent disabled()   { return color(UITheme.current().textDisabled()); }
+    public LabelComponent secondary()  { return color(UITheme.current().text().secondary()); }
+    public LabelComponent accent()     { return color(UITheme.current().text().accent()); }
+    public LabelComponent disabled()   { return color(UITheme.current().text().disabled()); }
 
     @Override public LabelComponent padding(Insets padding)  { super.padding(padding); return this; }
     @Override public LabelComponent margins(Insets margins)  { super.margins(margins); return this; }

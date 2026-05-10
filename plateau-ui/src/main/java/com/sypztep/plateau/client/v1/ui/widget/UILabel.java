@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 
 public class UILabel extends UIComponent {
     private Component text;
-    private int color = UITheme.current().textPrimary();
+    private int color = UITheme.current().text().primary();
     private boolean shadow = true;
     private boolean centered = false;
 

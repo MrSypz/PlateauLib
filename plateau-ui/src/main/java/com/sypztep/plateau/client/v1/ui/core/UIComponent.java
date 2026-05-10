@@ -115,7 +115,7 @@ public abstract class UIComponent implements GuiEventListener, Renderable, Narra
      */
     protected void renderFocusRing(GuiGraphicsExtractor graphics) {
         if (focusProgress > 0.01f) {
-            int color = ARGB.color(focusProgress, UITheme.current().textAccent());
+            int color = ARGB.color(focusProgress, UITheme.current().text().accent());
             RenderHelper.border(graphics, x - 1, y - 1, width + 2, height + 2, color);
         }
     }

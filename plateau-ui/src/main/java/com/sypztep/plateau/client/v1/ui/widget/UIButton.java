@@ -102,12 +102,12 @@ public class UIButton extends UIComponent {
         // Glow
         if (hoverAnimation > 0.3f && enabled && glowIntensity > 0) {
             int glow = ARGB.white((int)(40 * hoverAnimation * glowIntensity));
-            RenderHelper.drawBorder(graphics, x - 1, y - 1, width + 2, height + 2, glow);
+            RenderHelper.border(graphics, x - 1, y - 1, width + 2, height + 2, glow);
         }
 
         // Focus ring
         if (focused && enabled) {
-            RenderHelper.drawBorder(graphics, x - 2, y - 2, width + 4, height + 4, 0xFFFFFFFF);
+            RenderHelper.border(graphics, x - 2, y - 2, width + 4, height + 4, 0xFFFFFFFF);
         }
 
         graphics.pose().popMatrix();
@@ -153,15 +153,16 @@ public class UIButton extends UIComponent {
     }
 
     private int calculateBackground(UITheme theme) {
-        if (!enabled) return theme.buttonBgDisabled();
+        UITheme.Button button = theme.button();
+        if (!enabled) return button.bg().disabled();
         return ARGB.srgbLerp(pressAnimation,
-                ARGB.srgbLerp(hoverAnimation, theme.buttonBg(), theme.buttonBgHover()),
-                theme.buttonBgPressed());
+                ARGB.srgbLerp(hoverAnimation, button.bg().normal(), button.bg().hover()),
+                button.bg().pressed());
     }
 
     private int calculateTextColor(UITheme theme) {
-        if (!enabled) return theme.textDisabled();
-        return ARGB.srgbLerp(hoverAnimation, theme.buttonText(), theme.buttonTextHover());
+        if (!enabled) return theme.text().disabled();
+        return ARGB.srgbLerp(hoverAnimation, theme.button().text().normal(), theme.button().text().hover());
     }
 
     @Override

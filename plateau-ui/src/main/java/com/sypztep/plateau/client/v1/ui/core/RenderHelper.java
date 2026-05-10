@@ -32,19 +32,31 @@ public final class RenderHelper {
     public static void panelWithHover(GuiGraphicsExtractor graphics, int x, int y, int w, int h,
                                       float hoverProgress, boolean border) {
         UITheme theme = UITheme.current();
-        rectangle(graphics, x, y, w, h, ARGB.srgbLerp(hoverProgress, theme.panelBg(), theme.panelBgHover()));
-        if (border)
-            border(graphics, x, y, w, h, ARGB.srgbLerp(hoverProgress, theme.panelBorder(), theme.panelBorderHover()));
+        UITheme.Panel panel = theme.panel();
+
+        rectangle(graphics, x, y, w, h,
+                ARGB.srgbLerp(hoverProgress, panel.bg(), panel.bgHover()));
+
+        if (border) {
+            border(graphics, x, y, w, h,
+                    ARGB.srgbLerp(hoverProgress, panel.border(), panel.borderHover()));
+        }
     }
 
     public static int header(GuiGraphicsExtractor graphics, Font font, Component title,
                              int x, int y, int width, int padding, float hoverProgress) {
         UITheme theme = UITheme.current();
+        UITheme.Panel panel = theme.panel();
+        UITheme.Text text = theme.text();
+
         int headerH = font.lineHeight + padding * 2;
+
         rectangle(graphics, x + 1, y + 1, width - 2, headerH - 1,
-                ARGB.srgbLerp(hoverProgress, theme.panelHeaderBg(), UIColors.lighten(theme.panelHeaderBg(), 0.08f)));
+                ARGB.srgbLerp(hoverProgress, panel.headerBg(), UIColors.lighten(panel.headerBg(), 0.08f)));
+
         graphics.centeredText(font, title, x + width / 2, y + padding,
-                ARGB.srgbLerp(hoverProgress * 0.3f, theme.textAccent(), theme.textPrimary()));
+                ARGB.srgbLerp(hoverProgress * 0.3f, text.accent(), text.primary()));
+
         return headerH;
     }
 
@@ -58,10 +70,10 @@ public final class RenderHelper {
         }
     }
 
-    @Deprecated public static void drawRect(GuiGraphicsExtractor g, int x, int y, int w, int h, int c) { rectangle(g, x, y, w, h, c); }
-    @Deprecated public static void drawBorder(GuiGraphicsExtractor g, int x, int y, int w, int h, int c) { border(g, x, y, w, h, c); }
-    @Deprecated public static void drawPanel(GuiGraphicsExtractor g, int x, int y, int w, int h, int c, int bc) { panel(g, x, y, w, h, c, bc); }
-    @Deprecated public static void drawPanelWithHover(GuiGraphicsExtractor g, int x, int y, int w, int h, float p, boolean b) { panelWithHover(g, x, y, w, h, p, b); }
-    @Deprecated public static int drawHeader(GuiGraphicsExtractor g, Font f, Component t, int x, int y, int w, int p, float hp) { return header(g, f, t, x, y, w, p, hp); }
-    @Deprecated public static void drawProgressBar(GuiGraphicsExtractor g, int x, int y, int w, int h, float r, int fc, int bc) { progressBar(g, x, y, w, h, r, fc, bc); }
+    @Deprecated (forRemoval = true) public static void drawRect(GuiGraphicsExtractor g, int x, int y, int w, int h, int c) { rectangle(g, x, y, w, h, c); }
+    @Deprecated (forRemoval = true) public static void drawBorder(GuiGraphicsExtractor g, int x, int y, int w, int h, int c) { border(g, x, y, w, h, c); }
+    @Deprecated (forRemoval = true) public static void drawPanel(GuiGraphicsExtractor g, int x, int y, int w, int h, int c, int bc) { panel(g, x, y, w, h, c, bc); }
+    @Deprecated (forRemoval = true) public static void drawPanelWithHover(GuiGraphicsExtractor g, int x, int y, int w, int h, float p, boolean b) { panelWithHover(g, x, y, w, h, p, b); }
+    @Deprecated (forRemoval = true) public static int drawHeader(GuiGraphicsExtractor g, Font f, Component t, int x, int y, int w, int p, float hp) { return header(g, f, t, x, y, w, p, hp); }
+    @Deprecated (forRemoval = true) public static void drawProgressBar(GuiGraphicsExtractor g, int x, int y, int w, int h, float r, int fc, int bc) { progressBar(g, x, y, w, h, r, fc, bc); }
 }

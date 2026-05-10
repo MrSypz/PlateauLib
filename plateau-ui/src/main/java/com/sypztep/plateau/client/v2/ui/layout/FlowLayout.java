@@ -6,11 +6,13 @@ import com.sypztep.plateau.client.v2.ui.core.Sizing;
 import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.gui.components.events.ContainerEventHandler;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.input.PreeditEvent;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -25,11 +27,11 @@ import java.util.List;
  *   <li>{@code Sizing.fill()} — takes a proportional share of remaining space</li>
  *   <li>{@code Sizing.content()} — shrinks to fit its own content</li>
  * </ul>
- * Cross-axis (the non-flow axis) defaults to fill the container width/height. Override
- * with a fixed or content sizing on the child's cross axis.
+ * Implements {@link ContainerEventHandler} — Minecraft's Tab and Arrow key navigation
+ * descend into children automatically. No manual event forwarding needed.
  */
 @Environment(EnvType.CLIENT)
-public class FlowLayout extends BaseComponent {
+public class FlowLayout extends BaseComponent implements ContainerEventHandler {
 
     public enum Direction { HORIZONTAL, VERTICAL }
 
@@ -39,6 +41,9 @@ public class FlowLayout extends BaseComponent {
     private final List<BaseComponent> children = new ArrayList<>();
     private int gap = 0;
     private Align crossAlign = Align.START;
+
+    @Nullable private GuiEventListener focusedChild;
+    private boolean dragging;
 
     public FlowLayout(Direction direction, Sizing horizontal, Sizing vertical) {
         this.direction        = direction;
@@ -76,6 +81,85 @@ public class FlowLayout extends BaseComponent {
     @Override public FlowLayout sizing(Sizing h, Sizing v){ super.sizing(h, v);      return this; }
     @Override public FlowLayout sizing(Sizing both)       { super.sizing(both);      return this; }
 
+    // ── ContainerEventHandler ─────────────────────────────────
+    // Minecraft handles Tab navigation, Arrow navigation, drag tracking, and focus
+    // transfer for free. No manual mouseClicked/keyPressed/charTyped forwarding needed.
+
+    @Override
+    public @NonNull List<? extends GuiEventListener> children() { return children; }
+
+    @Override
+    public @Nullable GuiEventListener getFocused() { return focusedChild; }
+
+    @Override
+    public void setFocused(@Nullable GuiEventListener listener) {
+        if (focusedChild != null) focusedChild.setFocused(false);
+        focusedChild = listener;
+        if (listener != null) listener.setFocused(true);
+    }
+
+    @Override public boolean isDragging()          { return dragging; }
+    @Override public void setDragging(boolean v)   { dragging = v; }
+
+    // Disambiguate: ContainerEventHandler vs BaseComponent defaults
+    @Override public boolean isFocused()           { return focusedChild != null; }
+    @Override public void setFocused(boolean v)    { if (!v) setFocused((GuiEventListener) null); }
+
+    @Override
+    public @Nullable ComponentPath nextFocusPath(FocusNavigationEvent event) {
+        return ContainerEventHandler.super.nextFocusPath(event);
+    }
+
+    // BaseComponent stubs out these methods with `return false`, which beats the ContainerEventHandler
+    // defaults (Java class > interface). Explicitly delegate so MC's default iterating logic runs.
+    @Override
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
+        return ContainerEventHandler.super.mouseClicked(event, doubleClick);
+    }
+
+    @Override
+    public boolean mouseReleased(@NonNull MouseButtonEvent event) {
+        return ContainerEventHandler.super.mouseReleased(event);
+    }
+
+    @Override
+    public boolean mouseDragged(@NonNull MouseButtonEvent event, double dx, double dy) {
+        return ContainerEventHandler.super.mouseDragged(event, dx, dy);
+    }
+
+    @Override
+    public boolean keyPressed(@NonNull KeyEvent event) {
+        return ContainerEventHandler.super.keyPressed(event);
+    }
+
+    // mouseMoved has no ContainerEventHandler default — forward manually
+    @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        for (BaseComponent c : children) {
+            if (c.isVisible()) c.mouseMoved(mouseX, mouseY);
+        }
+    }
+
+    // ── PointerInteractable ───────────────────────────────────
+    // Used by ScrollContainer to dispatch clicks with content-space coordinates so that
+    // hit-testing works correctly regardless of scroll offset.
+
+    @Override
+    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
+        if (!hitTest(x, y)) return false;
+        for (BaseComponent child : children) {
+            if (!child.isVisible()) continue;
+            if (child.hitTest(x, y)) {
+                if (child.onPointerClicked(event, doubleClick, x, y)) {
+                    if (child.shouldTakeFocusAfterInteraction()) setFocused(child);
+                    if (event.button() == 0) setDragging(true);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     // ── Layout ───────────────────────────────────────────────
 
     @Override
@@ -107,7 +191,6 @@ public class FlowLayout extends BaseComponent {
         int[] heights = new int[vis.size()];
         int[] widths  = new int[vis.size()];
 
-        // First pass — measure fixed & content children
         for (int i = 0; i < vis.size(); i++) {
             BaseComponent c = vis.get(i);
             int childAvailW = innerW - c.margins().horizontal();
@@ -123,7 +206,6 @@ public class FlowLayout extends BaseComponent {
             }
         }
 
-        // Distribute remaining space to fill children
         int remaining  = Math.max(0, innerH - fixedH);
         float fillUnit = totalFillWeight > 0 ? (float) remaining / totalFillWeight : 0;
 
@@ -133,16 +215,12 @@ public class FlowLayout extends BaseComponent {
             }
         }
 
-        // Position each child
         int curY = innerY;
         for (int i = 0; i < vis.size(); i++) {
             BaseComponent c = vis.get(i);
-            int childW = widths[i];
-            int childH = heights[i];
-            int childX = resolveChildX(innerX, innerW, c, childW);
-            int childY = curY + c.margins().top();
-            c.mount(childX, childY, childW, childH);
-            curY += childH + c.margins().vertical() + (i < vis.size() - 1 ? gap : 0);
+            int childX = resolveChildX(innerX, innerW, c, widths[i]);
+            c.mount(childX, curY + c.margins().top(), widths[i], heights[i]);
+            curY += heights[i] + c.margins().vertical() + (i < vis.size() - 1 ? gap : 0);
         }
     }
 
@@ -189,12 +267,9 @@ public class FlowLayout extends BaseComponent {
         int curX = innerX;
         for (int i = 0; i < vis.size(); i++) {
             BaseComponent c = vis.get(i);
-            int childW = widths[i];
-            int childH = heights[i];
-            int childX = curX + c.margins().left();
-            int childY = resolveChildY(innerY, innerH, c, childH);
-            c.mount(childX, childY, childW, childH);
-            curX += childW + c.margins().horizontal() + (i < vis.size() - 1 ? gap : 0);
+            int childY = resolveChildY(innerY, innerH, c, heights[i]);
+            c.mount(curX + c.margins().left(), childY, widths[i], heights[i]);
+            curX += widths[i] + c.margins().horizontal() + (i < vis.size() - 1 ? gap : 0);
         }
     }
 
@@ -203,7 +278,7 @@ public class FlowLayout extends BaseComponent {
     private int resolveWidth(BaseComponent c, int availW) {
         return switch (c.horizontalSizing()) {
             case Sizing.Fixed   f -> f.value();
-            case Sizing.Fill    ignored -> availW; // fill cross-axis = full available
+            case Sizing.Fill    ignored -> availW;
             case Sizing.Content ignored -> c.determineHorizontalContentSize(availW);
         };
     }
@@ -254,7 +329,6 @@ public class FlowLayout extends BaseComponent {
             }
             return total;
         } else {
-            // For horizontal layout, height = max child height + padding
             int maxH = 0;
             for (BaseComponent c : vis) {
                 int childAvailW = innerW - c.margins().horizontal();
@@ -312,80 +386,5 @@ public class FlowLayout extends BaseComponent {
                 child.extractRenderState(g, mouseX, mouseY, delta);
             }
         }
-    }
-
-    // ── Input — forward to children ───────────────────────────
-
-    @Override
-    public void mouseMoved(double mouseX, double mouseY) {
-        for (BaseComponent c : children) {
-            if (c.isVisible()) c.mouseMoved(mouseX, mouseY);
-        }
-    }
-
-    @Override
-    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
-        for (int i = children.size() - 1; i >= 0; i--) {
-            BaseComponent c = children.get(i);
-            if (c.isVisible() && c.mouseClicked(event, doubleClick)) return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean mouseReleased(@NonNull MouseButtonEvent event) {
-        for (BaseComponent c : children) {
-            if (c.isVisible()) c.mouseReleased(event);
-        }
-        return false;
-    }
-
-    @Override
-    public boolean mouseDragged(@NonNull MouseButtonEvent event, double dx, double dy) {
-        for (BaseComponent c : children) {
-            if (c.isVisible() && c.mouseDragged(event, dx, dy)) return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
-        for (int i = children.size() - 1; i >= 0; i--) {
-            BaseComponent c = children.get(i);
-            if (c.isVisible() && c.mouseScrolled(mouseX, mouseY, hAmount, vAmount)) return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean keyPressed(@NonNull KeyEvent keyEvent) {
-        for (BaseComponent c : children) {
-            if (c.isVisible() && c.keyPressed(keyEvent)) return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean keyReleased(@NonNull KeyEvent keyEvent) {
-        for (BaseComponent c : children) {
-            if (c.isVisible() && c.keyReleased(keyEvent)) return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean charTyped(@NonNull CharacterEvent event) {
-        for (BaseComponent c : children) {
-            if (c.isVisible() && c.charTyped(event)) return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean preeditUpdated(@Nullable PreeditEvent event) {
-        for (BaseComponent c : children) {
-            if (c.isVisible() && c.preeditUpdated(event)) return true;
-        }
-        return false;
     }
 }

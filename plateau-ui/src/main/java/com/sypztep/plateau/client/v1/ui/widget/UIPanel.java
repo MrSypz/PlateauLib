@@ -41,10 +41,10 @@ public class UIPanel extends UIComponent {
             hoverProgress = stepAnimation(hoverProgress, super.isMouseOver(mouseX, mouseY), 0.05f);
         }
 
-        RenderHelper.drawPanelWithHover(graphics, x, y, width, height, hoverProgress, drawBorder);
+        RenderHelper.panelWithHover(graphics, x, y, width, height, hoverProgress, drawBorder);
 
         if (drawHeader && title != null) {
-            RenderHelper.drawHeader(graphics, font, title, x, y, width, padding, hoverProgress);
+            RenderHelper.header(graphics, font, title, x, y, width, padding, hoverProgress);
         }
 
         renderContents(graphics, mouseX, mouseY, delta);

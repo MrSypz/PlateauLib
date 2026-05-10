@@ -7,11 +7,13 @@ import com.sypztep.plateau.client.v2.ui.core.Sizing;
 import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.gui.components.events.ContainerEventHandler;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.input.PreeditEvent;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -20,25 +22,21 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A vertically scrollable container. Children are stacked top-to-bottom, each sized by their own
- * {@link Sizing}. Fill children take a proportional share of whatever space they collectively need —
- * but since content can overflow, fill in a ScrollContainer means "fill the viewport height shared
- * among fill siblings", which is usually not what you want. Prefer fixed or content sizing here.
- *
- * <p>Usage:
- * <pre>{@code
- * Components.scrollable(Sizing.fill(), Sizing.fill())
- *     .child(Components.label(...))
- *     .child(Components.button(...))
- * }</pre>
+ * A vertically scrollable container. Children are stacked top-to-bottom, each sized by their
+ * own {@link Sizing}. Implements {@link ContainerEventHandler} so MC's Tab and Arrow key
+ * navigation can descend into children. Arrow keys navigate between focusable children;
+ * Page Up/Down and Home/End scroll the viewport.
  */
 @Environment(EnvType.CLIENT)
-public class ScrollContainer extends BaseComponent {
+public class ScrollContainer extends BaseComponent implements ContainerEventHandler {
 
     private final List<BaseComponent> children = new ArrayList<>();
     private int gap = 0;
     private int contentHeight = 0;
     private final ScrollBehavior scroll = new ScrollBehavior();
+
+    @Nullable private GuiEventListener focusedChild;
+    private boolean dragging;
 
     public ScrollContainer(Sizing horizontal, Sizing vertical) {
         this.horizontalSizing = horizontal;
@@ -64,7 +62,6 @@ public class ScrollContainer extends BaseComponent {
 
     public ScrollContainer gap(int gap) { this.gap = gap; return this; }
 
-    // Override fluent base methods to preserve ScrollContainer return type in chains
     @Override public ScrollContainer padding(Insets padding)  { super.padding(padding); return this; }
     @Override public ScrollContainer margins(Insets margins)  { super.margins(margins); return this; }
     @Override public ScrollContainer surface(Surface surface) { super.surface(surface); return this; }
@@ -72,6 +69,111 @@ public class ScrollContainer extends BaseComponent {
     @Override public ScrollContainer visible(boolean visible) { super.visible(visible); return this; }
     @Override public ScrollContainer sizing(Sizing h, Sizing v){ super.sizing(h, v);    return this; }
     @Override public ScrollContainer sizing(Sizing both)      { super.sizing(both);     return this; }
+
+    // ── ContainerEventHandler ─────────────────────────────────
+
+    @Override
+    public @NonNull List<? extends GuiEventListener> children() { return children; }
+
+    @Override
+    public @Nullable GuiEventListener getFocused() { return focusedChild; }
+
+    @Override
+    public void setFocused(@Nullable GuiEventListener listener) {
+        if (focusedChild != null) focusedChild.setFocused(false);
+        focusedChild = listener;
+        if (listener != null) listener.setFocused(true);
+    }
+
+    @Override public boolean isDragging()        { return dragging; }
+    @Override public void setDragging(boolean v) { dragging = v; }
+
+    @Override public boolean isFocused()         { return focusedChild != null; }
+    @Override public void setFocused(boolean v)  { if (!v) setFocused((GuiEventListener) null); }
+
+    @Override
+    public @Nullable ComponentPath nextFocusPath(FocusNavigationEvent event) {
+        return ContainerEventHandler.super.nextFocusPath(event);
+    }
+
+    // ── Input ─────────────────────────────────────────────────
+
+    // mouseClicked dispatches through the PointerInteractable chain using content-space
+    // coordinates so that hit-testing works correctly regardless of scroll offset.
+    // Screen-space mouse Y and layout-space child Y only agree when scroll offset is zero,
+    // so contentY (= screenY + scrollOffset) is computed once here and passed all the way down.
+    @Override
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
+        if (!isMouseOver(event.x(), event.y())) return false;
+        if (scroll.mouseClicked(event, doubleClick)) return true;
+
+        double cx = event.x();
+        double cy = event.y() + scroll.getScrollOffset(); // content-space Y
+
+        for (int i = children.size() - 1; i >= 0; i--) {
+            BaseComponent child = children.get(i);
+            if (!child.isVisible()) continue;
+            if (child.hitTest(cx, cy)) {
+                if (child.onPointerClicked(event, doubleClick, cx, cy)) {
+                    // Only update focusedChild when the section changes — re-focusing the same
+                    // child would call setFocused(false) on it, erasing the button focus that
+                    // onPointerClicked just established inside the FlowLayout.
+                    if (child != focusedChild && child.shouldTakeFocusAfterInteraction()) {
+                        setFocused(child);
+                    }
+                    setDragging(true);
+                    return true;
+                }
+                break; // Found the section; it did not consume the click — stop searching.
+            }
+        }
+        // Click on empty area or non-interactive content — clear keyboard focus.
+        setFocused(null);
+        return false;
+    }
+
+    @Override
+    public boolean mouseReleased(@NonNull MouseButtonEvent event) {
+        setDragging(false);
+        scroll.mouseReleased(event);
+        if (focusedChild != null) focusedChild.mouseReleased(event);
+        return false;
+    }
+
+    @Override
+    public boolean mouseDragged(@NonNull MouseButtonEvent event, double dx, double dy) {
+        return scroll.mouseDragged(event);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
+        if (!isMouseOver(mouseX, mouseY)) return false;
+        return scroll.mouseScrolled(mouseX, mouseY, vAmount);
+    }
+
+    @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        double adjustedY = mouseY + scroll.getScrollOffset();
+        for (BaseComponent c : children) {
+            if (c.isVisible()) c.mouseMoved(mouseX, adjustedY);
+        }
+    }
+
+    // Arrow keys are consumed by MC's ContainerEventHandler navigation (nextFocusPath).
+    // Page/Home/End still scroll the viewport when no child handles the key.
+    @Override
+    public boolean keyPressed(@NonNull KeyEvent event) {
+        if (focusedChild != null && focusedChild.keyPressed(event)) return true;
+
+        int key = event.key();
+        if (key == 266) { scroll.scrollBy(-(height - 20)); return true; } // PAGE_UP
+        if (key == 267) { scroll.scrollBy( height - 20);  return true; } // PAGE_DOWN
+        if (key == 268) { scroll.scrollTo(0);              return true; } // HOME
+        if (key == 269) { scroll.scrollToEnd();            return true; } // END
+        return false;
+    }
+
+    @Override protected boolean isFocusable() { return true; }
 
     // ── Layout ───────────────────────────────────────────────
 
@@ -92,10 +194,7 @@ public class ScrollContainer extends BaseComponent {
             int childAvailW = innerW - c.margins().horizontal();
             int childW = resolveWidth(c, childAvailW);
             int childH = resolveHeight(c, childAvailW);
-            int childX = innerX + c.margins().left();
-            int childY = curY + c.margins().top();
-
-            c.mount(childX, childY, childW, childH);
+            c.mount(innerX + c.margins().left(), curY + c.margins().top(), childW, childH);
             curY += childH + c.margins().vertical() + (i < children.size() - 1 ? gap : 0);
         }
 
@@ -114,7 +213,7 @@ public class ScrollContainer extends BaseComponent {
         return switch (c.verticalSizing()) {
             case Sizing.Fixed   f -> f.value();
             case Sizing.Content ignored -> c.determineVerticalContentSize(availW);
-            case Sizing.Fill    ignored -> c.determineVerticalContentSize(availW); // no fill in scroll
+            case Sizing.Fill    ignored -> c.determineVerticalContentSize(availW);
         };
     }
 
@@ -140,84 +239,9 @@ public class ScrollContainer extends BaseComponent {
         }
 
         g.pose().popMatrix();
-
         scroll.disableScissor(g);
         scroll.renderScrollbar(g, mouseX, mouseY);
     }
-
-    // ── Input ─────────────────────────────────────────────────
-
-    @Override
-    public void mouseMoved(double mouseX, double mouseY) {
-        double adjustedY = mouseY + scroll.getScrollOffset();
-        for (BaseComponent c : children) {
-            if (c.isVisible()) c.mouseMoved(mouseX, adjustedY);
-        }
-    }
-
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
-        if (!isMouseOver(mouseX, mouseY)) return false;
-        return scroll.mouseScrolled(mouseX, mouseY, vAmount);
-    }
-
-    @Override
-    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
-        if (!isMouseOver(event.x(), event.y())) return false;
-        if (scroll.mouseClicked(event, doubleClick)) return true;
-
-        int scrollOffset = scroll.getScrollOffset();
-        double contentY  = event.y() + scrollOffset;
-
-        for (int i = children.size() - 1; i >= 0; i--) {
-            BaseComponent child = children.get(i);
-            if (!child.isVisible()) continue;
-            if (event.x() >= child.x() && event.x() < child.x() + child.width()
-                    && contentY >= child.y() && contentY < child.y() + child.height()) {
-                if (child.mouseClicked(event, doubleClick)) return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public boolean mouseReleased(@NonNull MouseButtonEvent event) {
-        scroll.mouseReleased(event);
-        for (BaseComponent child : children) {
-            if (child.isVisible()) child.mouseReleased(event);
-        }
-        return false;
-    }
-
-    @Override
-    public boolean mouseDragged(@NonNull MouseButtonEvent event, double dx, double dy) {
-        if (scroll.mouseDragged(event)) return true;
-        return false;
-    }
-
-    @Override
-    public boolean keyPressed(@NonNull KeyEvent keyEvent) {
-        if (!focused) return false;
-        int key = keyEvent.key();
-        if (key == 265) { scroll.scrollBy(-20);           return true; } // UP
-        if (key == 264) { scroll.scrollBy( 20);           return true; } // DOWN
-        if (key == 266) { scroll.scrollBy(-(height - 20)); return true; } // PAGE_UP
-        if (key == 267) { scroll.scrollBy( height - 20);  return true; } // PAGE_DOWN
-        if (key == 268) { scroll.scrollTo(0);             return true; } // HOME
-        if (key == 269) { scroll.scrollToEnd();           return true; } // END
-        return false;
-    }
-
-    @Override
-    public boolean charTyped(@NonNull CharacterEvent event) {
-        for (BaseComponent c : children) {
-            if (c.isVisible() && c.charTyped(event)) return true;
-        }
-        return false;
-    }
-
-    @Override
-    protected boolean isFocusable() { return true; }
 
     // ── Scroll helpers ────────────────────────────────────────
 
@@ -226,6 +250,5 @@ public class ScrollContainer extends BaseComponent {
     public void resetScroll()     { scroll.resetScroll(); }
     public ScrollBehavior getScrollBehavior() { return scroll; }
 
-    // default matches ScrollBehavior defaults (width=6, padding=2)
     private static final int SCROLLBAR_RESERVED = 8;
 }

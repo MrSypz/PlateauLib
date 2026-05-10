@@ -17,7 +17,7 @@ public interface Surface {
 
     static Surface panel() {
         return (g, x, y, w, h) -> RenderHelper.panel(g, x, y, w, h,
-                UITheme.current().panelBg(), UITheme.current().panelBorder());
+                UITheme.current().panel().bg(), UITheme.current().panel().border());
     }
 
     static Surface outline(int color) {
@@ -25,7 +25,7 @@ public interface Surface {
     }
 
     static Surface outline() {
-        return (g, x, y, w, h) -> RenderHelper.border(g, x, y, w, h, UITheme.current().panelBorder());
+        return (g, x, y, w, h) -> RenderHelper.border(g, x, y, w, h, UITheme.current().panel().border());
     }
 
     static Surface gradient(int topColor, int bottomColor) {

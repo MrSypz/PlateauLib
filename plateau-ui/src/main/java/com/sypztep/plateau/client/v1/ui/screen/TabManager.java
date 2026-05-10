@@ -43,7 +43,7 @@ public final class TabManager {
     }
 
     public void init() {
-        navBar = new UINavBar(10, 5, screen.width - 20, navBarHeight);
+        navBar = new UINavBar(0, 0, screen.width , navBarHeight);
 
         for (Tab tab : tabs.values()) {
             navBar.addItem(tab.getId(), tab.getLabel(), tab.getIcon(), this::activateTab);

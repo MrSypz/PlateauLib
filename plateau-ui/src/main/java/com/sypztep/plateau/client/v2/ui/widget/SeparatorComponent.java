@@ -50,7 +50,7 @@ public class SeparatorComponent extends BaseComponent {
 
     @Override
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        int c = color != -1 ? color : UITheme.current().panelBorder();
+        int c = color != -1 ? color : UITheme.current().panel().border();
         g.fill(x, y, x + width, y + height, c);
     }
 }
