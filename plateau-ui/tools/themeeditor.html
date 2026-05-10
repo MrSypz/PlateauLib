@@ -165,6 +165,14 @@
           <div class="border border-black p-3 max-w-[760px] mx-auto" id="previewPanel">
             <div class="p-[10px] -mx-3 -mt-3 mb-3 text-center font-bold" id="previewHeader">Theme Preview</div>
 
+            <div class="mt-3 mb-3 border border-black" id="previewNav">
+              <div class="flex items-center gap-2 px-2 py-1">
+                <div class="px-2 py-1 text-xs font-bold" id="previewNavTabActive">Widgets</div>
+                <div class="px-2 py-1 text-xs" id="previewNavTab">Scroll</div>
+                <div class="ml-auto h-1 w-16" id="previewNavIndicator"></div>
+              </div>
+            </div>
+
             <div class="font-bold mb-1" id="previewPrimary">Primary text / title</div>
             <div class="mb-1" id="previewSecondary">Secondary text / description</div>
             <div id="previewDisabled">Disabled text / unavailable option</div>
@@ -376,6 +384,11 @@
       s("previewPanel").style.borderColor  = css(theme.panel.border);
       s("previewHeader").style.background  = css(theme.panel.header_bg);
       s("previewHeader").style.color       = css(theme.text.accent);
+      s("previewNav").style.background = css(theme.nav.bg);
+      s("previewNav").style.borderColor = css(theme.panel.border);
+      s("previewNavTabActive").style.color = css(theme.text.accent);
+      s("previewNavTab").style.color = css(theme.text.secondary);
+      s("previewNavIndicator").style.background = css(theme.nav.indicator);
       s("previewPrimary").style.color      = css(theme.text.primary);
       s("previewSecondary").style.color    = css(theme.text.secondary);
       s("previewDisabled").style.color     = css(theme.text.disabled);
