@@ -4,7 +4,7 @@
   "panel": {
     "bg": "#FF18191F",
     "bg_hover": "#FF22242A",
-    "border": "#FF050607",
+    "border": "#FF424242",
     "border_hover": "#FF3A3428",
     "header_bg": "#FF141419"
   },

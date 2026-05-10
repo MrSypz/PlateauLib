@@ -18,36 +18,36 @@
 
   "button": {
     "bg": {
-      "normal": "#FF2A2A2A",
-      "hover": "#FF3A3A3A",
-      "pressed": "#FF1A1A1A",
-      "disabled": "#FF1A1A1A"
-    },
-
-    "border": {
-      "normal": "#FF1B1D1F",
-      "hover": "#FFFFD700",
-      "pressed": "#FF111111",
-      "disabled": "#FF111111"
-    },
-
-    "underline": {
-      "normal": "#FF1E1E1E",
-      "hover": "#FF3C3C3C",
-      "pressed": "#FF141414",
+      "normal": "#FF2B2B2B",
+      "hover": "#FF34302A",
+      "pressed": "#FF1D1B18",
       "disabled": "#FF171717"
     },
 
+    "border": {
+      "normal": "#FF050607",
+      "hover": "#FF050607",
+      "pressed": "#FF030405",
+      "disabled": "#FF030405"
+    },
+
+    "underline": {
+      "normal": "#FF282828",
+      "hover": "#FF383838",
+      "pressed": "#FF232323",
+      "disabled": "#FF0D0D0D"
+    },
+
     "outline": {
-      "normal": "#FF404040",
-      "hover": "#FFFFD700",
-      "pressed": "#FF1A1A1A",
-      "disabled": "#FF252525"
+      "normal": "#FF444444",
+      "hover": "#FFC0AE88",
+      "pressed": "#FF6F6553",
+      "disabled": "#FF1A1A1A"
     },
 
     "text": {
-      "normal": "#FFAAAAAA",
-      "hover": "#FFFFFFFF"
+      "normal": "#FFD0D0D4",
+      "hover": "#FFE8D8B6"
     }
   },
 
