@@ -1,21 +1,15 @@
 package com.sypztep.plateau.client.v2.ui.widget;
 
 import com.sypztep.plateau.client.v1.ui.behavior.ScrollBehavior;
-import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
-import com.sypztep.plateau.client.v2.ui.core.Insets;
-import com.sypztep.plateau.client.v2.ui.core.Sizing;
-import com.sypztep.plateau.client.v2.ui.core.Surface;
+import com.sypztep.plateau.client.v2.ui.core.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -29,15 +23,12 @@ import java.util.List;
  * Page Up/Down and Home/End scroll the viewport.
  */
 @Environment(EnvType.CLIENT)
-public class ScrollContainer extends BaseComponent implements ContainerEventHandler {
+public class ScrollContainer extends BaseContainerComponent {
 
     private final List<BaseComponent> children = new ArrayList<>();
     private int gap = 0;
     private int contentHeight = 0;
     private final ScrollBehavior scroll = new ScrollBehavior();
-
-    @Nullable private GuiEventListener focusedChild;
-    private boolean dragging;
 
     public ScrollContainer(Sizing horizontal, Sizing vertical) {
         this.horizontalSizing = horizontal;
@@ -76,27 +67,6 @@ public class ScrollContainer extends BaseComponent implements ContainerEventHand
     @Override
     public @NonNull List<? extends GuiEventListener> children() { return children; }
 
-    @Override
-    public @Nullable GuiEventListener getFocused() { return focusedChild; }
-
-    @Override
-    public void setFocused(@Nullable GuiEventListener listener) {
-        if (focusedChild != null) focusedChild.setFocused(false);
-        focusedChild = listener;
-        if (listener != null) listener.setFocused(true);
-    }
-
-    @Override public boolean isDragging()        { return dragging; }
-    @Override public void setDragging(boolean v) { dragging = v; }
-
-    @Override public boolean isFocused()         { return focusedChild != null; }
-    @Override public void setFocused(boolean v)  { if (!v) setFocused((GuiEventListener) null); }
-
-    @Override
-    public @Nullable ComponentPath nextFocusPath(FocusNavigationEvent event) {
-        return ContainerEventHandler.super.nextFocusPath(event);
-    }
-
     // ── Input ─────────────────────────────────────────────────
 
     // mouseClicked dispatches through the PointerInteractable chain using content-space
@@ -119,7 +89,7 @@ public class ScrollContainer extends BaseComponent implements ContainerEventHand
                     // Only update focusedChild when the section changes — re-focusing the same
                     // child would call setFocused(false) on it, erasing the button focus that
                     // onPointerClicked just established inside the FlowLayout.
-                    if (child != focusedChild && child.shouldTakeFocusAfterInteraction()) {
+                    if (child != getFocused() && child.shouldTakeFocusAfterInteraction()) {
                         setFocused(child);
                     }
                     setDragging(true);
@@ -147,7 +117,7 @@ public class ScrollContainer extends BaseComponent implements ContainerEventHand
 
             if (child.hitTest(cx, cy)) {
                 if (child.onPointerClicked(event, doubleClick, cx, cy)) {
-                    if (child != focusedChild && child.shouldTakeFocusAfterInteraction()) {
+                    if (child != getFocused() && child.shouldTakeFocusAfterInteraction()) {
                         setFocused(child);
                     }
 
@@ -167,7 +137,7 @@ public class ScrollContainer extends BaseComponent implements ContainerEventHand
     public boolean mouseReleased(@NonNull MouseButtonEvent event) {
         setDragging(false);
         scroll.mouseReleased(event);
-        if (focusedChild != null) focusedChild.mouseReleased(event);
+        if (getFocused() != null) getFocused().mouseReleased(event);
         return false;
     }
 
@@ -207,7 +177,7 @@ public class ScrollContainer extends BaseComponent implements ContainerEventHand
     // Page/Home/End still scroll the viewport when no child handles the key.
     @Override
     public boolean keyPressed(@NonNull KeyEvent event) {
-        if (focusedChild != null && focusedChild.keyPressed(event)) return true;
+        if (getFocused() != null && getFocused().keyPressed(event)) return true;
 
         int key = event.key();
         if (key == GLFW.GLFW_KEY_PAGE_UP) { scroll.scrollBy(-(height - 20)); return true; } // PAGE_UP
@@ -216,8 +186,6 @@ public class ScrollContainer extends BaseComponent implements ContainerEventHand
         if (key == GLFW.GLFW_KEY_END) { scroll.scrollToEnd(); return true; } // END
         return false;
     }
-
-    @Override protected boolean isFocusable() { return true; }
 
     // ── Layout ───────────────────────────────────────────────
 

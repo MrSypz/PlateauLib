@@ -2,29 +2,22 @@ package com.sypztep.plateau.client.v2.ui.widget;
 
 import com.sypztep.plateau.client.v1.ui.core.RenderHelper;
 import com.sypztep.plateau.client.v1.ui.core.UISounds;
-import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
-import com.sypztep.plateau.client.v2.ui.core.Insets;
-import com.sypztep.plateau.client.v2.ui.core.Sizing;
-import com.sypztep.plateau.client.v2.ui.core.Surface;
+import com.sypztep.plateau.client.v2.ui.core.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
-public class TabComponent extends BaseComponent implements ContainerEventHandler {
+public class TabComponent extends BaseContainerComponent {
 
     private record Tab(Component title, BaseComponent content) {}
 
@@ -36,8 +29,8 @@ public class TabComponent extends BaseComponent implements ContainerEventHandler
     private int contentGap = 6;
     private int tabPaddingX = 10;
 
-    private @Nullable GuiEventListener focusedChild;
-    private boolean dragging;
+    // Per-tab hover animation — resized whenever tabs change.
+    private float[] tabHoverProgress = new float[0];
 
     public TabComponent() {
         this.horizontalSizing = Sizing.fill();
@@ -46,6 +39,7 @@ public class TabComponent extends BaseComponent implements ContainerEventHandler
 
     public TabComponent tab(Component title, BaseComponent content) {
         tabs.add(new Tab(title, content));
+        tabHoverProgress = new float[tabs.size()]; // extend, new slots start at 0f
         return this;
     }
 
@@ -56,42 +50,24 @@ public class TabComponent extends BaseComponent implements ContainerEventHandler
     public TabComponent active(int index) {
         if (index >= 0 && index < tabs.size()) {
             activeIndex = index;
-            focusedChild = null;
+            transferFocus(); // clear child focus on tab switch
             UISounds.playClick();
             mountActiveContent();
         }
-
         return this;
     }
 
-    public int activeIndex() {
-        return activeIndex;
-    }
+    public int activeIndex()           { return activeIndex; }
 
     public BaseComponent activeContent() {
         if (tabs.isEmpty()) return null;
         return tabs.get(activeIndex).content();
     }
 
-    public TabComponent headerHeight(int headerHeight) {
-        this.headerHeight = headerHeight;
-        return this;
-    }
-
-    public TabComponent headerGap(int headerGap) {
-        this.headerGap = headerGap;
-        return this;
-    }
-
-    public TabComponent contentGap(int contentGap) {
-        this.contentGap = contentGap;
-        return this;
-    }
-
-    public TabComponent tabPaddingX(int tabPaddingX) {
-        this.tabPaddingX = tabPaddingX;
-        return this;
-    }
+    public TabComponent headerHeight(int v)  { this.headerHeight = v; return this; }
+    public TabComponent headerGap(int v)     { this.headerGap    = v; return this; }
+    public TabComponent contentGap(int v)    { this.contentGap   = v; return this; }
+    public TabComponent tabPaddingX(int v)   { this.tabPaddingX  = v; return this; }
 
     // ── ContainerEventHandler ─────────────────────────────────
 
@@ -99,39 +75,6 @@ public class TabComponent extends BaseComponent implements ContainerEventHandler
     public @NonNull List<? extends GuiEventListener> children() {
         if (tabs.isEmpty()) return List.of();
         return List.of(tabs.get(activeIndex).content());
-    }
-
-    @Override
-    public @Nullable GuiEventListener getFocused() {
-        return focusedChild;
-    }
-
-    @Override
-    public void setFocused(@Nullable GuiEventListener listener) {
-        if (focusedChild != null) focusedChild.setFocused(false);
-        focusedChild = listener;
-        if (listener != null) listener.setFocused(true);
-    }
-
-    @Override public boolean isDragging()          { return dragging; }
-    @Override public void setDragging(boolean v)   { dragging = v; }
-
-    @Override public boolean isFocused()           { return focused || focusedChild != null; }
-
-    @Override
-    public void setFocused(boolean focused) {
-        this.focused = focused;
-        if (!focused) setFocused((GuiEventListener) null);
-    }
-
-    @Override
-    public @Nullable ComponentPath nextFocusPath(FocusNavigationEvent event) {
-        return ContainerEventHandler.super.nextFocusPath(event);
-    }
-
-    @Override
-    protected boolean isFocusable() {
-        return true;
     }
 
     // ── Input ─────────────────────────────────────────────────
@@ -184,11 +127,9 @@ public class TabComponent extends BaseComponent implements ContainerEventHandler
 
     @Override
     public boolean mouseReleased(@NonNull MouseButtonEvent event) {
-        dragging = false;
-
+        setDragging(false); // was missing — BaseContainerComponent does not reset this automatically
         BaseComponent content = activeContent();
         if (content != null) content.mouseReleased(event);
-
         return false;
     }
 
@@ -207,26 +148,20 @@ public class TabComponent extends BaseComponent implements ContainerEventHandler
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
         BaseComponent content = activeContent();
-        return content != null && content.isMouseOver(mouseX, mouseY) && content.mouseScrolled(mouseX, mouseY, hAmount, vAmount);
+        return content != null
+                && content.isMouseOver(mouseX, mouseY)
+                && content.mouseScrolled(mouseX, mouseY, hAmount, vAmount);
     }
 
     @Override
     public boolean keyPressed(@NonNull KeyEvent event) {
-        if (focusedChild != null && focusedChild.keyPressed(event)) return true;
+        if (getFocused() != null && getFocused().keyPressed(event)) return true;
 
         int key = event.key();
+        if (key == GLFW.GLFW_KEY_LEFT)  { active(Math.max(0, activeIndex - 1));               return true; }
+        if (key == GLFW.GLFW_KEY_RIGHT) { active(Math.min(tabs.size() - 1, activeIndex + 1)); return true; }
 
-        if (key == GLFW.GLFW_KEY_LEFT) {
-            active(Math.max(0, activeIndex - 1));
-            return true;
-        }
-
-        if (key == GLFW.GLFW_KEY_RIGHT) {
-            active(Math.min(tabs.size() - 1, activeIndex + 1));
-            return true;
-        }
-
-        return ContainerEventHandler.super.keyPressed(event);
+        return false;
     }
 
     // ── Layout ────────────────────────────────────────────────
@@ -252,12 +187,10 @@ public class TabComponent extends BaseComponent implements ContainerEventHandler
     @Override
     public int determineHorizontalContentSize(int space) {
         int total = padding.horizontal();
-
         for (int i = 0; i < tabs.size(); i++) {
             total += font.width(tabs.get(i).title()) + tabPaddingX * 2;
             if (i < tabs.size() - 1) total += headerGap;
         }
-
         return total;
     }
 
@@ -269,8 +202,8 @@ public class TabComponent extends BaseComponent implements ContainerEventHandler
         BaseComponent content = tabs.get(activeIndex).content();
 
         int contentH = switch (content.verticalSizing()) {
-            case Sizing.Fixed f -> f.value();
-            case Sizing.Fill ignored -> content.determineVerticalContentSize(contentW);
+            case Sizing.Fixed   f       -> f.value();
+            case Sizing.Fill    ignored -> content.determineVerticalContentSize(contentW);
             case Sizing.Content ignored -> content.determineVerticalContentSize(contentW);
         };
 
@@ -281,13 +214,13 @@ public class TabComponent extends BaseComponent implements ContainerEventHandler
 
     @Override
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        extractHeaders(g, mouseX, mouseY);
+        extractHeaders(g, mouseX, mouseY, delta);
 
         BaseComponent content = activeContent();
         if (content != null) content.extractRenderState(g, mouseX, mouseY, delta);
     }
 
-    private void extractHeaders(GuiGraphicsExtractor g, int mouseX, int mouseY) {
+    private void extractHeaders(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         int curX = innerX();
         int tabY = innerY();
 
@@ -295,10 +228,19 @@ public class TabComponent extends BaseComponent implements ContainerEventHandler
             Tab tab = tabs.get(i);
 
             int tabW = font.width(tab.title()) + tabPaddingX * 2;
-            boolean selected = i == activeIndex;
-            boolean hovered = mouseX >= curX && mouseX < curX + tabW
+            boolean selected = (i == activeIndex);
+            boolean hovered  = mouseX >= curX && mouseX < curX + tabW
                     && mouseY >= tabY && mouseY < tabY + headerHeight;
-            RenderHelper.squareButton(g, font, tab.title(), curX, tabY, tabW, headerHeight, true, selected ? 0.65f : hovered ? 1.0f : 0.0f, selected ? 0.18f : 0.0f, true);
+
+            // Animate each tab's hover independently.
+            tabHoverProgress[i] = stepAnimation(tabHoverProgress[i], hovered || selected, 0.5f, delta);
+
+            float hover = selected ? Math.max(tabHoverProgress[i], 0.65f) : tabHoverProgress[i];
+            float press = selected ? 0.18f : 0f;
+
+            RenderHelper.squareButton(g, font, tab.title(), curX, tabY, tabW, headerHeight,
+                    true, hover, press, true);
+
             curX += tabW + headerGap;
         }
     }
@@ -307,25 +249,21 @@ public class TabComponent extends BaseComponent implements ContainerEventHandler
         if (mouseY < innerY() || mouseY >= innerY() + headerHeight) return -1;
 
         int curX = innerX();
-
         for (int i = 0; i < tabs.size(); i++) {
             int tabW = font.width(tabs.get(i).title()) + tabPaddingX * 2;
-
             if (mouseX >= curX && mouseX < curX + tabW) return i;
-
             curX += tabW + headerGap;
         }
-
         return -1;
     }
 
-    // Fluent
+    // ── Fluent ────────────────────────────────────────────────
 
-    @Override public TabComponent padding(Insets padding)   { super.padding(padding); return this; }
-    @Override public TabComponent margins(Insets margins)   { super.margins(margins); return this; }
-    @Override public TabComponent surface(Surface surface)  { super.surface(surface); return this; }
-    @Override public TabComponent id(String id)             { super.id(id);           return this; }
-    @Override public TabComponent visible(boolean visible)  { super.visible(visible); return this; }
-    @Override public TabComponent sizing(Sizing h, Sizing v){ super.sizing(h, v);     return this; }
-    @Override public TabComponent sizing(Sizing both)       { super.sizing(both);     return this; }
+    @Override public TabComponent padding(Insets padding)    { super.padding(padding); return this; }
+    @Override public TabComponent margins(Insets margins)    { super.margins(margins); return this; }
+    @Override public TabComponent surface(Surface surface)   { super.surface(surface); return this; }
+    @Override public TabComponent id(String id)              { super.id(id);           return this; }
+    @Override public TabComponent visible(boolean visible)   { super.visible(visible); return this; }
+    @Override public TabComponent sizing(Sizing h, Sizing v) { super.sizing(h, v);     return this; }
+    @Override public TabComponent sizing(Sizing both)        { super.sizing(both);     return this; }
 }

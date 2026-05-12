@@ -93,7 +93,7 @@ public final class RenderHelper {
                 pressProgress,
                 ARGB.srgbLerp(hoverProgress,
                         bg,                                             // ← idle: bgTop == bg → flat fill
-                        ARGB.scaleRGB(button.bg().hover(), 2f)),        // ← hover: gradient fades in
+                        ARGB.scaleRGB(button.bg().hover(), 1.5f)),        // ← hover: gradient fades in
                 button.bg().pressed()                                   // ← press: flattens again
         );
 
