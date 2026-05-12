@@ -67,13 +67,14 @@ public final class RenderHelper {
             rectangle(graphics, x, y, fillW, Math.max(1, height / 3), UIColors.lighten(fillColor, 0.3f));
         }
     }
-    public record ButtonColors(int bg, int border, int outline, int underline, int text) {}
+    public record ButtonColors(int bg, int bgTop, int border, int outline, int underline, int text) {}
     public static ButtonColors buttonColors(boolean enabled, float hoverProgress, float pressProgress) {
         UITheme        theme  = UITheme.current();
         UITheme.Button button = theme.button();
 
         if (!enabled) {
             return new ButtonColors(
+                    button.bg().disabled(),
                     button.bg().disabled(),
                     button.border().disabled(),
                     button.outline().disabled(),
@@ -86,6 +87,14 @@ public final class RenderHelper {
                 pressProgress,
                 ARGB.srgbLerp(hoverProgress, button.bg().normal(), button.bg().hover()),
                 button.bg().pressed()
+        );
+
+        int bgTop = ARGB.srgbLerp(
+                pressProgress,
+                ARGB.srgbLerp(hoverProgress,
+                        bg,                                             // ← idle: bgTop == bg → flat fill
+                        ARGB.scaleRGB(button.bg().hover(), 2f)),        // ← hover: gradient fades in
+                button.bg().pressed()                                   // ← press: flattens again
         );
 
         int border = ARGB.srgbLerp(
@@ -108,7 +117,7 @@ public final class RenderHelper {
 
         int text = ARGB.srgbLerp(hoverProgress, button.text().normal(), button.text().hover());
 
-        return new ButtonColors(bg, border, outline, underline, text);
+        return new ButtonColors(bg, bgTop, border, outline, underline, text);
     }
 
     public static void squareButton(GuiGraphicsExtractor graphics, Font font, Component label,
@@ -118,7 +127,7 @@ public final class RenderHelper {
                                     boolean shadow) {
         ButtonColors colors = buttonColors(enabled, hoverProgress, pressProgress);
 
-        graphics.fill(x + 2, y + 2, x + width - 2, y + height - 4, colors.bg());
+        graphics.fillGradient(x + 2, y + 2, x + width - 2, y + height - 4, colors.bg(), colors.bgTop());
         outline(graphics, x, y, width, height, colors.border());
         outline(graphics, x + 1, y + 1, width - 2, height - 4, colors.outline());
         graphics.fill(x + 1, y + height - 3, x + width - 1, y + height - 1, colors.underline());

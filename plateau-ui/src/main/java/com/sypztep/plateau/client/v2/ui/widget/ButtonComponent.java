@@ -90,7 +90,7 @@ public class ButtonComponent extends BaseComponent {
     private void extractIconButton(GuiGraphicsExtractor extractor) {
         RenderHelper.ButtonColors colors = RenderHelper.buttonColors(enabled, hoverProgress, pressProgress);
 
-        extractor.fill(x + 2, y + 2, x + width - 2, y + height - 4, colors.bg());
+        extractor.fillGradient(x + 2, y + 2, x + width - 2, y + height - 4, colors.bg(), colors.bgTop());
         extractor.outline(x, y, width, height, colors.border());
         extractor.outline(x + 1, y + 1, width - 2, height - 4, colors.outline());
         extractor.fill(x + 1, y + height - 3, x + width - 1, y + height - 1, colors.underline());
