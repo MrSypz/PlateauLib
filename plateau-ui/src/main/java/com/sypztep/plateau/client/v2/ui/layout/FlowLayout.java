@@ -132,12 +132,21 @@ public class FlowLayout extends BaseComponent implements ContainerEventHandler {
         return ContainerEventHandler.super.keyPressed(event);
     }
 
-    // mouseMoved has no ContainerEventHandler default — forward manually
     @Override
     public void mouseMoved(double mouseX, double mouseY) {
-        for (BaseComponent c : children) {
-            if (c.isVisible()) c.mouseMoved(mouseX, mouseY);
+        for (BaseComponent baseComponent : children) {
+            if (baseComponent.isVisible()) baseComponent.mouseMoved(mouseX, mouseY);
         }
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
+        for (BaseComponent baseComponent : children) {
+            if (baseComponent.isVisible() && baseComponent.isMouseOver(mouseX, mouseY)) {
+                if (baseComponent.mouseScrolled(mouseX, mouseY, hAmount, vAmount)) return true;
+            }
+        }
+        return false;
     }
 
     // ── PointerInteractable ───────────────────────────────────

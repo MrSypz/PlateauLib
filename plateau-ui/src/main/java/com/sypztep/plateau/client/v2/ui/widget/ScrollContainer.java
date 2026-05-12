@@ -16,6 +16,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -133,6 +134,36 @@ public class ScrollContainer extends BaseComponent implements ContainerEventHand
     }
 
     @Override
+    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
+        if (!hitTest(x, y)) return false;
+        if (scroll.mouseClicked(event, doubleClick)) return true;
+
+        double cx = x;
+        double cy = y + scroll.getScrollOffset();
+
+        for (int i = children.size() - 1; i >= 0; i--) {
+            BaseComponent child = children.get(i);
+            if (!child.isVisible()) continue;
+
+            if (child.hitTest(cx, cy)) {
+                if (child.onPointerClicked(event, doubleClick, cx, cy)) {
+                    if (child != focusedChild && child.shouldTakeFocusAfterInteraction()) {
+                        setFocused(child);
+                    }
+
+                    setDragging(true);
+                    return true;
+                }
+
+                break;
+            }
+        }
+
+        setFocused(null);
+        return false;
+    }
+
+    @Override
     public boolean mouseReleased(@NonNull MouseButtonEvent event) {
         setDragging(false);
         scroll.mouseReleased(event);
@@ -148,6 +179,19 @@ public class ScrollContainer extends BaseComponent implements ContainerEventHand
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
         if (!isMouseOver(mouseX, mouseY)) return false;
+
+        double contentY = mouseY + scroll.getScrollOffset();
+
+        for (int i = children.size() - 1; i >= 0; i--) {
+            BaseComponent child = children.get(i);
+            if (!child.isVisible()) continue;
+
+            if (child.hitTest(mouseX, contentY)) {
+                if (child.mouseScrolled(mouseX, contentY, hAmount, vAmount)) return true;
+                break;
+            }
+        }
+
         return scroll.mouseScrolled(mouseX, mouseY, vAmount);
     }
 
@@ -166,10 +210,10 @@ public class ScrollContainer extends BaseComponent implements ContainerEventHand
         if (focusedChild != null && focusedChild.keyPressed(event)) return true;
 
         int key = event.key();
-        if (key == 266) { scroll.scrollBy(-(height - 20)); return true; } // PAGE_UP
-        if (key == 267) { scroll.scrollBy( height - 20);  return true; } // PAGE_DOWN
-        if (key == 268) { scroll.scrollTo(0);              return true; } // HOME
-        if (key == 269) { scroll.scrollToEnd();            return true; } // END
+        if (key == GLFW.GLFW_KEY_PAGE_UP) { scroll.scrollBy(-(height - 20)); return true; } // PAGE_UP
+        if (key == GLFW.GLFW_KEY_PAGE_DOWN) { scroll.scrollBy( height - 20); return true; } // PAGE_DOWN
+        if (key == GLFW.GLFW_KEY_HOME) { scroll.scrollTo(0); return true; } // HOME
+        if (key == GLFW.GLFW_KEY_END) { scroll.scrollToEnd(); return true; } // END
         return false;
     }
 

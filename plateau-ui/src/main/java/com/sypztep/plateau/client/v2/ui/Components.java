@@ -25,6 +25,10 @@ public final class Components {
     public static LabelComponent label(String text)              { return new LabelComponent(Component.literal(text)); }
     public static LabelComponent label(String text, int color)   { return new LabelComponent(Component.literal(text)).color(color); }
 
+    public static TextComponent text(Component text) { return new TextComponent(text); }
+    public static TextComponent text(String text)    { return new TextComponent(Component.literal(text)); }
+    public static TabComponent tabs() { return new TabComponent(); }
+
     public static ButtonComponent button(Component label)                                          { return new ButtonComponent(label); }
     public static ButtonComponent button(String label)                                             { return new ButtonComponent(Component.literal(label)); }
     public static ButtonComponent button(Component label, Consumer<ButtonComponent> onClick) { return new ButtonComponent(label).onClick(onClick); }

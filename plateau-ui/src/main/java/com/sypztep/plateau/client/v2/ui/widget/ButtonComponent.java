@@ -63,8 +63,8 @@ public class ButtonComponent extends BaseComponent {
         if (hovered && !wasHovered) UISounds.playHover();
         wasHovered = hovered;
 
-        hoverProgress = stepAnimation(hoverProgress, active, 0.1f);
-        liftProgress = stepAnimation(liftProgress, active && !pressed, 0.08f);
+        hoverProgress = stepAnimation(hoverProgress, active, 0.5f, delta);
+        liftProgress = stepAnimation(liftProgress, active && !pressed, 0.5f, delta);
         // Self-heal: if the LMB is no longer physically held, clear pressed regardless of
         // whether mouseReleased propagated through the ScrollContainer/FlowLayout chain.
         if (pressed && GLFW.glfwGetMouseButton(
@@ -74,75 +74,39 @@ public class ButtonComponent extends BaseComponent {
         // Snap to full dim on press; ease back to hover on release.
         if (pressed && hovered) pressProgress = 1.0f;
         else pressProgress = Math.max(0f, pressProgress - 0.15f);
-
-        UITheme        theme  = UITheme.current();
-        UITheme.Button button = theme.button();
-
-        int bg, border, outline, underline, textColor;
-
-        if (!enabled) {
-            bg = button.bg().disabled();
-            border = button.border().disabled();
-            outline = button.outline().disabled();
-            underline = button.underline().disabled();
-            textColor = theme.text().disabled();
-        } else {
-            float hoverLerp = hoverProgress, pressLerp = pressProgress;
-
-            bg = ARGB.srgbLerp(
-                    pressLerp,
-                    ARGB.srgbLerp(hoverLerp, button.bg().normal(), button.bg().hover()),
-                    button.bg().pressed()
-            );
-
-            border = ARGB.srgbLerp(
-                    pressLerp,
-                    ARGB.srgbLerp(hoverLerp, button.border().normal(), button.border().hover()),
-                    button.border().pressed()
-            );
-
-            outline = ARGB.srgbLerp(
-                    pressLerp,
-                    ARGB.srgbLerp(hoverLerp, button.outline().normal(), button.outline().hover()),
-                    button.outline().pressed()
-            );
-
-            underline = ARGB.srgbLerp(
-                    pressLerp,
-                    ARGB.srgbLerp(hoverLerp, button.underline().normal(), button.underline().hover()),
-                    button.underline().pressed()
-            );
-
-            textColor = ARGB.srgbLerp(hoverLerp, button.text().normal(), button.text().hover());
-        }
-
         float hoverY = lerp(liftProgress, 0f, -2f);
         float pressY = lerp(pressProgress, 0f, 1.5f);
         float liftY = hoverY + pressY;
 
         g.pose().pushMatrix();
         g.pose().translate(0f, liftY);
-
-        g.fill(x + 2, y + 2, x + width - 2, y + height - 4, bg);
-        RenderHelper.border(g, x, y, width, height, border);
-        RenderHelper.border(g, x + 1, y + 1, width - 2, height - 4, outline);
-        g.fill(x + 1, y + height - 3, x + width - 1, y + height - 1, underline);
-
-        int contentW = font.width(label) + (icon != null ? 16 + 5 : 0);
-        int curX = x + (width - contentW) / 2;
-        int textY = y + (height - font.lineHeight) / 2;
-
-        if (icon != null) {
-            int iconY = y + (height - 16) / 2;
-            g.blitSprite(RenderPipelines.GUI_TEXTURED, icon, curX, iconY, 16, 16);
-            curX += 16 + 5;
+        if (icon == null) {
+            RenderHelper.squareButton(g, font, label, x, y, width, height, enabled, hoverProgress, pressProgress, true);
+        } else {
+            extractIconButton(g);
         }
-
-        g.text(font, label, curX, textY, textColor, true);
 
         g.pose().popMatrix();
     }
 
+    private void extractIconButton(GuiGraphicsExtractor extractor) {
+        RenderHelper.ButtonColors colors = RenderHelper.buttonColors(enabled, hoverProgress, pressProgress);
+
+        extractor.fill(x + 2, y + 2, x + width - 2, y + height - 4, colors.bg());
+        RenderHelper.border(extractor, x, y, width, height, colors.border());
+        RenderHelper.border(extractor, x + 1, y + 1, width - 2, height - 4, colors.outline());
+        extractor.fill(x + 1, y + height - 3, x + width - 1, y + height - 1, colors.underline());
+
+        int contentW = font.width(label) + 16 + 5;
+        int curX = x + (width - contentW) / 2;
+        int textY = y + (height - font.lineHeight) / 2;
+
+        int iconY = y + (height - 16) / 2;
+        extractor.blitSprite(RenderPipelines.GUI_TEXTURED, icon, curX, iconY, 16, 16);
+        curX += 16 + 5;
+
+        extractor.text(font, label, curX, textY, colors.text(), true);
+    }
     // Used by the non-scroll path (screen dispatches directly via GuiEventListener chain).
     @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {

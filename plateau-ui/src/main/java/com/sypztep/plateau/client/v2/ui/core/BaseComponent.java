@@ -83,9 +83,11 @@ public abstract class BaseComponent implements GuiEventListener, Renderable, Nar
 
     // ── Animation helpers ─────────────────────────────────────
 
-    protected static float stepAnimation(float current, boolean active, float speed) {
-        if (active) return Math.min(1f, current + speed);
-        else        return Math.max(0f, current - speed);
+    protected static float stepAnimation(float current, boolean active, float speed, float delta) {
+        float amount = speed * delta;
+
+        if (active) return Math.min(1f, current + amount);
+        else        return Math.max(0f, current - amount);
     }
 
     // ── GuiEventListener ─────────────────────────────────────
@@ -135,8 +137,8 @@ public abstract class BaseComponent implements GuiEventListener, Renderable, Nar
     }
 
     /**
-     * Default: no-op. Leaf components (e.g. {@link ButtonComponent}) override to fire their
-     * action; container components (e.g. {@link FlowLayout}) override to dispatch to children.
+     * Default: no-op. Leaf components (e.g. {@link com.sypztep.plateau.client.v2.ui.widget.ButtonComponent}) override to fire their
+     * action; container components (e.g. {@link com.sypztep.plateau.client.v2.ui.layout.FlowLayout}) override to dispatch to children.
      */
     @Override
     public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
