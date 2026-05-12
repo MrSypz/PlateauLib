@@ -1,6 +1,9 @@
 package com.sypztep.plateau.client.v1.ui.widget;
 
-import com.sypztep.plateau.client.v1.ui.core.*;
+import com.sypztep.plateau.client.v1.ui.core.RenderHelper;
+import com.sypztep.plateau.client.v1.ui.core.SoundConfig;
+import com.sypztep.plateau.client.v1.ui.core.UIColors;
+import com.sypztep.plateau.client.v1.ui.core.UIComponent;
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.narration.NarratedElementType;

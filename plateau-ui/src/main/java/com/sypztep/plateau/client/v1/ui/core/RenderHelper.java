@@ -16,11 +16,9 @@ public final class RenderHelper {
         graphics.fill(x, y, x + w, y + h, color);
     }
 
-    public static void border(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int color) {
-        graphics.fill(x, y, x + w, y + 1, color);
-        graphics.fill(x, y + h - 1, x + w, y + h, color);
-        graphics.fill(x, y, x + 1, y + h, color);
-        graphics.fill(x + w - 1, y, x + w, y + h, color);
+    @Deprecated
+    public static void border(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int color) {
+        graphics.outline(x, y, width, height, color);
     }
 
     public static void panel(GuiGraphicsExtractor graphics, int x, int y, int w, int h,
