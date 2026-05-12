@@ -1,6 +1,8 @@
 package com.sypztep.plateau.client.v2.ui;
 
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
+import com.sypztep.plateau.client.v2.ui.container.ScrollContainer;
+import com.sypztep.plateau.client.v2.ui.container.TabComponent;
 import com.sypztep.plateau.client.v2.ui.layout.FlowLayout;
 import com.sypztep.plateau.client.v2.ui.layout.StackLayout;
 import net.fabricmc.api.EnvType;
@@ -53,5 +55,13 @@ public final class Containers {
 
     public static StackLayout stackFill() {
         return stack(Sizing.fill(), Sizing.fill());
+    }
+
+    public static ScrollContainer scrollable(Sizing horizontal, Sizing vertical) {
+        return new ScrollContainer(horizontal, vertical);
+    }
+
+    public static TabComponent tabs() {
+        return new TabComponent();
     }
 }

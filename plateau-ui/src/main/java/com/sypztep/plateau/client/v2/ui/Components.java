@@ -1,7 +1,14 @@
 package com.sypztep.plateau.client.v2.ui;
 
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
-import com.sypztep.plateau.client.v2.ui.widget.*;
+import com.sypztep.plateau.client.v2.ui.widget.ButtonComponent;
+import com.sypztep.plateau.client.v2.ui.widget.DialogComponent;
+import com.sypztep.plateau.client.v2.ui.widget.LabelComponent;
+import com.sypztep.plateau.client.v2.ui.widget.ScrollContainer;
+import com.sypztep.plateau.client.v2.ui.widget.SeparatorComponent;
+import com.sypztep.plateau.client.v2.ui.widget.SpacerComponent;
+import com.sypztep.plateau.client.v2.ui.widget.TabComponent;
+import com.sypztep.plateau.client.v2.ui.widget.TextComponent;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Component;
@@ -27,6 +34,8 @@ public final class Components {
 
     public static TextComponent text(Component text) { return new TextComponent(text); }
     public static TextComponent text(String text)    { return new TextComponent(Component.literal(text)); }
+
+    @Deprecated(forRemoval = false)
     public static TabComponent tabs() { return new TabComponent(); }
 
     public static ButtonComponent button(Component label)                                          { return new ButtonComponent(label); }
@@ -45,18 +54,22 @@ public final class Components {
     public static SeparatorComponent separator(SeparatorComponent.Axis axis)  { return new SeparatorComponent(axis); }
     public static SeparatorComponent separator(int color)                     { return new SeparatorComponent().color(color); }
 
+    @Deprecated()
     public static ScrollContainer scrollable(Sizing horizontal, Sizing vertical) {
         return new ScrollContainer(horizontal, vertical);
     }
 
+    @Deprecated()
     public static DialogComponent dialog() {
         return new DialogComponent();
     }
 
+    @Deprecated()
     public static DialogComponent dialog(String title) {
         return new DialogComponent().title(title);
     }
 
+    @Deprecated()
     public static DialogComponent dialog(Component title) {
         return new DialogComponent().title(title);
     }

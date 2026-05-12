@@ -65,23 +65,19 @@ public class StackLayout extends BaseContainerComponent {
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
         if (!isMouseOver(event.x(), event.y())) return false;
 
-        // Top-most child first.
+        // Top-most child first. Blocking children absorb even when their internals don't.
         for (int i = children.size() - 1; i >= 0; i--) {
             BaseComponent child = children.get(i);
             if (!child.isVisible()) continue;
-            if (!child.isMouseOver(event.x(), event.y())) continue;
+            boolean blocking = child.blocksLowerInput();
+            if (!blocking && !child.isMouseOver(event.x(), event.y())) continue;
 
             if (child.mouseClicked(event, doubleClick)) {
-                if (child != getFocused() && child.shouldTakeFocusAfterInteraction()) {
-                    setFocused(child);
-                }
-
-                if (event.button() == 0) {
-                    setDragging(true);
-                }
-
+                focusAfterInteraction(child, event.button());
                 return true;
             }
+
+            if (blocking) return true;
         }
 
         setFocused(null);
@@ -90,11 +86,29 @@ public class StackLayout extends BaseContainerComponent {
 
     @Override
     public boolean mouseReleased(@NonNull MouseButtonEvent event) {
-        setDragging(false);
+        boolean wasDragging = isDragging();
+        if (event.button() == 0) setDragging(false);
+
+        for (int i = children.size() - 1; i >= 0; i--) {
+            BaseComponent child = children.get(i);
+            if (!child.isVisible() || !child.blocksLowerInput()) continue;
+            child.mouseReleased(event);
+            return true;
+        }
 
         GuiEventListener focused = getFocused();
-        if (focused != null) {
-            return focused.mouseReleased(event);
+        if (focused != null && (wasDragging || focused.isMouseOver(event.x(), event.y()))) {
+            if (focused.mouseReleased(event)) return true;
+        }
+
+        for (int i = children.size() - 1; i >= 0; i--) {
+            BaseComponent child = children.get(i);
+            if (!child.isVisible()) continue;
+            boolean blocking = child.blocksLowerInput();
+            if (!blocking && !child.isMouseOver(event.x(), event.y())) continue;
+
+            if (child.mouseReleased(event)) return true;
+            if (blocking) return true;
         }
 
         return false;
@@ -102,6 +116,13 @@ public class StackLayout extends BaseContainerComponent {
 
     @Override
     public boolean mouseDragged(@NonNull MouseButtonEvent event, double dragX, double dragY) {
+        for (int i = children.size() - 1; i >= 0; i--) {
+            BaseComponent child = children.get(i);
+            if (!child.isVisible() || !child.blocksLowerInput()) continue;
+            child.mouseDragged(event, dragX, dragY);
+            return true;
+        }
+
         GuiEventListener focused = getFocused();
         return focused != null && focused.mouseDragged(event, dragX, dragY);
     }
@@ -110,15 +131,18 @@ public class StackLayout extends BaseContainerComponent {
     public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
         if (!isMouseOver(mouseX, mouseY)) return false;
 
-        // Top-most child first.
+        // Top-most child first. Blocking children absorb lower scroll.
         for (int i = children.size() - 1; i >= 0; i--) {
             BaseComponent child = children.get(i);
             if (!child.isVisible()) continue;
-            if (!child.isMouseOver(mouseX, mouseY)) continue;
+            boolean blocking = child.blocksLowerInput();
+            if (!blocking && !child.isMouseOver(mouseX, mouseY)) continue;
 
             if (child.mouseScrolled(mouseX, mouseY, hAmount, vAmount)) {
                 return true;
             }
+
+            if (blocking) return true;
 
             // Stop at first child under mouse so lower layers don't receive scroll through it.
             return false;
@@ -139,6 +163,13 @@ public class StackLayout extends BaseContainerComponent {
 
     @Override
     public boolean keyPressed(@NonNull KeyEvent event) {
+        for (int i = children.size() - 1; i >= 0; i--) {
+            BaseComponent child = children.get(i);
+            if (!child.isVisible() || !child.blocksLowerInput()) continue;
+            child.keyPressed(event);
+            return true;
+        }
+
         return getFocused() != null && getFocused().keyPressed(event);
     }
 

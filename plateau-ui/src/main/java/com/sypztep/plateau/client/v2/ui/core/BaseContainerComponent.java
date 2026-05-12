@@ -3,15 +3,19 @@ package com.sypztep.plateau.client.v2.ui.core;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.ComponentPath;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
 public abstract class BaseContainerComponent extends BaseComponent implements ContainerEventHandler {
@@ -59,6 +63,7 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
 
     @Override
     public void setFocused(@Nullable GuiEventListener listener) {
+        if (focusedChild == listener) return;
         if (focusedChild != null) focusedChild.setFocused(false);
 
         focusedChild = listener;
@@ -98,5 +103,118 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
 
     protected void transferFocus() {
         setFocused(null);
+    }
+
+    @Override
+    public void visitWidgets(Consumer<AbstractWidget> widgetVisitor) {
+        for (BaseComponent child : childComponents()) {
+            child.visitWidgets(widgetVisitor);
+        }
+    }
+
+    @Override
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
+        if (!isMouseOver(event.x(), event.y())) return false;
+
+        for (BaseComponent child : childrenBackToFront()) {
+            if (!child.isVisible() || !child.isMouseOver(event.x(), event.y())) continue;
+            if (child.mouseClicked(event, doubleClick)) {
+                focusAfterInteraction(child, event.button());
+                return true;
+            }
+        }
+
+        setFocused(null);
+        return false;
+    }
+
+    @Override
+    public boolean mouseReleased(@NonNull MouseButtonEvent event) {
+        boolean wasDragging = isDragging();
+        if (event.button() == 0) setDragging(false);
+
+        GuiEventListener focused = getFocused();
+        if (focused != null && (wasDragging || focused.isMouseOver(event.x(), event.y()))) {
+            if (focused.mouseReleased(event)) return true;
+        }
+
+        for (BaseComponent child : childrenBackToFront()) {
+            if (!child.isVisible() || !child.isMouseOver(event.x(), event.y())) continue;
+            return child.mouseReleased(event);
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean mouseDragged(@NonNull MouseButtonEvent event, double dragX, double dragY) {
+        GuiEventListener focused = getFocused();
+        return focused != null && isDragging() && focused.mouseDragged(event, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
+        if (!isMouseOver(mouseX, mouseY)) return false;
+
+        for (BaseComponent child : childrenBackToFront()) {
+            if (!child.isVisible() || !child.isMouseOver(mouseX, mouseY)) continue;
+            return child.mouseScrolled(mouseX, mouseY, hAmount, vAmount);
+        }
+
+        return false;
+    }
+
+    @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        for (BaseComponent child : childComponents()) {
+            if (child.isVisible()) child.mouseMoved(mouseX, mouseY);
+        }
+    }
+
+    @Override
+    public boolean keyPressed(@NonNull KeyEvent event) {
+        return getFocused() != null && getFocused().keyPressed(event);
+    }
+
+    @Override
+    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
+        if (!hitTest(x, y)) return false;
+
+        for (BaseComponent child : childrenBackToFront()) {
+            if (!child.isVisible() || !child.hitTest(x, y)) continue;
+            if (child.onPointerClicked(event, doubleClick, x, y)) {
+                focusAfterInteraction(child, event.button());
+                return true;
+            }
+
+            break;
+        }
+
+        setFocused(null);
+        return false;
+    }
+
+    protected List<BaseComponent> childComponents() {
+        List<BaseComponent> result = new ArrayList<>();
+        for (GuiEventListener listener : children()) {
+            if (listener instanceof BaseComponent component) {
+                result.add(component);
+            }
+        }
+        return result;
+    }
+
+    protected List<BaseComponent> childrenBackToFront() {
+        List<BaseComponent> result = childComponents();
+        Collections.reverse(result);
+        return result;
+    }
+
+    protected void focusAfterInteraction(BaseComponent child, int button) {
+        if (child != getFocused() && child.shouldTakeFocusAfterInteraction()) {
+            setFocused(child);
+        }
+
+        if (button == 0) setDragging(true);
     }
 }

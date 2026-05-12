@@ -11,6 +11,8 @@ import net.minecraft.client.input.MouseButtonEvent;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.List;
+
 
 /**
  * A vertically scrollable container. Children are stacked top-to-bottom, each sized by their
@@ -19,6 +21,7 @@ import org.lwjgl.glfw.GLFW;
  * Page Up/Down and Home/End scroll the viewport.
  */
 @Environment(EnvType.CLIENT)
+@Deprecated(forRemoval = false)
 public class ScrollContainer extends BaseContainerComponent {
     private int gap = 0;
     private int contentHeight = 0;
@@ -188,36 +191,53 @@ public class ScrollContainer extends BaseContainerComponent {
 
     private void layoutChildren() {
         int innerX = x + padding.left();
-        int innerW = width - padding.horizontal() - SCROLLBAR_RESERVED;
+        int innerW = Math.max(0, width - padding.horizontal());
+
+        contentHeight = layoutChildren(innerX, innerW);
+        if (contentHeight > height) {
+            contentHeight = layoutChildren(innerX, Math.max(0, innerW - SCROLLBAR_RESERVED));
+        }
+
+        syncScrollState();
+    }
+
+    private int layoutChildren(int innerX, int innerW) {
+        List<BaseComponent> visible = children.stream()
+                .filter(BaseComponent::isVisible)
+                .toList();
 
         int curY = y + padding.top();
-        for (int i = 0; i < children.size(); i++) {
-            BaseComponent c = children.get(i);
-            if (!c.isVisible()) continue;
+        for (int i = 0; i < visible.size(); i++) {
+            BaseComponent c = visible.get(i);
 
-            int childAvailW = innerW - c.margins().horizontal();
+            int childAvailW = Math.max(0, innerW - c.margins().horizontal());
             int childW = resolveWidth(c, childAvailW);
             int childH = resolveHeight(c, childAvailW);
             c.mount(innerX + c.margins().left(), curY + c.margins().top(), childW, childH);
-            curY += childH + c.margins().vertical() + (i < children.size() - 1 ? gap : 0);
+            curY += childH + c.margins().vertical() + (i < visible.size() - 1 ? gap : 0);
         }
 
-        contentHeight = curY - (y + padding.top()) + padding.bottom();
+        return curY - (y + padding.top()) + padding.bottom();
+    }
+
+    private void syncScrollState() {
+        scroll.setBounds(x, y, width, height);
+        scroll.setContentHeight(contentHeight);
     }
 
     private int resolveWidth(BaseComponent c, int availW) {
         return switch (c.horizontalSizing()) {
-            case Sizing.Fixed   f -> f.value();
+            case Sizing.Fixed   f -> Math.max(0, f.value());
             case Sizing.Fill    ignored -> availW;
-            case Sizing.Content ignored -> c.determineHorizontalContentSize(availW);
+            case Sizing.Content ignored -> Math.max(0, c.determineHorizontalContentSize(availW));
         };
     }
 
     private int resolveHeight(BaseComponent c, int availW) {
         return switch (c.verticalSizing()) {
-            case Sizing.Fixed   f -> f.value();
-            case Sizing.Content ignored -> c.determineVerticalContentSize(availW);
-            case Sizing.Fill    ignored -> c.determineVerticalContentSize(availW);
+            case Sizing.Fixed   f -> Math.max(0, f.value());
+            case Sizing.Content ignored -> Math.max(0, c.determineVerticalContentSize(availW));
+            case Sizing.Fill    ignored -> Math.max(0, c.determineVerticalContentSize(availW));
         };
     }
 
@@ -225,8 +245,7 @@ public class ScrollContainer extends BaseContainerComponent {
 
     @Override
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        scroll.setBounds(x, y, width, height);
-        scroll.setContentHeight(contentHeight);
+        syncScrollState();
         scroll.update(delta);
         scroll.enableScissor(g);
 

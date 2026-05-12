@@ -5,12 +5,13 @@ import com.sypztep.plateau.client.v2.ui.core.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ARGB;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ import java.util.function.Consumer;
  *   DialogComponent dialog = new DialogComponent()
  *       .title("Confirm")
  *       .content(Components.text("Are you sure?").sizing(Sizing.fill(), Sizing.content()))
- *       .contentHeight(16)
+ *       .dialogHeight(16)
  *       .button("OK",     d -> { doThing(); d.close(); })
  *       .button("Cancel", d -> d.close());
  *
@@ -39,6 +40,7 @@ import java.util.function.Consumer;
  * full viewport area so the backdrop and centering math are correct.
  */
 @Environment(EnvType.CLIENT)
+@Deprecated(forRemoval = false)
 public class DialogComponent extends BaseContainerComponent {
 
     // ── State ─────────────────────────────────────────────────
@@ -52,9 +54,9 @@ public class DialogComponent extends BaseContainerComponent {
 
     // ── Configuration ─────────────────────────────────────────
 
-    private int     dialogWidth       = 220;
-    private int contentHeight = 40;   // used only when content != null
-    private boolean closeOnBackdrop   = true;
+    private int dialogWidth = 220;
+    private int dialogHeight = 40; // used only when content != null
+    private boolean closeOnBackdrop = true;
 
     // ── Layout constants ──────────────────────────────────────
 
@@ -71,11 +73,13 @@ public class DialogComponent extends BaseContainerComponent {
 
     // ── Fluent API ────────────────────────────────────────────
 
-    public DialogComponent title(Component title)         { this.title = title;   return this; }
-    public DialogComponent title(String title)            { return title(Component.literal(title)); }
-    public DialogComponent dialogWidth(int w)             { this.dialogWidth = w; remount(); return this; }
-    public DialogComponent contentHeight(int h)           { this.contentHeight = h;    remount(); return this; }
-    public DialogComponent closeOnBackdrop(boolean v)     { this.closeOnBackdrop = v; return this; }
+    public DialogComponent title(Component title)               { this.title = title; return this; }
+    public DialogComponent title(String title)                  { return title(Component.literal(title)); }
+    public DialogComponent dialogWidth(int width)               { this.dialogWidth = Math.max(0, width); remount(); return this; }
+    public DialogComponent dialogHeight(int height)             { this.dialogHeight = Math.max(0, height); remount(); return this; }
+    public DialogComponent closeOnBackdrop(boolean onClose)     { this.closeOnBackdrop = onClose; return this; }
+    @Deprecated(forRemoval = false)
+    public DialogComponent contentHeight(int height)            { return dialogHeight(height); }
 
     public DialogComponent content(@Nullable BaseComponent c) {
         this.content = c;
@@ -111,14 +115,14 @@ public class DialogComponent extends BaseContainerComponent {
     private void remount() {
         if (width == 0 || height == 0) return;
 
-        int dw = Math.min(dialogWidth, width - PAD * 4);
+        int dw = dialogWidth();
         int dh = totalDialogHeight();
         int dx = x + (width  - dw) / 2;
         int dy = y + (height - dh) / 2;
 
         // Content
         if (content != null) {
-            content.mount(dx + PAD, dy + HEADER_H + PAD, dw - PAD * 2, contentHeight);
+            content.mount(dx + PAD, dy + HEADER_H + PAD, dw - PAD * 2, dialogHeight);
         }
 
         // Position buttons evenly in footer
@@ -136,7 +140,7 @@ public class DialogComponent extends BaseContainerComponent {
     }
 
     private int totalDialogHeight() {
-        int inner = (content != null) ? PAD * 2 + contentHeight : PAD;
+        int inner = (content != null) ? PAD * 2 + dialogHeight : PAD;
         return HEADER_H + inner + FOOTER_H;
     }
 
@@ -151,16 +155,21 @@ public class DialogComponent extends BaseContainerComponent {
     // ── Input — modal: absorb all events while visible ────────
 
     @Override
+    public boolean blocksLowerInput() {
+        return open;
+    }
+
+    @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
         // Consume the whole viewport while the dialog is open
-        return open && openProgress > 0.01f
+        return open
                 && mouseX >= x && mouseX < x + width
                 && mouseY >= y && mouseY < y + height;
     }
 
     @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
-        if (!open || openProgress < 0.01f) return false;
+        if (!open) return false;
 
         // Buttons first
         for (ButtonComponent btn : buttonWidgets) {
@@ -168,7 +177,7 @@ public class DialogComponent extends BaseContainerComponent {
         }
 
         // Content
-        if (content instanceof BaseComponent bc && bc.mouseClicked(event, doubleClick)) return true;
+        if (content != null && content.mouseClicked(event, doubleClick)) return true;
 
         // Backdrop click — close if enabled and click was outside the box
         if (closeOnBackdrop && !isOverBox(event.x(), event.y())) {
@@ -181,11 +190,29 @@ public class DialogComponent extends BaseContainerComponent {
     @Override
     public boolean mouseReleased(@NonNull MouseButtonEvent event) {
         for (ButtonComponent btn : buttonWidgets) btn.mouseReleased(event);
-        return false;
+        return open;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
+        if (!open) return false;
+        if (content != null) content.mouseScrolled(mouseX, mouseY, hAmount, vAmount);
+        return true;
+    }
+
+    @Override
+    public boolean keyPressed(@NonNull KeyEvent event) {
+        if (!open) return false;
+        if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+            close();
+            return true;
+        }
+
+        return getFocused() != null && getFocused().keyPressed(event);
     }
 
     private boolean isOverBox(double mx, double my) {
-        int dw = Math.min(dialogWidth, width - PAD * 4);
+        int dw = dialogWidth();
         int dh = totalDialogHeight();
         int dx = x + (width  - dw) / 2;
         int dy = y + (height - dh) / 2;
@@ -201,7 +228,7 @@ public class DialogComponent extends BaseContainerComponent {
 
         UITheme theme = UITheme.current();
 
-        int dw = Math.min(dialogWidth, width - PAD * 4);
+        int dw = dialogWidth();
         int dh = totalDialogHeight();
         int cx = x + width  / 2;
         int cy = y + height / 2;
@@ -255,6 +282,10 @@ public class DialogComponent extends BaseContainerComponent {
 
     private static float lerp(float t, float from, float to) {
         return from + (to - from) * t;
+    }
+
+    private int dialogWidth() {
+        return Math.max(0, Math.min(dialogWidth, width - PAD * 4));
     }
 
     /** Cubic ease-out so the open animation decelerates nicely. */

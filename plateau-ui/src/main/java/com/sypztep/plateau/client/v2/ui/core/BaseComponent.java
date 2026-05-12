@@ -7,7 +7,9 @@ import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.layouts.LayoutElement;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
@@ -17,13 +19,15 @@ import net.minecraft.client.input.MouseButtonEvent;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
+import java.util.function.Consumer;
+
 /**
  * Base for all v2 UI components. Unlike v1, components do not take x/y/w/h in their constructors —
  * the parent layout assigns those via {@link #mount}. Declare what size you want with
  * {@link Sizing} and let the layout engine do the math.
  */
 @Environment(EnvType.CLIENT)
-public abstract class BaseComponent implements GuiEventListener, Renderable, NarratableEntry, PointerInteractable {
+public abstract class BaseComponent implements GuiEventListener, Renderable, NarratableEntry, LayoutElement, PointerInteractable {
 
     protected int x, y, width, height;
     protected Sizing horizontalSizing = Sizing.content();
@@ -49,13 +53,46 @@ public abstract class BaseComponent implements GuiEventListener, Renderable, Nar
     public final void mount(int x, int y, int width, int height) {
         this.x = x;
         this.y = y;
-        this.width  = width;
-        this.height = height;
+        this.width  = Math.max(0, width);
+        this.height = Math.max(0, height);
         onMounted();
     }
 
     /** Override to react after mount() has been called (e.g. lay out children). */
     protected void onMounted() {}
+
+    @Override
+    public void setX(int x) {
+        mount(x, y, width, height);
+    }
+
+    @Override
+    public void setY(int y) {
+        mount(x, y, width, height);
+    }
+
+    @Override
+    public int getX() {
+        return x;
+    }
+
+    @Override
+    public int getY() {
+        return y;
+    }
+
+    @Override
+    public int getWidth() {
+        return width;
+    }
+
+    @Override
+    public int getHeight() {
+        return height;
+    }
+
+    @Override
+    public void visitWidgets(Consumer<AbstractWidget> widgetVisitor) {}
 
     /**
      * Return the preferred width when {@link Sizing#content()} is used horizontally.
@@ -102,6 +139,14 @@ public abstract class BaseComponent implements GuiEventListener, Renderable, Nar
     public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) { return false; }
     @Override
     public boolean keyPressed(@NonNull KeyEvent keyEvent) { return false; }
+
+    /**
+     * When true, parent overlays must route input to this component before lower siblings
+     * and stop propagation even if this component does not otherwise handle the event.
+     */
+    public boolean blocksLowerInput() { return false; }
+
+    public boolean shouldTakeFocusAfterInteraction() { return isFocusable(); }
 
     @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
@@ -211,6 +256,6 @@ public abstract class BaseComponent implements GuiEventListener, Renderable, Nar
 
     public int innerX() { return x + padding.left(); }
     public int innerY() { return y + padding.top(); }
-    public int innerWidth()  { return width  - padding.horizontal(); }
-    public int innerHeight() { return height - padding.vertical(); }
+    public int innerWidth()  { return Math.max(0, width  - padding.horizontal()); }
+    public int innerHeight() { return Math.max(0, height - padding.vertical()); }
 }

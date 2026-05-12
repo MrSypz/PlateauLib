@@ -41,8 +41,9 @@ public class TextComponent extends BaseComponent {
 
     @Override
     public int determineHorizontalContentSize(int space) {
-        if (wrap) return space;
-        return font.width(text);
+        int available = Math.max(0, space);
+        if (wrap) return available;
+        return Math.min(font.width(text) + padding.horizontal(), available);
     }
 
     @Override
@@ -63,12 +64,17 @@ public class TextComponent extends BaseComponent {
 
     @Override
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        if (width <= 0 || height <= 0) return;
+
         int wrapWidth = Math.max(1, innerWidth());
         rebuildIfNeeded(wrapWidth);
 
         int drawY = innerY();
+        int maxY = y + height;
 
+        g.enableScissor(x, y, x + width, y + height);
         for (FormattedCharSequence line : lines) {
+            if (drawY >= maxY) break;
             int lineWidth = font.width(line);
             int drawX = centered ? innerX() + (innerWidth() - lineWidth) / 2 : innerX();
 
@@ -76,6 +82,7 @@ public class TextComponent extends BaseComponent {
 
             drawY += font.lineHeight + lineSpacing;
         }
+        g.disableScissor();
     }
 
     private void rebuildIfNeeded(int wrapWidth) {

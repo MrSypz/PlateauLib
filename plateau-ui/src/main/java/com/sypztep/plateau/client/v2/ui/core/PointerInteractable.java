@@ -1,6 +1,6 @@
 package com.sypztep.plateau.client.v2.ui.core;
 
-import com.sypztep.plateau.client.v2.ui.widget.ScrollContainer;
+import com.sypztep.plateau.client.v2.ui.container.ScrollContainer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.input.MouseButtonEvent;

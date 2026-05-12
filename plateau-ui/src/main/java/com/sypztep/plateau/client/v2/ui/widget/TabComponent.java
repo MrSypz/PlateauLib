@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
+@Deprecated(forRemoval = false)
 public class TabComponent extends BaseContainerComponent {
 
     private record Tab(Component title, BaseComponent content) {}

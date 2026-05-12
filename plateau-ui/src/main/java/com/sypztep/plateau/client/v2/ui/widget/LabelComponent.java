@@ -17,7 +17,6 @@ public class LabelComponent extends BaseComponent {
     private int color;
     private boolean shadow      = true;
     private boolean centered    = false;
-    private boolean smallCaps   = false;
 
     public LabelComponent(Component text) {
         this.text  = text;
@@ -27,12 +26,15 @@ public class LabelComponent extends BaseComponent {
     }
 
     @Override
-    public int determineHorizontalContentSize(int space) { return font.width(text); }
+    public int determineHorizontalContentSize(int space) { return Math.min(font.width(text), Math.max(0, space)); }
     @Override
     public int determineVerticalContentSize(int space)   { return font.lineHeight; }
 
     @Override
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        if (width <= 0 || height <= 0) return;
+
+        g.enableScissor(x, y, x + width, y + height);
         if (centered) {
             int textX = x + (width - font.width(text)) / 2;
             int textY = y + (height - font.lineHeight) / 2;
@@ -40,6 +42,7 @@ public class LabelComponent extends BaseComponent {
         } else {
             g.text(font, text, x, y + (height - font.lineHeight) / 2, color, shadow);
         }
+        g.disableScissor();
     }
 
     // Fluent

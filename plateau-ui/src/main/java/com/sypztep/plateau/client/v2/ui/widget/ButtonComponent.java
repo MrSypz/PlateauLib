@@ -56,6 +56,8 @@ public class ButtonComponent extends BaseComponent {
 
     @Override
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        if (width <= 0 || height <= 0) return;
+
         boolean hovered = enabled && isMouseOver(mouseX, mouseY);
         boolean active = hovered || (focused && enabled);
         if (hovered && !wasHovered) UISounds.playHover();
@@ -78,11 +80,13 @@ public class ButtonComponent extends BaseComponent {
 
         g.pose().pushMatrix();
         g.pose().translate(0f, liftY);
+        g.enableScissor(x, y, x + width, y + height);
         if (icon == null) {
             RenderHelper.squareButton(g, font, label, x, y, width, height, enabled, hoverProgress, pressProgress, true);
         } else {
             extractIconButton(g);
         }
+        g.disableScissor();
 
         g.pose().popMatrix();
     }

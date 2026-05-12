@@ -3,18 +3,8 @@ package com.sypztep.plateau.client.v2.ui.layout;
 import com.sypztep.plateau.client.v2.ui.core.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.events.ContainerEventHandler;
-import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.navigation.FocusNavigationEvent;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,8 +14,8 @@ import java.util.List;
  *   <li>{@code Sizing.fill()} — takes a proportional share of remaining space</li>
  *   <li>{@code Sizing.content()} — shrinks to fit its own content</li>
  * </ul>
- * Implements {@link ContainerEventHandler} — Minecraft's Tab and Arrow key navigation
- * descend into children automatically. No manual event forwarding needed.
+ * Inherits event routing from {@link BaseContainerComponent}, so nested components
+ * receive mouse and keyboard events without one-off forwarding in each layout.
  */
 @Environment(EnvType.CLIENT)
 public class FlowLayout extends BaseContainerComponent {
@@ -59,65 +49,7 @@ public class FlowLayout extends BaseContainerComponent {
     @Override public FlowLayout child(BaseComponent child)                             { super.child(child);         return this; }
     @Override public FlowLayout children(BaseComponent... components)                  { super.children(components); return this; }
     @Override public FlowLayout children(Iterable<? extends BaseComponent> components) { super.children(components); return this; }
-    // BaseComponent stubs out these methods with `return false`, which beats the ContainerEventHandler
-    // defaults (Java class > interface). Explicitly delegate so MC's default iterating logic runs.
-    @Override
-    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
-        return super.mouseClicked(event, doubleClick);
-    }
-
-    @Override
-    public boolean mouseReleased(@NonNull MouseButtonEvent event) {
-        return super.mouseReleased(event);
-    }
-
-    @Override
-    public boolean mouseDragged(@NonNull MouseButtonEvent event, double dx, double dy) {
-        return super.mouseDragged(event, dx, dy);
-    }
-
-    @Override
-    public boolean keyPressed(@NonNull KeyEvent event) {
-        return super.keyPressed(event);
-    }
-
-    @Override
-    public void mouseMoved(double mouseX, double mouseY) {
-        for (BaseComponent baseComponent : children) {
-            if (baseComponent.isVisible()) baseComponent.mouseMoved(mouseX, mouseY);
-        }
-    }
-
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
-        for (BaseComponent baseComponent : children) {
-            if (baseComponent.isVisible() && baseComponent.isMouseOver(mouseX, mouseY)) {
-                if (baseComponent.mouseScrolled(mouseX, mouseY, hAmount, vAmount)) return true;
-            }
-        }
-        return false;
-    }
-
     // ── PointerInteractable ───────────────────────────────────
-    // Used by ScrollContainer to dispatch clicks with content-space coordinates so that
-    // hit-testing works correctly regardless of scroll offset.
-
-    @Override
-    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
-        if (!hitTest(x, y)) return false;
-        for (BaseComponent child : children) {
-            if (!child.isVisible()) continue;
-            if (child.hitTest(x, y)) {
-                if (child.onPointerClicked(event, doubleClick, x, y)) {
-                    if (child.shouldTakeFocusAfterInteraction()) setFocused(child);
-                    if (event.button() == 0) setDragging(true);
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     // ── Layout ───────────────────────────────────────────────
 
     @Override
@@ -136,8 +68,8 @@ public class FlowLayout extends BaseContainerComponent {
     private void layoutVertical() {
         int innerX = x + padding.left();
         int innerY = y + padding.top();
-        int innerW = width  - padding.horizontal();
-        int innerH = height - padding.vertical();
+        int innerW = innerWidth();
+        int innerH = innerHeight();
 
         List<BaseComponent> vis = visible();
         if (vis.isEmpty()) return;
@@ -151,7 +83,7 @@ public class FlowLayout extends BaseContainerComponent {
 
         for (int i = 0; i < vis.size(); i++) {
             BaseComponent c = vis.get(i);
-            int childAvailW = innerW - c.margins().horizontal();
+            int childAvailW = Math.max(0, innerW - c.margins().horizontal());
             widths[i] = resolveWidth(c, childAvailW);
 
             switch (c.verticalSizing()) {
@@ -160,7 +92,7 @@ public class FlowLayout extends BaseContainerComponent {
                     heights[i] = c.determineVerticalContentSize(childAvailW);
                     fixedH += heights[i] + c.margins().vertical();
                 }
-                case Sizing.Fill   f -> totalFillWeight += f.weight();
+                case Sizing.Fill   f -> totalFillWeight += Math.max(0, f.weight());
             }
         }
 
@@ -169,7 +101,7 @@ public class FlowLayout extends BaseContainerComponent {
 
         for (int i = 0; i < vis.size(); i++) {
             if (vis.get(i).verticalSizing() instanceof Sizing.Fill(int weight)) {
-                heights[i] = Math.max(0, (int)(weight * fillUnit));
+                heights[i] = Math.max(0, (int)(Math.max(0, weight) * fillUnit));
             }
         }
 
@@ -185,8 +117,8 @@ public class FlowLayout extends BaseContainerComponent {
     private void layoutHorizontal() {
         int innerX = x + padding.left();
         int innerY = y + padding.top();
-        int innerW = width  - padding.horizontal();
-        int innerH = height - padding.vertical();
+        int innerW = innerWidth();
+        int innerH = innerHeight();
 
         List<BaseComponent> vis = visible();
         if (vis.isEmpty()) return;
@@ -200,16 +132,17 @@ public class FlowLayout extends BaseContainerComponent {
 
         for (int i = 0; i < vis.size(); i++) {
             BaseComponent c = vis.get(i);
-            int childAvailH = innerH - c.margins().vertical();
-            heights[i] = resolveHeight(c, childAvailH, innerW - c.margins().horizontal());
+            int childAvailH = Math.max(0, innerH - c.margins().vertical());
+            int childAvailW = Math.max(0, innerW - c.margins().horizontal());
+            heights[i] = resolveHeight(c, childAvailH, childAvailW);
 
             switch (c.horizontalSizing()) {
                 case Sizing.Fixed  f -> { widths[i] = f.value(); fixedW += f.value() + c.margins().horizontal(); }
                 case Sizing.Content ignored -> {
-                    widths[i] = c.determineHorizontalContentSize(innerH);
+                    widths[i] = c.determineHorizontalContentSize(childAvailW);
                     fixedW += widths[i] + c.margins().horizontal();
                 }
-                case Sizing.Fill   f -> totalFillWeight += f.weight();
+                case Sizing.Fill   f -> totalFillWeight += Math.max(0, f.weight());
             }
         }
 
@@ -218,7 +151,7 @@ public class FlowLayout extends BaseContainerComponent {
 
         for (int i = 0; i < vis.size(); i++) {
             if (vis.get(i).horizontalSizing() instanceof Sizing.Fill(int weight)) {
-                widths[i] = Math.max(0, (int)(weight * fillUnit));
+                widths[i] = Math.max(0, (int)(Math.max(0, weight) * fillUnit));
             }
         }
 
@@ -275,21 +208,21 @@ public class FlowLayout extends BaseContainerComponent {
 
     @Override
     public int determineVerticalContentSize(int availableWidth) {
-        int innerW = availableWidth - padding.horizontal();
+        int innerW = Math.max(0, availableWidth - padding.horizontal());
         List<BaseComponent> vis = visible();
         if (vis.isEmpty()) return padding.vertical();
 
         if (direction == Direction.VERTICAL) {
             int total = padding.vertical() + gap * Math.max(0, vis.size() - 1);
             for (BaseComponent c : vis) {
-                int childAvailW = innerW - c.margins().horizontal();
+                int childAvailW = Math.max(0, innerW - c.margins().horizontal());
                 total += childContentH(c, childAvailW) + c.margins().vertical();
             }
             return total;
         } else {
             int maxH = 0;
             for (BaseComponent c : vis) {
-                int childAvailW = innerW - c.margins().horizontal();
+                int childAvailW = Math.max(0, innerW - c.margins().horizontal());
                 maxH = Math.max(maxH, childContentH(c, childAvailW) + c.margins().vertical());
             }
             return maxH + padding.vertical();
@@ -297,23 +230,23 @@ public class FlowLayout extends BaseContainerComponent {
     }
 
     @Override
-    public int determineHorizontalContentSize(int availableHeight) {
-        int innerH = availableHeight - padding.vertical();
+    public int determineHorizontalContentSize(int availableWidth) {
+        int innerW = Math.max(0, availableWidth - padding.horizontal());
         List<BaseComponent> vis = visible();
         if (vis.isEmpty()) return padding.horizontal();
 
         if (direction == Direction.HORIZONTAL) {
             int total = padding.horizontal() + gap * Math.max(0, vis.size() - 1);
             for (BaseComponent c : vis) {
-                int childAvailH = innerH - c.margins().vertical();
-                total += childContentW(c, childAvailH) + c.margins().horizontal();
+                int childAvailW = Math.max(0, innerW - c.margins().horizontal());
+                total += childContentW(c, childAvailW) + c.margins().horizontal();
             }
             return total;
         } else {
             int maxW = 0;
             for (BaseComponent c : vis) {
-                int childAvailH = innerH - c.margins().vertical();
-                maxW = Math.max(maxW, childContentW(c, childAvailH) + c.margins().horizontal());
+                int childAvailW = Math.max(0, innerW - c.margins().horizontal());
+                maxW = Math.max(maxW, childContentW(c, childAvailW) + c.margins().horizontal());
             }
             return maxW + padding.horizontal();
         }
@@ -327,10 +260,10 @@ public class FlowLayout extends BaseContainerComponent {
         };
     }
 
-    private static int childContentW(BaseComponent c, int availH) {
+    private static int childContentW(BaseComponent c, int availW) {
         return switch (c.horizontalSizing()) {
             case Sizing.Fixed   f -> f.value();
-            case Sizing.Content ignored -> c.determineHorizontalContentSize(availH);
+            case Sizing.Content ignored -> c.determineHorizontalContentSize(availW);
             case Sizing.Fill    ignored -> 0;
         };
     }
@@ -339,10 +272,14 @@ public class FlowLayout extends BaseContainerComponent {
 
     @Override
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        if (width <= 0 || height <= 0) return;
+
+        g.enableScissor(x, y, x + width, y + height);
         for (BaseComponent child : children) {
             if (child.isVisible()) {
                 child.extractRenderState(g, mouseX, mouseY, delta);
             }
         }
+        g.disableScissor();
     }
 }
