@@ -9,28 +9,82 @@ import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 @Environment(EnvType.CLIENT)
 public abstract class BaseContainerComponent extends BaseComponent implements ContainerEventHandler {
+
+    protected final List<BaseComponent> children = new ArrayList<>();
 
     @Nullable
     private GuiEventListener focusedChild;
     private boolean dragging;
 
+    // ── Child management ─────────────────────────────────────
+
+    public BaseContainerComponent child(BaseComponent child) {
+        children.add(child);
+        return this;
+    }
+
+    public BaseContainerComponent children(BaseComponent... components) {
+        Collections.addAll(children, components);
+        return this;
+    }
+
+    public BaseContainerComponent children(Iterable<? extends BaseComponent> components) {
+        for (BaseComponent component : components) {
+            children.add(component);
+        }
+        return this;
+    }
+
+    public List<BaseComponent> getChildren() {
+        return children;
+    }
+
     @Override
-    public @Nullable GuiEventListener getFocused() { return focusedChild; }
+    public @NonNull List<? extends GuiEventListener> children() {
+        return children;
+    }
+
+    // ── Focus / dragging ─────────────────────────────────────
+
+    @Override
+    public @Nullable GuiEventListener getFocused() {
+        return focusedChild;
+    }
 
     @Override
     public void setFocused(@Nullable GuiEventListener listener) {
         if (focusedChild != null) focusedChild.setFocused(false);
+
         focusedChild = listener;
+
         if (listener != null) listener.setFocused(true);
     }
 
-    @Override public final boolean isDragging()        { return dragging; }
-    @Override public final void setDragging(boolean v) { dragging = v; }
+    @Override
+    public final boolean isDragging() {
+        return dragging;
+    }
 
-    @Override public boolean isFocused()  { return focusedChild != null; }
-    @Override public void setFocused(boolean v) { if (!v) setFocused(null); }
+    @Override
+    public final void setDragging(boolean dragging) {
+        this.dragging = dragging;
+    }
+
+    @Override
+    public boolean isFocused() {
+        return focusedChild != null;
+    }
+
+    @Override
+    public void setFocused(boolean focused) {
+        if (!focused) setFocused(null);
+    }
 
     @Override
     public @Nullable ComponentPath nextFocusPath(@NonNull FocusNavigationEvent event) {
@@ -38,9 +92,10 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
     }
 
     @Override
-    protected boolean isFocusable() { return true; } // containers are always focusable
+    protected boolean isFocusable() {
+        return true;
+    }
 
-    /** Helper: transfer focus safely, updating focused flag on both old and new child. */
     protected void transferFocus() {
         setFocused(null);
     }

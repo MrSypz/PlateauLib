@@ -6,15 +6,11 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
-import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * A vertically scrollable container. Children are stacked top-to-bottom, each sized by their
@@ -24,8 +20,6 @@ import java.util.List;
  */
 @Environment(EnvType.CLIENT)
 public class ScrollContainer extends BaseContainerComponent {
-
-    private final List<BaseComponent> children = new ArrayList<>();
     private int gap = 0;
     private int contentHeight = 0;
     private final ScrollBehavior scroll = new ScrollBehavior();
@@ -37,18 +31,21 @@ public class ScrollContainer extends BaseContainerComponent {
 
     // ── Child management ─────────────────────────────────────
 
+    @Override
     public ScrollContainer child(BaseComponent child) {
-        children.add(child);
+        super.child(child);
         return this;
     }
 
+    @Override
     public ScrollContainer children(BaseComponent... components) {
-        Collections.addAll(children, components);
+        super.children(components);
         return this;
     }
 
+    @Override
     public ScrollContainer children(Iterable<? extends BaseComponent> components) {
-        for (BaseComponent c : components) children.add(c);
+        super.children(components);
         return this;
     }
 
@@ -61,11 +58,6 @@ public class ScrollContainer extends BaseContainerComponent {
     @Override public ScrollContainer visible(boolean visible) { super.visible(visible); return this; }
     @Override public ScrollContainer sizing(Sizing h, Sizing v){ super.sizing(h, v);    return this; }
     @Override public ScrollContainer sizing(Sizing both)      { super.sizing(both);     return this; }
-
-    // ── ContainerEventHandler ─────────────────────────────────
-
-    @Override
-    public @NonNull List<? extends GuiEventListener> children() { return children; }
 
     // ── Input ─────────────────────────────────────────────────
 

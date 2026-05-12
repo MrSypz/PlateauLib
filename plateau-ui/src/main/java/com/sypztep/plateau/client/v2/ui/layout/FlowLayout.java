@@ -1,9 +1,6 @@
 package com.sypztep.plateau.client.v2.ui.layout;
 
-import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
-import com.sypztep.plateau.client.v2.ui.core.Insets;
-import com.sypztep.plateau.client.v2.ui.core.Sizing;
-import com.sypztep.plateau.client.v2.ui.core.Surface;
+import com.sypztep.plateau.client.v2.ui.core.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.ComponentPath;
@@ -31,19 +28,15 @@ import java.util.List;
  * descend into children automatically. No manual event forwarding needed.
  */
 @Environment(EnvType.CLIENT)
-public class FlowLayout extends BaseComponent implements ContainerEventHandler {
+public class FlowLayout extends BaseContainerComponent {
 
     public enum Direction { HORIZONTAL, VERTICAL }
 
     public enum Align { START, CENTER, END }
 
     private final Direction direction;
-    private final List<BaseComponent> children = new ArrayList<>();
     private int gap = 0;
     private Align crossAlign = Align.START;
-
-    @Nullable private GuiEventListener focusedChild;
-    private boolean dragging;
 
     public FlowLayout(Direction direction, Sizing horizontal, Sizing vertical) {
         this.direction        = direction;
@@ -51,26 +44,8 @@ public class FlowLayout extends BaseComponent implements ContainerEventHandler {
         this.verticalSizing   = vertical;
     }
 
-    // ── Child management ─────────────────────────────────────
-
-    public FlowLayout child(BaseComponent child) {
-        children.add(child);
-        return this;
-    }
-
-    public FlowLayout children(BaseComponent... components) {
-        Collections.addAll(children, components);
-        return this;
-    }
-
-    public FlowLayout children(Iterable<? extends BaseComponent> components) {
-        for (BaseComponent c : components) children.add(c);
-        return this;
-    }
-
     public FlowLayout gap(int gap)               { this.gap = gap; return this; }
     public FlowLayout crossAlign(Align align)    { this.crossAlign = align; return this; }
-    public List<BaseComponent> getChildren()     { return children; }
 
     // Override fluent base methods to preserve FlowLayout return type in chains
     @Override public FlowLayout padding(Insets padding)   { super.padding(padding);  return this; }
@@ -81,55 +56,29 @@ public class FlowLayout extends BaseComponent implements ContainerEventHandler {
     @Override public FlowLayout sizing(Sizing h, Sizing v){ super.sizing(h, v);      return this; }
     @Override public FlowLayout sizing(Sizing both)       { super.sizing(both);      return this; }
 
-    // ── ContainerEventHandler ─────────────────────────────────
-    // Minecraft handles Tab navigation, Arrow navigation, drag tracking, and focus
-    // transfer for free. No manual mouseClicked/keyPressed/charTyped forwarding needed.
-
-    @Override
-    public @NonNull List<? extends GuiEventListener> children() { return children; }
-
-    @Override
-    public @Nullable GuiEventListener getFocused() { return focusedChild; }
-
-    @Override
-    public void setFocused(@Nullable GuiEventListener listener) {
-        if (focusedChild != null) focusedChild.setFocused(false);
-        focusedChild = listener;
-        if (listener != null) listener.setFocused(true);
-    }
-
-    @Override public boolean isDragging()          { return dragging; }
-    @Override public void setDragging(boolean v)   { dragging = v; }
-
-    // Disambiguate: ContainerEventHandler vs BaseComponent defaults
-    @Override public boolean isFocused()           { return focusedChild != null; }
-    @Override public void setFocused(boolean v)    { if (!v) setFocused((GuiEventListener) null); }
-
-    @Override
-    public @Nullable ComponentPath nextFocusPath(FocusNavigationEvent event) {
-        return ContainerEventHandler.super.nextFocusPath(event);
-    }
-
+    @Override public FlowLayout child(BaseComponent child)                             { super.child(child);         return this; }
+    @Override public FlowLayout children(BaseComponent... components)                  { super.children(components); return this; }
+    @Override public FlowLayout children(Iterable<? extends BaseComponent> components) { super.children(components); return this; }
     // BaseComponent stubs out these methods with `return false`, which beats the ContainerEventHandler
     // defaults (Java class > interface). Explicitly delegate so MC's default iterating logic runs.
     @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
-        return ContainerEventHandler.super.mouseClicked(event, doubleClick);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
     public boolean mouseReleased(@NonNull MouseButtonEvent event) {
-        return ContainerEventHandler.super.mouseReleased(event);
+        return super.mouseReleased(event);
     }
 
     @Override
     public boolean mouseDragged(@NonNull MouseButtonEvent event, double dx, double dy) {
-        return ContainerEventHandler.super.mouseDragged(event, dx, dy);
+        return super.mouseDragged(event, dx, dy);
     }
 
     @Override
     public boolean keyPressed(@NonNull KeyEvent event) {
-        return ContainerEventHandler.super.keyPressed(event);
+        return super.keyPressed(event);
     }
 
     @Override

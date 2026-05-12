@@ -34,6 +34,8 @@ public final class Components {
     public static ButtonComponent button(Component label, Consumer<ButtonComponent> onClick) { return new ButtonComponent(label).onClick(onClick); }
     public static ButtonComponent button(String label,    Consumer<ButtonComponent> onClick) { return new ButtonComponent(Component.literal(label)).onClick(onClick); }
 
+
+
     public static SpacerComponent spacer(int size)                      { return new SpacerComponent(size); }
     public static SpacerComponent spacer(Sizing horizontal, Sizing vertical) { return new SpacerComponent(horizontal, vertical); }
     public static SpacerComponent hSpacer()                             { return new SpacerComponent(Sizing.fill(), Sizing.fixed(0)); }
@@ -43,5 +45,19 @@ public final class Components {
     public static SeparatorComponent separator(SeparatorComponent.Axis axis)  { return new SeparatorComponent(axis); }
     public static SeparatorComponent separator(int color)                     { return new SeparatorComponent().color(color); }
 
-    public static ScrollContainer scrollable(Sizing horizontal, Sizing vertical) { return new ScrollContainer(horizontal, vertical); }
+    public static ScrollContainer scrollable(Sizing horizontal, Sizing vertical) {
+        return new ScrollContainer(horizontal, vertical);
+    }
+
+    public static DialogComponent dialog() {
+        return new DialogComponent();
+    }
+
+    public static DialogComponent dialog(String title) {
+        return new DialogComponent().title(title);
+    }
+
+    public static DialogComponent dialog(Component title) {
+        return new DialogComponent().title(title);
+    }
 }

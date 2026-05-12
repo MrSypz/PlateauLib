@@ -6,11 +6,11 @@ import com.sypztep.plateau.client.v2.ui.core.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -59,7 +59,7 @@ public class TabComponent extends BaseContainerComponent {
 
     public int activeIndex()           { return activeIndex; }
 
-    public BaseComponent activeContent() {
+    public @Nullable BaseComponent activeContent() {
         if (tabs.isEmpty()) return null;
         return tabs.get(activeIndex).content();
     }
@@ -72,7 +72,7 @@ public class TabComponent extends BaseContainerComponent {
     // ── ContainerEventHandler ─────────────────────────────────
 
     @Override
-    public @NonNull List<? extends GuiEventListener> children() {
+    public @NonNull List<BaseComponent> children() {
         if (tabs.isEmpty()) return List.of();
         return List.of(tabs.get(activeIndex).content());
     }

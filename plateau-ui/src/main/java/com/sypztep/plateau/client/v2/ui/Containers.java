@@ -2,6 +2,7 @@ package com.sypztep.plateau.client.v2.ui;
 
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
 import com.sypztep.plateau.client.v2.ui.layout.FlowLayout;
+import com.sypztep.plateau.client.v2.ui.layout.StackLayout;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
@@ -43,5 +44,14 @@ public final class Containers {
     /** Shorthand: vertical stack that fills width and shrinks to its content height. */
     public static FlowLayout verticalFlow() {
         return vertical(Sizing.fill(), Sizing.content());
+    }
+
+    // Containers.java
+    public static StackLayout stack(Sizing horizontal, Sizing vertical) {
+        return new StackLayout(horizontal, vertical);
+    }
+
+    public static StackLayout stackFill() {
+        return stack(Sizing.fill(), Sizing.fill());
     }
 }
