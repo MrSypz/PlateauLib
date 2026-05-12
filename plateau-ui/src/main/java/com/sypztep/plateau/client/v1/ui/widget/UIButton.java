@@ -105,12 +105,12 @@ public class UIButton extends UIComponent {
         // Glow
         if (hoverAnimation > 0.3f && enabled && glowIntensity > 0) {
             int glow = ARGB.white((int)(40 * hoverAnimation * glowIntensity));
-            RenderHelper.border(graphics, x - 1, y - 1, width + 2, height + 2, glow);
+            graphics.outline(x - 1, y - 1, width + 2, height + 2, glow);
         }
 
         // Focus ring
         if (focused && enabled) {
-            RenderHelper.border(graphics, x - 2, y - 2, width + 4, height + 4, 0xFFFFFFFF);
+            graphics.outline(x - 2, y - 2, width + 4, height + 4, 0xFFFFFFFF);
         }
 
         graphics.pose().popMatrix();

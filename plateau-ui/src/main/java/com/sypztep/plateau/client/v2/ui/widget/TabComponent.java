@@ -178,7 +178,7 @@ public class TabComponent extends BaseComponent implements ContainerEventHandler
             }
         }
 
-        setFocused((GuiEventListener) null);
+        setFocused(null);
         return false;
     }
 

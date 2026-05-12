@@ -21,11 +21,11 @@ public interface Surface {
     }
 
     static Surface outline(int color) {
-        return (g, x, y, w, h) -> RenderHelper.border(g, x, y, w, h, color);
+        return (g, x, y, w, h) -> g.outline(x, y, w, h, color);
     }
 
     static Surface outline() {
-        return (g, x, y, w, h) -> RenderHelper.border(g, x, y, w, h, UITheme.current().panel().border());
+        return (g, x, y, w, h) -> g.outline(x, y, w, h, UITheme.current().panel().border());
     }
 
     static Surface gradient(int topColor, int bottomColor) {

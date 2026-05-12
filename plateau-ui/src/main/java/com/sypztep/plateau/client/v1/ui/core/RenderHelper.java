@@ -17,14 +17,14 @@ public final class RenderHelper {
     }
 
     @Deprecated
-    public static void border(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int color) {
+    public static void outline(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int color) {
         graphics.outline(x, y, width, height, color);
     }
 
     public static void panel(GuiGraphicsExtractor graphics, int x, int y, int w, int h,
                              int color, int borderColor) {
         rectangle(graphics, x, y, w, h, color);
-        border(graphics, x, y, w, h, borderColor);
+        outline(graphics, x, y, w, h, borderColor);
     }
 
     public static void panelWithHover(GuiGraphicsExtractor graphics, int x, int y, int w, int h,
@@ -36,7 +36,7 @@ public final class RenderHelper {
                 ARGB.srgbLerp(hoverProgress, panel.bg(), panel.bgHover()));
 
         if (border) {
-            border(graphics, x, y, w, h,
+            outline(graphics, x, y, w, h,
                     ARGB.srgbLerp(hoverProgress, panel.border(), panel.borderHover()));
         }
     }
@@ -119,8 +119,8 @@ public final class RenderHelper {
         ButtonColors colors = buttonColors(enabled, hoverProgress, pressProgress);
 
         graphics.fill(x + 2, y + 2, x + width - 2, y + height - 4, colors.bg());
-        border(graphics, x, y, width, height, colors.border());
-        border(graphics, x + 1, y + 1, width - 2, height - 4, colors.outline());
+        outline(graphics, x, y, width, height, colors.border());
+        outline(graphics, x + 1, y + 1, width - 2, height - 4, colors.outline());
         graphics.fill(x + 1, y + height - 3, x + width - 1, y + height - 1, colors.underline());
 
         int textX = x + (width - font.width(label)) / 2;
@@ -130,7 +130,7 @@ public final class RenderHelper {
     }
 
     @Deprecated (forRemoval = true) public static void drawRect(GuiGraphicsExtractor g, int x, int y, int w, int h, int c) { rectangle(g, x, y, w, h, c); }
-    @Deprecated (forRemoval = true) public static void drawBorder(GuiGraphicsExtractor g, int x, int y, int w, int h, int c) { border(g, x, y, w, h, c); }
+    @Deprecated (forRemoval = true) public static void drawBorder(GuiGraphicsExtractor g, int x, int y, int w, int h, int c) { outline(g, x, y, w, h, c); }
     @Deprecated (forRemoval = true) public static void drawPanel(GuiGraphicsExtractor g, int x, int y, int w, int h, int c, int bc) { panel(g, x, y, w, h, c, bc); }
     @Deprecated (forRemoval = true) public static void drawPanelWithHover(GuiGraphicsExtractor g, int x, int y, int w, int h, float p, boolean b) { panelWithHover(g, x, y, w, h, p, b); }
     @Deprecated (forRemoval = true) public static int drawHeader(GuiGraphicsExtractor g, Font f, Component t, int x, int y, int w, int p, float hp) { return header(g, f, t, x, y, w, p, hp); }
