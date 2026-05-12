@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
 public class ButtonComponent extends BaseComponent {
+    private static final int ANIMATION_CLIP_OUTSET = 3;
 
     private Component label;
     private @Nullable Identifier icon;
@@ -43,16 +44,22 @@ public class ButtonComponent extends BaseComponent {
 
     @Override
     public int determineHorizontalContentSize(int space) {
-        int w = font.width(label) + 12;
+        int w = font.width(label) + 12 + padding.horizontal();
         if (icon != null) w += 16 + 5;
         return w;
     }
 
     @Override
-    public int determineVerticalContentSize(int space) { return 20; }
+    public int determineVerticalContentSize(int space) { return 20 + padding.vertical(); }
 
     @Override
     protected boolean isFocusable() { return enabled; }
+
+    @Override
+    public int renderClipTopOutset() { return ANIMATION_CLIP_OUTSET; }
+
+    @Override
+    public int renderClipBottomOutset() { return ANIMATION_CLIP_OUTSET; }
 
     @Override
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
@@ -80,15 +87,29 @@ public class ButtonComponent extends BaseComponent {
 
         g.pose().pushMatrix();
         g.pose().translate(0f, liftY);
-        g.enableScissor(x, y, x + width, y + height);
+        int clipTop = y - renderClipTopOutset();
+        int clipBottom = y + height + renderClipBottomOutset();
+        g.enableScissor(x, clipTop, x + width, clipBottom);
         if (icon == null) {
-            RenderHelper.squareButton(g, font, label, x, y, width, height, enabled, hoverProgress, pressProgress, true);
+            extractTextButton(g);
         } else {
             extractIconButton(g);
         }
         g.disableScissor();
-
         g.pose().popMatrix();
+    }
+
+    private void extractTextButton(GuiGraphicsExtractor extractor) {
+        RenderHelper.ButtonColors colors = RenderHelper.buttonColors(enabled, hoverProgress, pressProgress);
+
+        extractor.fillGradient(x + 2, y + 2, x + width - 2, y + height - 4, colors.bg(), colors.bgTop());
+        extractor.outline(x, y, width, height, colors.border());
+        extractor.outline(x + 1, y + 1, width - 2, height - 4, colors.outline());
+        extractor.fill(x + 1, y + height - 3, x + width - 1, y + height - 1, colors.underline());
+
+        int textX = innerX() + (innerWidth() - font.width(label)) / 2;
+        int textY = innerY() + (innerHeight() - font.lineHeight) / 2;
+        extractor.text(font, label, textX, textY, colors.text(), true);
     }
 
     private void extractIconButton(GuiGraphicsExtractor extractor) {
@@ -100,10 +121,10 @@ public class ButtonComponent extends BaseComponent {
         extractor.fill(x + 1, y + height - 3, x + width - 1, y + height - 1, colors.underline());
 
         int contentW = font.width(label) + 16 + 5;
-        int curX = x + (width - contentW) / 2;
-        int textY = y + (height - font.lineHeight) / 2;
+        int curX = innerX() + (innerWidth() - contentW) / 2;
+        int textY = innerY() + (innerHeight() - font.lineHeight) / 2;
 
-        int iconY = y + (height - 16) / 2;
+        int iconY = innerY() + (innerHeight() - 16) / 2;
         extractor.blitSprite(RenderPipelines.GUI_TEXTURED, icon, curX, iconY, 16, 16);
         curX += 16 + 5;
 

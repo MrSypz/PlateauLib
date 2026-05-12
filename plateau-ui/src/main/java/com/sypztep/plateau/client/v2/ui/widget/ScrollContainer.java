@@ -78,6 +78,21 @@ public class ScrollContainer extends BaseContainerComponent {
 
         for (int i = children.size() - 1; i >= 0; i--) {
             BaseComponent child = children.get(i);
+            if (!child.isVisible() || !child.rendersAboveSiblings()) continue;
+            if (child.hitTest(cx, cy)) {
+                if (child.onPointerClicked(event, doubleClick, cx, cy)) {
+                    if (child != getFocused() && child.shouldTakeFocusAfterInteraction()) {
+                        setFocused(child);
+                    }
+                    setDragging(true);
+                    return true;
+                }
+                if (child.blocksLowerInput()) return true;
+            }
+        }
+
+        for (int i = children.size() - 1; i >= 0; i--) {
+            BaseComponent child = children.get(i);
             if (!child.isVisible()) continue;
             if (child.hitTest(cx, cy)) {
                 if (child.onPointerClicked(event, doubleClick, cx, cy)) {
@@ -105,6 +120,24 @@ public class ScrollContainer extends BaseContainerComponent {
 
         double cx = x;
         double cy = y + scroll.getScrollOffset();
+
+        for (int i = children.size() - 1; i >= 0; i--) {
+            BaseComponent child = children.get(i);
+            if (!child.isVisible() || !child.rendersAboveSiblings()) continue;
+
+            if (child.hitTest(cx, cy)) {
+                if (child.onPointerClicked(event, doubleClick, cx, cy)) {
+                    if (child != getFocused() && child.shouldTakeFocusAfterInteraction()) {
+                        setFocused(child);
+                    }
+
+                    setDragging(true);
+                    return true;
+                }
+
+                if (child.blocksLowerInput()) return true;
+            }
+        }
 
         for (int i = children.size() - 1; i >= 0; i--) {
             BaseComponent child = children.get(i);
@@ -138,7 +171,8 @@ public class ScrollContainer extends BaseContainerComponent {
 
     @Override
     public boolean mouseDragged(@NonNull MouseButtonEvent event, double dx, double dy) {
-        return scroll.mouseDragged(event);
+        if (scroll.mouseDragged(event)) return true;
+        return getFocused() != null && isDragging() && getFocused().mouseDragged(event, dx, dy);
     }
 
     @Override
@@ -146,6 +180,16 @@ public class ScrollContainer extends BaseContainerComponent {
         if (!isMouseOver(mouseX, mouseY)) return false;
 
         double contentY = mouseY + scroll.getScrollOffset();
+
+        for (int i = children.size() - 1; i >= 0; i--) {
+            BaseComponent child = children.get(i);
+            if (!child.isVisible() || !child.rendersAboveSiblings()) continue;
+
+            if (child.hitTest(mouseX, contentY)) {
+                if (child.mouseScrolled(mouseX, contentY, hAmount, vAmount)) return true;
+                if (child.blocksLowerInput()) return true;
+            }
+        }
 
         for (int i = children.size() - 1; i >= 0; i--) {
             BaseComponent child = children.get(i);
@@ -256,7 +300,13 @@ public class ScrollContainer extends BaseContainerComponent {
         g.pose().translate(0f, -(float) scrollOffset);
 
         for (BaseComponent child : children) {
-            if (child.isVisible()) {
+            if (child.isVisible() && !child.rendersAboveSiblings()) {
+                child.extractRenderState(g, mouseX, adjustedMouseY, delta);
+            }
+        }
+
+        for (BaseComponent child : children) {
+            if (child.isVisible() && child.rendersAboveSiblings()) {
                 child.extractRenderState(g, mouseX, adjustedMouseY, delta);
             }
         }

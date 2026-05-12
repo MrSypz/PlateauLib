@@ -117,6 +117,15 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
         if (!isMouseOver(event.x(), event.y())) return false;
 
         for (BaseComponent child : childrenBackToFront()) {
+            if (!child.isVisible() || !child.rendersAboveSiblings() || !child.isMouseOver(event.x(), event.y())) continue;
+            if (child.mouseClicked(event, doubleClick)) {
+                focusAfterInteraction(child, event.button());
+                return true;
+            }
+            if (child.blocksLowerInput()) return true;
+        }
+
+        for (BaseComponent child : childrenBackToFront()) {
             if (!child.isVisible() || !child.isMouseOver(event.x(), event.y())) continue;
             if (child.mouseClicked(event, doubleClick)) {
                 focusAfterInteraction(child, event.button());
@@ -157,6 +166,12 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
         if (!isMouseOver(mouseX, mouseY)) return false;
 
         for (BaseComponent child : childrenBackToFront()) {
+            if (!child.isVisible() || !child.rendersAboveSiblings() || !child.isMouseOver(mouseX, mouseY)) continue;
+            if (child.mouseScrolled(mouseX, mouseY, hAmount, vAmount)) return true;
+            if (child.blocksLowerInput()) return true;
+        }
+
+        for (BaseComponent child : childrenBackToFront()) {
             if (!child.isVisible() || !child.isMouseOver(mouseX, mouseY)) continue;
             return child.mouseScrolled(mouseX, mouseY, hAmount, vAmount);
         }
@@ -179,6 +194,15 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
     @Override
     public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
         if (!hitTest(x, y)) return false;
+
+        for (BaseComponent child : childrenBackToFront()) {
+            if (!child.isVisible() || !child.rendersAboveSiblings() || !child.hitTest(x, y)) continue;
+            if (child.onPointerClicked(event, doubleClick, x, y)) {
+                focusAfterInteraction(child, event.button());
+                return true;
+            }
+            if (child.blocksLowerInput()) return true;
+        }
 
         for (BaseComponent child : childrenBackToFront()) {
             if (!child.isVisible() || !child.hitTest(x, y)) continue;

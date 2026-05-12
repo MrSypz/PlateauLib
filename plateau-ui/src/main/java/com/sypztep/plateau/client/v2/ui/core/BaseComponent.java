@@ -148,6 +148,12 @@ public abstract class BaseComponent implements GuiEventListener, Renderable, Nar
 
     public boolean shouldTakeFocusAfterInteraction() { return isFocusable(); }
 
+    public int renderClipTopOutset() { return 0; }
+    public int renderClipRightOutset() { return 0; }
+    public int renderClipBottomOutset() { return 0; }
+    public int renderClipLeftOutset() { return 0; }
+    public boolean rendersAboveSiblings() { return false; }
+
     @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
         return visible && mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
@@ -217,10 +223,26 @@ public abstract class BaseComponent implements GuiEventListener, Renderable, Nar
         return (T) this;
     }
 
+    public <T extends BaseComponent> T padding(int all) {
+        return padding(Insets.of(all));
+    }
+
     @SuppressWarnings("unchecked")
     public <T extends BaseComponent> T margins(Insets margins) {
         this.margins = margins;
         return (T) this;
+    }
+
+    public <T extends BaseComponent> T margins(int all) {
+        return margins(Insets.of(all));
+    }
+
+    public <T extends BaseComponent> T margin(Insets margins) {
+        return margins(margins);
+    }
+
+    public <T extends BaseComponent> T margin(int all) {
+        return margins(all);
     }
 
     @SuppressWarnings("unchecked")

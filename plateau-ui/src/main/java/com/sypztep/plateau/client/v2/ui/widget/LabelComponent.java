@@ -26,9 +26,9 @@ public class LabelComponent extends BaseComponent {
     }
 
     @Override
-    public int determineHorizontalContentSize(int space) { return Math.min(font.width(text), Math.max(0, space)); }
+    public int determineHorizontalContentSize(int space) { return Math.min(font.width(text) + padding.horizontal(), Math.max(0, space)); }
     @Override
-    public int determineVerticalContentSize(int space)   { return font.lineHeight; }
+    public int determineVerticalContentSize(int space)   { return font.lineHeight + padding.vertical(); }
 
     @Override
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
@@ -36,11 +36,11 @@ public class LabelComponent extends BaseComponent {
 
         g.enableScissor(x, y, x + width, y + height);
         if (centered) {
-            int textX = x + (width - font.width(text)) / 2;
-            int textY = y + (height - font.lineHeight) / 2;
+            int textX = innerX() + (innerWidth() - font.width(text)) / 2;
+            int textY = innerY() + (innerHeight() - font.lineHeight) / 2;
             g.text(font, text, textX, textY, color, shadow);
         } else {
-            g.text(font, text, x, y + (height - font.lineHeight) / 2, color, shadow);
+            g.text(font, text, innerX(), innerY() + (innerHeight() - font.lineHeight) / 2, color, shadow);
         }
         g.disableScissor();
     }
