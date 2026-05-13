@@ -148,18 +148,18 @@ public class WindowLayer extends BaseContainerComponent<WindowLayer> {
 
     @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
-        if (super.isMouseOver(mouseX, mouseY)) return true;
+        return hitTest(mouseX, mouseY);
+    }
+
+    @Override
+    public boolean hitTest(double mouseX, double mouseY) {
+        if (super.hitTest(mouseX, mouseY)) return true;
 
         syncZOrder(floatingPanels());
         for (DetachablePanel panel : zOrder) {
             if (panel.isFloatingMouseOver(mouseX, mouseY)) return true;
         }
         return false;
-    }
-
-    @Override
-    public boolean hitTest(double x, double y) {
-        return isMouseOver(x, y);
     }
 
     private Optional<BaseComponent<?>> content() {

@@ -66,14 +66,18 @@ public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownC
 
     @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
-        if (!visible) return false;
-        if (super.isMouseOver(mouseX, mouseY)) return true;
-        return open && mouseX >= x && mouseX < x + width && mouseY >= y + height && mouseY < y + height * (values.size() + 1);
+        return hitTest(mouseX, mouseY);
     }
 
     @Override
-    public boolean hitTest(double x, double y) {
-        return isMouseOver(x, y);
+    public boolean hitTest(double mouseX, double mouseY) {
+        if (!visible) return false;
+        if (super.hitTest(mouseX, mouseY)) return true;
+        return open
+                && mouseX >= x
+                && mouseX < x + width
+                && mouseY >= y + height
+                && mouseY < y + height * (values.size() + 1);
     }
 
     @Override
@@ -81,7 +85,7 @@ public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownC
         if (width <= 0 || height <= 0) return;
 
         UITheme theme = UITheme.current();
-        boolean hot = enabled && super.isMouseOver(mouseX, mouseY);
+        boolean hot = enabled && super.hitTest(mouseX, mouseY);
         if (hot && !wasHovered) UISounds.playHover();
         wasHovered = hot;
         hoverProgress = stepAnimation(hoverProgress, enabled && (hot || focused), 0.5f, delta);
