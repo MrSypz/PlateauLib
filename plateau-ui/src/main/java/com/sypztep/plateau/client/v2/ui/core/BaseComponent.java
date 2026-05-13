@@ -7,19 +7,16 @@ import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Renderable;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.layouts.LayoutElement;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
-
-import java.util.function.Consumer;
 
 /**
  * Base for all v2 UI components. Unlike v1, components do not take x/y/w/h in their constructors —
@@ -27,7 +24,7 @@ import java.util.function.Consumer;
  * {@link Sizing} and let the layout engine do the math.
  */
 @Environment(EnvType.CLIENT)
-public abstract class BaseComponent<GenericComponent extends BaseComponent<GenericComponent>> implements GuiEventListener, Renderable, NarratableEntry, LayoutElement {
+public abstract class BaseComponent<GenericComponent extends BaseComponent<GenericComponent>> implements GuiEventListener, Renderable, NarratableEntry {
 
     protected int x, y, width, height;
     protected Sizing horizontalSizing = Sizing.content();
@@ -61,38 +58,29 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
     /** Override to react after mount() has been called (e.g. lay out children). */
     protected void onMounted() {}
 
-    @Override
     public void setX(int x) {
         mount(x, y, width, height);
     }
 
-    @Override
     public void setY(int y) {
         mount(x, y, width, height);
     }
 
-    @Override
     public int getX() {
         return x;
     }
 
-    @Override
     public int getY() {
         return y;
     }
 
-    @Override
     public int getWidth() {
         return width;
     }
 
-    @Override
     public int getHeight() {
         return height;
     }
-
-    @Override
-    public void visitWidgets(Consumer<AbstractWidget> widgetVisitor) {}
 
     /**
      * Return the preferred width when {@link Sizing#content()} is used horizontally.
@@ -156,7 +144,7 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
 
     @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
-        return visible && mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+        return hitTest(mouseX, mouseY);
     }
 
     @Override
@@ -165,7 +153,9 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
     public boolean isFocused() { return focused; }
 
     @Override
-    public @NonNull ScreenRectangle getRectangle() { return new ScreenRectangle(x, y, width, height); }
+    public @NonNull ScreenRectangle getRectangle() {
+        return bounds();
+    }
 
     @Override
     public @Nullable ComponentPath nextFocusPath(FocusNavigationEvent event) {
@@ -183,7 +173,7 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
      * Matches the same bounds used by layout, so hit-test and rendered position always agree.
      */
     public boolean hitTest(double x, double y) {
-        return visible && x >= this.x && x < this.x + width && y >= this.y && y < this.y + height;
+        return visible && bounds().containsPoint(Mth.floor(x), Mth.floor(y));
     }
 
     // ── NarratableEntry ───────────────────────────────────────
@@ -257,6 +247,8 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
     public int y()       { return y; }
     public int width()   { return width; }
     public int height()  { return height; }
+    public ScreenRectangle bounds() { return new ScreenRectangle(x, y, width, height); }
+    public ScreenRectangle innerBounds() { return new ScreenRectangle(innerX(), innerY(), innerWidth(), innerHeight()); }
     public Sizing horizontalSizing() { return horizontalSizing; }
     public Sizing verticalSizing()   { return verticalSizing; }
     public Insets padding()  { return padding; }

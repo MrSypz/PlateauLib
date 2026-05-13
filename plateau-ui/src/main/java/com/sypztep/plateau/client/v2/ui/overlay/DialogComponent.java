@@ -10,6 +10,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ARGB;
+import net.minecraft.util.Mth;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -237,7 +238,7 @@ public class DialogComponent extends BaseContainerComponent<DialogComponent> {
         g.fill(x, y, x + width, y + height, ARGB.color(backdropAlpha, 0, 0, 0));
 
         // ── Dialog box — scale from center ──
-        float scale = lerp(easeOut(openProgress), 0.90f, 1.0f);
+        float scale = Mth.lerp(easeOut(openProgress), 0.90f, 1.0f);
         g.pose().pushMatrix();
         g.pose().translate(cx, cy);
         g.pose().scale(scale, scale);
@@ -276,10 +277,6 @@ public class DialogComponent extends BaseContainerComponent<DialogComponent> {
     }
 
     // ── Helpers ───────────────────────────────────────────────
-    private static float lerp(float t, float from, float to) {
-        return from + (to - from) * t;
-    }
-
     private int dialogWidth() {
         return Math.max(0, Math.min(dialogWidth, width - PAD * 4));
     }

@@ -14,6 +14,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
@@ -79,8 +80,8 @@ public class ButtonComponent extends BaseComponent<ButtonComponent> {
         // Snap to full dim on press; ease back to hover on release.
         if (pressed && hovered) pressProgress = 1.0f;
         else pressProgress = Math.max(0f, pressProgress - 0.15f);
-        float hoverY = lerp(liftProgress, 0f, -2f);
-        float pressY = lerp(pressProgress, 0f, 1.5f);
+        float hoverY = Mth.lerp(liftProgress, 0f, -2f);
+        float pressY = Mth.lerp(pressProgress, 0f, 1.5f);
         float liftY = hoverY + pressY;
 
         g.pose().pushMatrix();
@@ -178,9 +179,6 @@ public class ButtonComponent extends BaseComponent<ButtonComponent> {
     public void setFocused(boolean focused) {
         if (focused && !this.focused) UISounds.playFocus();
         super.setFocused(focused);
-    }
-    private static float lerp(float t, float from, float to) {
-        return from + (to - from) * t;
     }
     // Fluent
     public ButtonComponent onClick(Consumer<ButtonComponent> onClick)  { this.onClick = onClick; return this; }

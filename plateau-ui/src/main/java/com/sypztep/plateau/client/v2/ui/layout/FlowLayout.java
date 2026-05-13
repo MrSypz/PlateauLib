@@ -4,6 +4,7 @@ import com.sypztep.plateau.client.v2.ui.core.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.util.Mth;
 
 import java.util.List;
 
@@ -305,7 +306,7 @@ public class FlowLayout extends BaseContainerComponent<FlowLayout> {
 
     private boolean hasOpenChildAt(double x, double y) {
         for (BaseComponent<?> child : children) {
-            if (child.isVisible() && child.rendersAboveSiblings() && child.isMouseOver(x, y)) {
+            if (child.isVisible() && child.rendersAboveSiblings() && child.bounds().containsPoint(Mth.floor(x), Mth.floor(y))) {
                 return true;
             }
         }

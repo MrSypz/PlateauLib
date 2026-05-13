@@ -12,6 +12,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
@@ -526,14 +527,10 @@ public class DetachablePanel extends BaseComponent<DetachablePanel> {
     private static Bounds defaultAnimate(Bounds current, Bounds target, float delta, float speed) {
         float amount = Math.min(1f, Math.max(0f, speed) * Math.max(0f, delta));
         return new Bounds(
-                lerp(current.x(), target.x(), amount),
-                lerp(current.y(), target.y(), amount),
-                lerp(current.width(), target.width(), amount),
-                lerp(current.height(), target.height(), amount)
+                Mth.lerp(amount, current.x(), target.x()),
+                Mth.lerp(amount, current.y(), target.y()),
+                Mth.lerp(amount, current.width(), target.width()),
+                Mth.lerp(amount, current.height(), target.height())
         );
-    }
-
-    private static float lerp(float from, float to, float amount) {
-        return from + (to - from) * amount;
     }
 }

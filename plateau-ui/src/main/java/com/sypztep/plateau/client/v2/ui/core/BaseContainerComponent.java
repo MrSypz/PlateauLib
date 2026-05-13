@@ -3,7 +3,6 @@ package com.sypztep.plateau.client.v2.ui.core;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.ComponentPath;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
@@ -15,7 +14,6 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
 public abstract class BaseContainerComponent<GenericBaseComponent extends BaseContainerComponent<GenericBaseComponent>> extends BaseComponent<GenericBaseComponent> implements ContainerEventHandler {
@@ -103,13 +101,6 @@ public abstract class BaseContainerComponent<GenericBaseComponent extends BaseCo
 
     protected void transferFocus() {
         setFocused(null);
-    }
-
-    @Override
-    public void visitWidgets(Consumer<AbstractWidget> widgetVisitor) {
-        for (BaseComponent<?> child : childComponents()) {
-            child.visitWidgets(widgetVisitor);
-        }
     }
 
     @Override
