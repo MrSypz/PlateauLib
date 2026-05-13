@@ -21,19 +21,19 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Environment(EnvType.CLIENT)
-public class DropdownComponent<T> extends BaseComponent<DropdownComponent<T>> {
-    private final List<T> values = new ArrayList<>();
-    private Function<T, Component> labeler;
+public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownComponent<GenericComponent>> {
+    private final List<GenericComponent> values = new ArrayList<>();
+    private Function<GenericComponent, Component> labeler;
     private int selectedIndex = 0;
     private boolean open = false;
     private boolean enabled = true;
-    private Consumer<T> onChanged = ignored -> {};
+    private Consumer<GenericComponent> onChanged = ignored -> {};
     private float hoverProgress = 0f;
     private float openProgress = 0f;
     private boolean wasHovered = false;
     private float[] rowHoverProgress = new float[0];
 
-    public DropdownComponent(List<T> values, Function<T, Component> labeler) {
+    public DropdownComponent(List<GenericComponent> values, Function<GenericComponent, Component> labeler) {
         this.values.addAll(values);
         this.labeler = labeler;
         this.horizontalSizing = Sizing.fill();
@@ -225,7 +225,7 @@ public class DropdownComponent<T> extends BaseComponent<DropdownComponent<T>> {
         return values.isEmpty() ? Component.empty() : labeler.apply(values.get(selectedIndex));
     }
 
-    public DropdownComponent<T> selectedIndex(int selectedIndex) {
+    public DropdownComponent<GenericComponent> selectedIndex(int selectedIndex) {
         if (values.isEmpty()) {
             this.selectedIndex = 0;
             return this;
@@ -239,16 +239,16 @@ public class DropdownComponent<T> extends BaseComponent<DropdownComponent<T>> {
         return this;
     }
 
-    public DropdownComponent<T> value(T value) {
+    public DropdownComponent<GenericComponent> value(GenericComponent value) {
         int index = values.indexOf(value);
         if (index >= 0) selectedIndex(index);
         return this;
     }
 
-    public T value() { return values.isEmpty() ? null : values.get(selectedIndex); }
+    public GenericComponent value() { return values.isEmpty() ? null : values.get(selectedIndex); }
     public int selectedIndex() { return selectedIndex; }
-    public DropdownComponent<T> onChanged(Consumer<T> onChanged) { this.onChanged = onChanged != null ? onChanged : ignored -> {}; return this; }
-    public DropdownComponent<T> labeler(Function<T, Component> labeler) { this.labeler = labeler; return this; }
-    public DropdownComponent<T> enabled(boolean enabled) { this.enabled = enabled; return this; }
-    public DropdownComponent<T> open(boolean open) { this.open = open; return this; }
+    public DropdownComponent<GenericComponent> onChanged(Consumer<GenericComponent> onChanged) { this.onChanged = onChanged != null ? onChanged : ignored -> {}; return this; }
+    public DropdownComponent<GenericComponent> labeler(Function<GenericComponent, Component> labeler) { this.labeler = labeler; return this; }
+    public DropdownComponent<GenericComponent> enabled(boolean enabled) { this.enabled = enabled; return this; }
+    public DropdownComponent<GenericComponent> open(boolean open) { this.open = open; return this; }
 }
