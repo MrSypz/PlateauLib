@@ -44,9 +44,13 @@ public class WindowLayer extends BaseContainerComponent<WindowLayer> {
 
     @Override
     public void extract(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        boolean contentHoverBlocked = isContentHoverBlocked(mouseX, mouseY);
         content().ifPresent(component -> {
             component.mount(innerX(), innerY(), innerWidth(), innerHeight());
-            component.extractRenderState(graphics, mouseX, mouseY, delta);
+            component.extractRenderState(graphics,
+                    contentHoverBlocked ? hoverSuppressedMouse() : mouseX,
+                    contentHoverBlocked ? hoverSuppressedMouse() : mouseY,
+                    delta);
         });
 
         List<DetachablePanel> panels = floatingPanels();
@@ -196,6 +200,18 @@ public class WindowLayer extends BaseContainerComponent<WindowLayer> {
     private void bringToFront(DetachablePanel panel) {
         zOrder.remove(panel);
         zOrder.add(panel);
+    }
+
+    private boolean isContentHoverBlocked(int mouseX, int mouseY) {
+        syncZOrder(floatingPanels());
+        for (int index = zOrder.size() - 1; index >= 0; index--) {
+            DetachablePanel panel = zOrder.get(index);
+            if (!panel.isFloatingActive()) continue;
+            if (panel.inputMode() == DetachablePanel.WindowInputMode.MODAL || panel.isFloatingMouseOver(mouseX, mouseY)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

@@ -334,8 +334,36 @@ public class FlowLayout extends BaseContainerComponent<FlowLayout> {
 
     private void extractChild(GuiGraphicsExtractor g, BaseComponent<?> child, int mouseX, int mouseY, float delta) {
         enableChildScissor(g, child);
-        child.extractRenderState(g, mouseX, mouseY, delta);
+        boolean hoverBlocked = isMouseBlockedByTopChild(child, mouseX, mouseY);
+        child.extractRenderState(g,
+                hoverBlocked ? hoverSuppressedMouse() : mouseX,
+                hoverBlocked ? hoverSuppressedMouse() : mouseY,
+                delta);
         g.disableScissor();
+    }
+
+    private boolean isMouseBlockedByTopChild(BaseComponent<?> target, int mouseX, int mouseY) {
+        for (BaseComponent<?> child : children) {
+            if (child != target
+                    && child.isVisible()
+                    && child.rendersAboveSiblings()
+                    && child.blocksLowerInput()
+                    && child.isMouseOver(mouseX, mouseY)) {
+                return true;
+            }
+        }
+
+        for (int index = children.size() - 1; index >= 0; index--) {
+            BaseComponent<?> child = children.get(index);
+            if (child == target) return false;
+            if (child.isVisible()
+                    && !child.rendersAboveSiblings()
+                    && child.blocksLowerInput()
+                    && child.isMouseOver(mouseX, mouseY)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void enableChildScissor(GuiGraphicsExtractor g, BaseComponent<?> child) {

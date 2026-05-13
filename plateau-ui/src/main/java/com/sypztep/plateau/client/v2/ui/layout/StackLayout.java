@@ -52,9 +52,13 @@ public class StackLayout extends BaseContainerComponent<StackLayout> {
 
     @Override
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        for (BaseComponent<?> child : children) {
+        int blockingIndex = blockingChildIndex(mouseX, mouseY);
+        for (int index = 0; index < children.size(); index++) {
+            BaseComponent<?> child = children.get(index);
             if (child.isVisible()) {
-                child.extractRenderState(g, mouseX, mouseY, delta);
+                int childMouseX = index < blockingIndex ? hoverSuppressedMouse() : mouseX;
+                int childMouseY = index < blockingIndex ? hoverSuppressedMouse() : mouseY;
+                child.extractRenderState(g, childMouseX, childMouseY, delta);
             }
         }
     }
@@ -149,7 +153,9 @@ public class StackLayout extends BaseContainerComponent<StackLayout> {
 
     @Override
     public void mouseMoved(double mouseX, double mouseY) {
+        int blockingIndex = blockingChildIndex(mouseX, mouseY);
         for (int i = children.size() - 1; i >= 0; i--) {
+            if (i < blockingIndex) continue;
             BaseComponent<?> child = children.get(i);
             if (child.isVisible()) {
                 child.mouseMoved(mouseX, mouseY);
@@ -167,5 +173,15 @@ public class StackLayout extends BaseContainerComponent<StackLayout> {
         }
 
         return getFocused() != null && getFocused().keyPressed(event);
+    }
+
+    private int blockingChildIndex(double mouseX, double mouseY) {
+        for (int index = children.size() - 1; index >= 0; index--) {
+            BaseComponent<?> child = children.get(index);
+            if (child.isVisible() && child.blocksLowerInput() && child.isMouseOver(mouseX, mouseY)) {
+                return index;
+            }
+        }
+        return -1;
     }
 }

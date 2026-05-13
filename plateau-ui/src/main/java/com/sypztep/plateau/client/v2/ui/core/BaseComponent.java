@@ -1,5 +1,6 @@
 package com.sypztep.plateau.client.v2.ui.core;
 
+import com.sypztep.plateau.client.v2.ui.overlay.TooltipOverlay;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -26,6 +27,8 @@ import org.jspecify.annotations.NonNull;
 @Environment(EnvType.CLIENT)
 public abstract class BaseComponent<GenericComponent extends BaseComponent<GenericComponent>> implements GuiEventListener, Renderable, NarratableEntry {
 
+    protected static final int HOVER_SUPPRESSED_MOUSE = Integer.MIN_VALUE / 4;
+
     protected int x, y, width, height;
     protected Sizing horizontalSizing = Sizing.content();
     protected Sizing verticalSizing   = Sizing.content();
@@ -35,6 +38,7 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
     protected boolean visible  = true;
     protected boolean focused  = false;
     protected @Nullable String id;
+    private static int renderDepth = 0;
 
     protected final Minecraft minecraft;
     protected final Font font;
@@ -99,8 +103,17 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
     @Override
     public final void extractRenderState(@NonNull GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (!visible) return;
-        surface.extract(g, x, y, width, height);
-        extract(g, mouseX, mouseY, delta);
+        boolean rootRender = renderDepth == 0;
+        if (rootRender) TooltipOverlay.clear();
+
+        renderDepth++;
+        try {
+            surface.extract(g, x, y, width, height);
+            extract(g, mouseX, mouseY, delta);
+        } finally {
+            renderDepth--;
+            if (rootRender) TooltipOverlay.render(g);
+        }
     }
 
     /** Override to render this component's content. Surface is already drawn before this is called. */
@@ -113,6 +126,10 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
 
         if (active) return Math.min(1f, current + amount);
         else        return Math.max(0f, current - amount);
+    }
+
+    protected static int hoverSuppressedMouse() {
+        return HOVER_SUPPRESSED_MOUSE;
     }
 
     // ── GuiEventListener ─────────────────────────────────────

@@ -129,7 +129,13 @@ public class PanelComponent extends BaseContainerComponent<PanelComponent> {
 
         graphics.enableScissor(x, y + headerHeight, x + width, y + height);
         for (BaseComponent<?> child : children) {
-            if (child.isVisible()) child.extractRenderState(graphics, mouseX, mouseY, delta);
+            if (child.isVisible()) {
+                boolean hoverBlocked = isMouseBlockedByTopChild(child, mouseX, mouseY);
+                child.extractRenderState(graphics,
+                        hoverBlocked ? hoverSuppressedMouse() : mouseX,
+                        hoverBlocked ? hoverSuppressedMouse() : mouseY,
+                        delta);
+            }
         }
         graphics.disableScissor();
     }
@@ -223,6 +229,31 @@ public class PanelComponent extends BaseContainerComponent<PanelComponent> {
             case Sizing.Fill ignored -> availableWidth;
         };
     }
+
+    private boolean isMouseBlockedByTopChild(BaseComponent<?> target, int mouseX, int mouseY) {
+        for (BaseComponent<?> child : children) {
+            if (child != target
+                    && child.isVisible()
+                    && child.rendersAboveSiblings()
+                    && child.blocksLowerInput()
+                    && child.isMouseOver(mouseX, mouseY)) {
+                return true;
+            }
+        }
+
+        for (int index = children.size() - 1; index >= 0; index--) {
+            BaseComponent<?> child = children.get(index);
+            if (child == target) return false;
+            if (child.isVisible()
+                    && !child.rendersAboveSiblings()
+                    && child.blocksLowerInput()
+                    && child.isMouseOver(mouseX, mouseY)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // NOTE: this one is critical it not suppose to using Runnable
     private record PanelControl(WindowControls.Type type, Consumer<PanelComponent> action) {}
 }
