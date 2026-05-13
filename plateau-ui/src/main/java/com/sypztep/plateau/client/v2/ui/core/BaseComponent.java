@@ -27,7 +27,7 @@ import java.util.function.Consumer;
  * {@link Sizing} and let the layout engine do the math.
  */
 @Environment(EnvType.CLIENT)
-public abstract class BaseComponent implements GuiEventListener, Renderable, NarratableEntry, LayoutElement, PointerInteractable {
+public abstract class BaseComponent<GenericComponent extends BaseComponent<GenericComponent>> implements GuiEventListener, Renderable, NarratableEntry, LayoutElement, PointerInteractable {
 
     protected int x, y, width, height;
     protected Sizing horizontalSizing = Sizing.content();
@@ -199,68 +199,66 @@ public abstract class BaseComponent implements GuiEventListener, Renderable, Nar
     // ── NarratableEntry ───────────────────────────────────────
 
     @Override
-    public NarrationPriority narrationPriority() { return NarrationPriority.NONE; }
+    public @NonNull NarrationPriority narrationPriority() { return NarrationPriority.NONE; }
     @Override
-    public void updateNarration(NarrationElementOutput output) {}
+    public void updateNarration(@NonNull NarrationElementOutput output) {}
 
     // ── Fluent API ────────────────────────────────────────────
 
     @SuppressWarnings("unchecked")
-    public <T extends BaseComponent> T sizing(Sizing horizontal, Sizing vertical) {
-        this.horizontalSizing = horizontal;
-        this.verticalSizing   = vertical;
-        return (T) this;
+    protected final GenericComponent self() {
+        return (GenericComponent) this;
     }
 
-    @SuppressWarnings("unchecked")
-    public <T extends BaseComponent> T sizing(Sizing both) {
+    public GenericComponent sizing(Sizing horizontal, Sizing vertical) {
+        this.horizontalSizing = horizontal;
+        this.verticalSizing   = vertical;
+        return self();
+    }
+
+    public GenericComponent sizing(Sizing both) {
         return sizing(both, both);
     }
 
-    @SuppressWarnings("unchecked")
-    public <T extends BaseComponent> T padding(Insets padding) {
+    public GenericComponent padding(Insets padding) {
         this.padding = padding;
-        return (T) this;
+        return self();
     }
 
-    public <T extends BaseComponent> T padding(int all) {
+    public GenericComponent padding(int all) {
         return padding(Insets.of(all));
     }
 
-    @SuppressWarnings("unchecked")
-    public <T extends BaseComponent> T margins(Insets margins) {
+    public GenericComponent margins(Insets margins) {
         this.margins = margins;
-        return (T) this;
+        return self();
     }
 
-    public <T extends BaseComponent> T margins(int all) {
+    public GenericComponent margins(int all) {
         return margins(Insets.of(all));
     }
 
-    public <T extends BaseComponent> T margin(Insets margins) {
+    public GenericComponent margin(Insets margins) {
         return margins(margins);
     }
 
-    public <T extends BaseComponent> T margin(int all) {
+    public GenericComponent margin(int all) {
         return margins(all);
     }
 
-    @SuppressWarnings("unchecked")
-    public <T extends BaseComponent> T surface(Surface surface) {
+    public GenericComponent surface(Surface surface) {
         this.surface = surface;
-        return (T) this;
+        return self();
     }
 
-    @SuppressWarnings("unchecked")
-    public <T extends BaseComponent> T id(String id) {
+    public GenericComponent id(String id) {
         this.id = id;
-        return (T) this;
+        return self();
     }
 
-    @SuppressWarnings("unchecked")
-    public <T extends BaseComponent> T visible(boolean visible) {
+    public GenericComponent visible(boolean visible) {
         this.visible = visible;
-        return (T) this;
+        return self();
     }
 
     // ── Geometry accessors ────────────────────────────────────

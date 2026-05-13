@@ -1,6 +1,8 @@
 package com.sypztep.plateau.client.v2.ui;
 
 import com.sypztep.plateau.client.v2.ui.overlay.DialogComponent;
+import com.sypztep.plateau.client.v2.ui.overlay.DetachablePanel;
+import com.sypztep.plateau.client.v2.ui.overlay.WindowLayer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Component;
@@ -21,5 +23,17 @@ public final class Overlays {
 
     public static DialogComponent dialog(Component title) {
         return new DialogComponent().title(title);
+    }
+
+    public static WindowLayer windowLayer() {
+        return new WindowLayer();
+    }
+
+    public static DetachablePanel detachable(String title) {
+        return new DetachablePanel(title);
+    }
+
+    public static DetachablePanel detachable(Component title) {
+        return new DetachablePanel(title);
     }
 }

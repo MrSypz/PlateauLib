@@ -2,16 +2,14 @@ package com.sypztep.plateau.client.v2.ui.widget;
 
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
-import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
-import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /** A 1-pixel divider line, horizontal by default. */
 @Environment(EnvType.CLIENT)
-public class SeparatorComponent extends BaseComponent {
+public class SeparatorComponent extends BaseComponent<SeparatorComponent> {
 
     public enum Axis { HORIZONTAL, VERTICAL }
 
@@ -35,14 +33,6 @@ public class SeparatorComponent extends BaseComponent {
 
     public SeparatorComponent color(int color) { this.color = color; return this; }
 
-    @Override public SeparatorComponent padding(Insets padding)  { super.padding(padding); return this; }
-    @Override public SeparatorComponent margins(Insets margins)  { super.margins(margins); return this; }
-    @Override public SeparatorComponent surface(Surface surface) { super.surface(surface); return this; }
-    @Override public SeparatorComponent id(String id)            { super.id(id);           return this; }
-    @Override public SeparatorComponent visible(boolean visible) { super.visible(visible); return this; }
-    @Override public SeparatorComponent sizing(Sizing h, Sizing v){ super.sizing(h, v);    return this; }
-    @Override public SeparatorComponent sizing(Sizing both)      { super.sizing(both);     return this; }
-
     @Override
     public int determineHorizontalContentSize(int space) { return axis == Axis.VERTICAL ? 1 : space; }
     @Override
@@ -50,7 +40,7 @@ public class SeparatorComponent extends BaseComponent {
 
     @Override
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        int c = color != -1 ? color : UITheme.current().panel().border();
-        g.fill(x, y, x + width, y + height, c);
+        int dividerColor = color != -1 ? color : UITheme.current().panel().border();
+        g.fill(x, y, x + width, y + height, dividerColor);
     }
 }

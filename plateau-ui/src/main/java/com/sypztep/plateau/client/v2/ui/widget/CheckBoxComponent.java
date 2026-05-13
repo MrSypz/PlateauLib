@@ -3,9 +3,7 @@ package com.sypztep.plateau.client.v2.ui.widget;
 import com.sypztep.plateau.client.v1.ui.core.UISounds;
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
-import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
-import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -21,7 +19,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
-public class CheckBoxComponent extends BaseComponent {
+public class CheckBoxComponent extends BaseComponent<CheckBoxComponent> {
     private static final Identifier CHECKBOX_SPRITE = Identifier.withDefaultNamespace("pending_invite/accept");
 
     private static final int BOX = 13;
@@ -74,8 +72,8 @@ public class CheckBoxComponent extends BaseComponent {
         g.outline(boxX, boxY, BOX, BOX, border);
 
         if (checkProgress > 0.01f) {
-            int c = enabled ? theme.text().accent() : theme.text().disabled();
-            int color = ARGB.color((int)(checkProgress * 255f), c);
+            int checkColor = enabled ? theme.text().accent() : theme.text().disabled();
+            int color = ARGB.color((int)(checkProgress * 255f), checkColor);
             int iconSize = 16;
             int iconX = boxX + (BOX - iconSize) / 2;
             int iconY = boxY + (BOX - iconSize) / 2;
@@ -128,12 +126,4 @@ public class CheckBoxComponent extends BaseComponent {
     public CheckBoxComponent onChanged(Consumer<Boolean> onChanged) { this.onChanged = onChanged != null ? onChanged : ignored -> {}; return this; }
     public CheckBoxComponent label(Component label) { this.label = label; return this; }
     public CheckBoxComponent enabled(boolean enabled) { this.enabled = enabled; return this; }
-
-    @Override public CheckBoxComponent padding(Insets padding) { super.padding(padding); return this; }
-    @Override public CheckBoxComponent margins(Insets margins) { super.margins(margins); return this; }
-    @Override public CheckBoxComponent surface(Surface surface) { super.surface(surface); return this; }
-    @Override public CheckBoxComponent id(String id) { super.id(id); return this; }
-    @Override public CheckBoxComponent visible(boolean visible) { super.visible(visible); return this; }
-    @Override public CheckBoxComponent sizing(Sizing h, Sizing v) { super.sizing(h, v); return this; }
-    @Override public CheckBoxComponent sizing(Sizing both) { super.sizing(both); return this; }
 }

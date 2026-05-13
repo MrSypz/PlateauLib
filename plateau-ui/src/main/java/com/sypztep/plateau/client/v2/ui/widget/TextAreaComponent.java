@@ -2,9 +2,7 @@ package com.sypztep.plateau.client.v2.ui.widget;
 
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
-import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
-import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -17,11 +15,12 @@ import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
-public class TextAreaComponent extends BaseComponent {
+public class TextAreaComponent extends BaseComponent<TextAreaComponent> {
     private String value = "";
     private Component placeholder = Component.empty();
     private int cursor = 0;
@@ -189,7 +188,7 @@ public class TextAreaComponent extends BaseComponent {
             if (index <= pos + len) return new int[]{i, index - pos};
             pos += len + 1;
         }
-        return new int[]{Math.max(0, lines.size() - 1), lines.isEmpty() ? 0 : lines.get(lines.size() - 1).length()};
+        return new int[]{Math.max(0, lines.size() - 1), lines.isEmpty() ? 0 : lines.getLast().length()};
     }
 
     private int indexAt(int line, int col, List<String> lines) {
@@ -215,7 +214,7 @@ public class TextAreaComponent extends BaseComponent {
     private List<String> lines() {
         String[] split = value.split("\n", -1);
         List<String> lines = new ArrayList<>(split.length);
-        for (String line : split) lines.add(line);
+        Collections.addAll(lines, split);
         return lines.isEmpty() ? List.of("") : lines;
     }
 
@@ -230,12 +229,4 @@ public class TextAreaComponent extends BaseComponent {
     public TextAreaComponent placeholder(Component placeholder) { this.placeholder = placeholder; return this; }
     public TextAreaComponent maxLength(int maxLength) { this.maxLength = Math.max(0, maxLength); return value(value); }
     public TextAreaComponent onChanged(Consumer<String> onChanged) { this.onChanged = onChanged != null ? onChanged : ignored -> {}; return this; }
-
-    @Override public TextAreaComponent padding(Insets padding) { super.padding(padding); return this; }
-    @Override public TextAreaComponent margins(Insets margins) { super.margins(margins); return this; }
-    @Override public TextAreaComponent surface(Surface surface) { super.surface(surface); return this; }
-    @Override public TextAreaComponent id(String id) { super.id(id); return this; }
-    @Override public TextAreaComponent visible(boolean visible) { super.visible(visible); return this; }
-    @Override public TextAreaComponent sizing(Sizing h, Sizing v) { super.sizing(h, v); return this; }
-    @Override public TextAreaComponent sizing(Sizing both) { super.sizing(both); return this; }
 }

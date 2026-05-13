@@ -2,9 +2,7 @@ package com.sypztep.plateau.client.v2.ui.layout;
 
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
 import com.sypztep.plateau.client.v2.ui.core.BaseContainerComponent;
-import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
-import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -22,7 +20,7 @@ import org.jspecify.annotations.NonNull;
  * Use for screen roots that need modal/dialog overlays.
  */
 @Environment(EnvType.CLIENT)
-public class StackLayout extends BaseContainerComponent {
+public class StackLayout extends BaseContainerComponent<StackLayout> {
 
     public StackLayout(Sizing horizontal, Sizing vertical) {
         this.horizontalSizing = horizontal;
@@ -40,7 +38,7 @@ public class StackLayout extends BaseContainerComponent {
         int iw = innerWidth();
         int ih = innerHeight();
 
-        for (BaseComponent child : children) {
+        for (BaseComponent<?> child : children) {
             if (!child.isVisible()) continue;
 
             int childX = ix + child.margins().left();
@@ -54,7 +52,7 @@ public class StackLayout extends BaseContainerComponent {
 
     @Override
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        for (BaseComponent child : children) {
+        for (BaseComponent<?> child : children) {
             if (child.isVisible()) {
                 child.extractRenderState(g, mouseX, mouseY, delta);
             }
@@ -67,7 +65,7 @@ public class StackLayout extends BaseContainerComponent {
 
         // Top-most child first. Blocking children absorb even when their internals don't.
         for (int i = children.size() - 1; i >= 0; i--) {
-            BaseComponent child = children.get(i);
+            BaseComponent<?> child = children.get(i);
             if (!child.isVisible()) continue;
             boolean blocking = child.blocksLowerInput();
             if (!blocking && !child.isMouseOver(event.x(), event.y())) continue;
@@ -90,7 +88,7 @@ public class StackLayout extends BaseContainerComponent {
         if (event.button() == 0) setDragging(false);
 
         for (int i = children.size() - 1; i >= 0; i--) {
-            BaseComponent child = children.get(i);
+            BaseComponent<?> child = children.get(i);
             if (!child.isVisible() || !child.blocksLowerInput()) continue;
             child.mouseReleased(event);
             return true;
@@ -102,7 +100,7 @@ public class StackLayout extends BaseContainerComponent {
         }
 
         for (int i = children.size() - 1; i >= 0; i--) {
-            BaseComponent child = children.get(i);
+            BaseComponent<?> child = children.get(i);
             if (!child.isVisible()) continue;
             boolean blocking = child.blocksLowerInput();
             if (!blocking && !child.isMouseOver(event.x(), event.y())) continue;
@@ -117,7 +115,7 @@ public class StackLayout extends BaseContainerComponent {
     @Override
     public boolean mouseDragged(@NonNull MouseButtonEvent event, double dragX, double dragY) {
         for (int i = children.size() - 1; i >= 0; i--) {
-            BaseComponent child = children.get(i);
+            BaseComponent<?> child = children.get(i);
             if (!child.isVisible() || !child.blocksLowerInput()) continue;
             child.mouseDragged(event, dragX, dragY);
             return true;
@@ -133,7 +131,7 @@ public class StackLayout extends BaseContainerComponent {
 
         // Top-most child first. Blocking children absorb lower scroll.
         for (int i = children.size() - 1; i >= 0; i--) {
-            BaseComponent child = children.get(i);
+            BaseComponent<?> child = children.get(i);
             if (!child.isVisible()) continue;
             boolean blocking = child.blocksLowerInput();
             if (!blocking && !child.isMouseOver(mouseX, mouseY)) continue;
@@ -142,10 +140,8 @@ public class StackLayout extends BaseContainerComponent {
                 return true;
             }
 
-            if (blocking) return true;
-
             // Stop at first child under mouse so lower layers don't receive scroll through it.
-            return false;
+            return blocking;
         }
 
         return false;
@@ -154,7 +150,7 @@ public class StackLayout extends BaseContainerComponent {
     @Override
     public void mouseMoved(double mouseX, double mouseY) {
         for (int i = children.size() - 1; i >= 0; i--) {
-            BaseComponent child = children.get(i);
+            BaseComponent<?> child = children.get(i);
             if (child.isVisible()) {
                 child.mouseMoved(mouseX, mouseY);
             }
@@ -164,7 +160,7 @@ public class StackLayout extends BaseContainerComponent {
     @Override
     public boolean keyPressed(@NonNull KeyEvent event) {
         for (int i = children.size() - 1; i >= 0; i--) {
-            BaseComponent child = children.get(i);
+            BaseComponent<?> child = children.get(i);
             if (!child.isVisible() || !child.blocksLowerInput()) continue;
             child.keyPressed(event);
             return true;
@@ -172,16 +168,4 @@ public class StackLayout extends BaseContainerComponent {
 
         return getFocused() != null && getFocused().keyPressed(event);
     }
-
-    @Override public StackLayout child(BaseComponent child)                             { super.child(child);         return this; }
-    @Override public StackLayout children(BaseComponent... components)                  { super.children(components); return this; }
-    @Override public StackLayout children(Iterable<? extends BaseComponent> components) { super.children(components); return this; }
-
-    @Override public StackLayout padding(Insets padding)   { super.padding(padding); return this; }
-    @Override public StackLayout margins(Insets margins)   { super.margins(margins); return this; }
-    @Override public StackLayout surface(Surface surface)  { super.surface(surface); return this; }
-    @Override public StackLayout id(String id)             { super.id(id); return this; }
-    @Override public StackLayout visible(boolean visible)  { super.visible(visible); return this; }
-    @Override public StackLayout sizing(Sizing h, Sizing v){ super.sizing(h, v); return this; }
-    @Override public StackLayout sizing(Sizing both)       { super.sizing(both); return this; }
 }

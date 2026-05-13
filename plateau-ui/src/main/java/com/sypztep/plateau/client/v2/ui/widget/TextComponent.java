@@ -2,9 +2,7 @@ package com.sypztep.plateau.client.v2.ui.widget;
 
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
-import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
-import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -18,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
-public class TextComponent extends BaseComponent {
+public class TextComponent extends BaseComponent<TextComponent> {
 
     private Component text;
     private int color;
@@ -115,7 +113,7 @@ public class TextComponent extends BaseComponent {
     }
 
     @Override
-    public void updateNarration(NarrationElementOutput output) {
+    public void updateNarration(@NonNull NarrationElementOutput output) {
         output.add(NarratedElementType.TITLE, text);
     }
 
@@ -165,12 +163,4 @@ public class TextComponent extends BaseComponent {
     public TextComponent disabled() {
         return color(UITheme.current().text().disabled());
     }
-
-    @Override public TextComponent padding(Insets padding)    { super.padding(padding); return this; }
-    @Override public TextComponent margins(Insets margins)    { super.margins(margins); return this; }
-    @Override public TextComponent surface(Surface surface)   { super.surface(surface); return this; }
-    @Override public TextComponent id(String id)              { super.id(id);           return this; }
-    @Override public TextComponent visible(boolean visible)   { super.visible(visible); return this; }
-    @Override public TextComponent sizing(Sizing h, Sizing v) { super.sizing(h, v);     return this; }
-    @Override public TextComponent sizing(Sizing both)        { super.sizing(both);     return this; }
 }

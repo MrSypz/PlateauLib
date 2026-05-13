@@ -3,9 +3,7 @@ package com.sypztep.plateau.client.v2.ui.widget;
 import com.sypztep.plateau.client.v1.ui.core.UISounds;
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
-import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
-import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -19,7 +17,7 @@ import java.util.Locale;
 import java.util.function.DoubleConsumer;
 
 @Environment(EnvType.CLIENT)
-public class SliderButtonComponent extends BaseComponent {
+public class SliderButtonComponent extends BaseComponent<SliderButtonComponent> {
     private Component label;
     private double min;
     private double max;
@@ -66,7 +64,7 @@ public class SliderButtonComponent extends BaseComponent {
         g.fill(trackX, trackY, trackX + fillW, trackY + 2, enabled ? theme.progress().fill() : theme.text().disabled());
 
         int handleX = trackX + fillW - 3;
-        g.fill(handleX, innerY() + 3, handleX + 6, innerY() + innerHeight() - 3, enabled ? theme.text().accent() : theme.text().disabled());
+        g.fill(handleX, innerY() + 15, handleX + 6, innerY() + innerHeight() - 3, enabled ? 0xFFF3F2ED: theme.text().disabled());
 
         Component text = Component.literal(label.getString() + ": " + formatValue(value));
         int textColor = enabled ? theme.text().primary() : theme.text().disabled();
@@ -74,13 +72,13 @@ public class SliderButtonComponent extends BaseComponent {
         g.centeredText(font, text, innerX() + innerWidth() / 2, innerY() + 4, textColor);
         g.disableScissor();
     }
-
+    // ERROR: THIS IS ARE NOW ISSUE it code smell I don't know the issue but this are should be the main interact of mouse event but! the thing it work are onPointerClicked() not this method
     @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
-        if (!enabled || event.button() != 0 || !isMouseOver(event.x(), event.y())) return false;
-        dragging = true;
-        setValueFromMouse(event.x());
-        UISounds.playClick();
+//        if (!enabled || event.button() != 0 || !isMouseOver(event.x(), event.y())) return false;
+//        dragging = true;
+//        setValueFromMouse(event.x());
+//        UISounds.playClick();
         return true;
     }
 
@@ -89,7 +87,7 @@ public class SliderButtonComponent extends BaseComponent {
         if (!enabled || event.button() != 0 || !hitTest(x, y)) return false;
         dragging = true;
         setValueFromMouse(x);
-        UISounds.playClick();
+        UISounds.playHover();
         return true;
     }
 
@@ -154,12 +152,4 @@ public class SliderButtonComponent extends BaseComponent {
     public SliderButtonComponent onValueChange(DoubleConsumer onValueChange) { this.onValueChange = onValueChange != null ? onValueChange : ignored -> {}; return this; }
     public SliderButtonComponent label(Component label) { this.label = label; return this; }
     public SliderButtonComponent enabled(boolean enabled) { this.enabled = enabled; return this; }
-
-    @Override public SliderButtonComponent padding(Insets padding) { super.padding(padding); return this; }
-    @Override public SliderButtonComponent margins(Insets margins) { super.margins(margins); return this; }
-    @Override public SliderButtonComponent surface(Surface surface) { super.surface(surface); return this; }
-    @Override public SliderButtonComponent id(String id) { super.id(id); return this; }
-    @Override public SliderButtonComponent visible(boolean visible) { super.visible(visible); return this; }
-    @Override public SliderButtonComponent sizing(Sizing h, Sizing v) { super.sizing(h, v); return this; }
-    @Override public SliderButtonComponent sizing(Sizing both) { super.sizing(both); return this; }
 }

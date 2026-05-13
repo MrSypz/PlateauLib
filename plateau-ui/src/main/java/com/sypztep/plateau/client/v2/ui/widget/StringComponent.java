@@ -2,9 +2,7 @@ package com.sypztep.plateau.client.v2.ui.widget;
 
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
-import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
-import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.input.CharacterEvent;
@@ -18,7 +16,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
-public class StringComponent extends BaseComponent {
+public class StringComponent extends BaseComponent<StringComponent> {
     private String value = "";
     private Component placeholder = Component.empty();
     private int cursor = 0;
@@ -149,12 +147,12 @@ public class StringComponent extends BaseComponent {
         return Math.min(value.length(), display + local);
     }
 
-    private void updateDisplay(int innerW) {
+    private void updateDisplay(int innerWidth) {
         display = Math.min(display, cursor);
-        while (display > 0 && font.width(value.substring(display, cursor)) < innerW / 2) {
+        while (display > 0 && font.width(value.substring(display, cursor)) < innerWidth / 2) {
             display--;
         }
-        while (display < cursor && font.width(value.substring(display, cursor)) > innerW) {
+        while (display < cursor && font.width(value.substring(display, cursor)) > innerWidth) {
             display++;
         }
     }
@@ -210,12 +208,4 @@ public class StringComponent extends BaseComponent {
     public StringComponent editable(boolean editable) { this.editable = editable; return this; }
     public StringComponent shadow(boolean shadow) { this.shadow = shadow; return this; }
     public StringComponent onChanged(Consumer<String> onChanged) { this.onChanged = onChanged != null ? onChanged : ignored -> {}; return this; }
-
-    @Override public StringComponent padding(Insets padding) { super.padding(padding); return this; }
-    @Override public StringComponent margins(Insets margins) { super.margins(margins); return this; }
-    @Override public StringComponent surface(Surface surface) { super.surface(surface); return this; }
-    @Override public StringComponent id(String id) { super.id(id); return this; }
-    @Override public StringComponent visible(boolean visible) { super.visible(visible); return this; }
-    @Override public StringComponent sizing(Sizing h, Sizing v) { super.sizing(h, v); return this; }
-    @Override public StringComponent sizing(Sizing both) { super.sizing(both); return this; }
 }

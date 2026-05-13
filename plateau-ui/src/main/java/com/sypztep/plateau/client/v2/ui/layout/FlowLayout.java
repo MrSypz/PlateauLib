@@ -18,7 +18,7 @@ import java.util.List;
  * receive mouse and keyboard events without one-off forwarding in each layout.
  */
 @Environment(EnvType.CLIENT)
-public class FlowLayout extends BaseContainerComponent {
+public class FlowLayout extends BaseContainerComponent<FlowLayout> {
 
     public enum Direction { HORIZONTAL, VERTICAL }
 
@@ -37,18 +37,6 @@ public class FlowLayout extends BaseContainerComponent {
     public FlowLayout gap(int gap)               { this.gap = gap; return this; }
     public FlowLayout crossAlign(Align align)    { this.crossAlign = align; return this; }
 
-    // Override fluent base methods to preserve FlowLayout return type in chains
-    @Override public FlowLayout padding(Insets padding)   { super.padding(padding);  return this; }
-    @Override public FlowLayout margins(Insets margins)   { super.margins(margins);  return this; }
-    @Override public FlowLayout surface(Surface surface)  { super.surface(surface);  return this; }
-    @Override public FlowLayout id(String id)             { super.id(id);            return this; }
-    @Override public FlowLayout visible(boolean visible)  { super.visible(visible);  return this; }
-    @Override public FlowLayout sizing(Sizing h, Sizing v){ super.sizing(h, v);      return this; }
-    @Override public FlowLayout sizing(Sizing both)       { super.sizing(both);      return this; }
-
-    @Override public FlowLayout child(BaseComponent child)                             { super.child(child);         return this; }
-    @Override public FlowLayout children(BaseComponent... components)                  { super.children(components); return this; }
-    @Override public FlowLayout children(Iterable<? extends BaseComponent> components) { super.children(components); return this; }
     // ── PointerInteractable ───────────────────────────────────
     // ── Layout ───────────────────────────────────────────────
 
@@ -58,213 +46,219 @@ public class FlowLayout extends BaseContainerComponent {
     }
 
     private void layout() {
+        List<BaseComponent<?>> visibleChildren = visibleChildren();
+        if (visibleChildren.isEmpty()) return;
+
         if (direction == Direction.VERTICAL) {
-            layoutVertical();
+            layoutVertical(visibleChildren);
         } else {
-            layoutHorizontal();
+            layoutHorizontal(visibleChildren);
         }
     }
 
-    private void layoutVertical() {
-        int innerX = x + padding.left();
-        int innerY = y + padding.top();
-        int innerW = innerWidth();
-        int innerH = innerHeight();
+    private void layoutVertical(List<BaseComponent<?>> visibleChildren) {
+        int contentX = innerX();
+        int contentY = innerY();
+        int contentWidth = innerWidth();
+        int contentHeight = innerHeight();
 
-        List<BaseComponent> vis = visible();
-        if (vis.isEmpty()) return;
-
-        int totalGaps      = gap * (vis.size() - 1);
-        int fixedH         = totalGaps;
+        int fixedHeight = totalGapSize(visibleChildren);
         int totalFillWeight = 0;
 
-        int[] heights = new int[vis.size()];
-        int[] widths  = new int[vis.size()];
+        int[] childHeights = new int[visibleChildren.size()];
+        int[] childWidths = new int[visibleChildren.size()];
 
-        for (int i = 0; i < vis.size(); i++) {
-            BaseComponent c = vis.get(i);
-            int childAvailW = Math.max(0, innerW - c.margins().horizontal());
-            widths[i] = resolveWidth(c, childAvailW);
+        for (int index = 0; index < visibleChildren.size(); index++) {
+            BaseComponent<?> child = visibleChildren.get(index);
+            int childAvailableWidth = Math.max(0, contentWidth - child.margins().horizontal());
+            childWidths[index] = resolveWidth(child, childAvailableWidth);
 
-            switch (c.verticalSizing()) {
-                case Sizing.Fixed  f -> { heights[i] = f.value(); fixedH += f.value() + c.margins().vertical(); }
-                case Sizing.Content ignored -> {
-                    heights[i] = c.determineVerticalContentSize(childAvailW);
-                    fixedH += heights[i] + c.margins().vertical();
+            switch (child.verticalSizing()) {
+                case Sizing.Fixed fixed -> {
+                    childHeights[index] = fixed.value();
+                    fixedHeight += fixed.value() + child.margins().vertical();
                 }
-                case Sizing.Fill   f -> totalFillWeight += Math.max(0, f.weight());
+                case Sizing.Content ignored -> {
+                    childHeights[index] = child.determineVerticalContentSize(childAvailableWidth);
+                    fixedHeight += childHeights[index] + child.margins().vertical();
+                }
+                case Sizing.Fill fill -> totalFillWeight += Math.max(0, fill.weight());
             }
         }
 
-        int remaining  = Math.max(0, innerH - fixedH);
-        float fillUnit = totalFillWeight > 0 ? (float) remaining / totalFillWeight : 0;
+        distributeFillSizes(visibleChildren, childHeights, Math.max(0, contentHeight - fixedHeight), totalFillWeight, Direction.VERTICAL);
 
-        for (int i = 0; i < vis.size(); i++) {
-            if (vis.get(i).verticalSizing() instanceof Sizing.Fill(int weight)) {
-                heights[i] = Math.max(0, (int)(Math.max(0, weight) * fillUnit));
-            }
-        }
-
-        int curY = innerY;
-        for (int i = 0; i < vis.size(); i++) {
-            BaseComponent c = vis.get(i);
-            int childX = resolveChildX(innerX, innerW, c, widths[i]);
-            c.mount(childX, curY + c.margins().top(), widths[i], heights[i]);
-            curY += heights[i] + c.margins().vertical() + (i < vis.size() - 1 ? gap : 0);
+        int nextY = contentY;
+        for (int index = 0; index < visibleChildren.size(); index++) {
+            BaseComponent<?> child = visibleChildren.get(index);
+            int childX = resolveChildX(contentX, contentWidth, child, childWidths[index]);
+            child.mount(childX, nextY + child.margins().top(), childWidths[index], childHeights[index]);
+            nextY += childHeights[index] + child.margins().vertical() + gapAfter(visibleChildren, index);
         }
     }
 
-    private void layoutHorizontal() {
-        int innerX = x + padding.left();
-        int innerY = y + padding.top();
-        int innerW = innerWidth();
-        int innerH = innerHeight();
+    private void layoutHorizontal(List<BaseComponent<?>> visibleChildren) {
+        int contentX = innerX();
+        int contentY = innerY();
+        int contentWidth = innerWidth();
+        int contentHeight = innerHeight();
 
-        List<BaseComponent> vis = visible();
-        if (vis.isEmpty()) return;
-
-        int totalGaps       = gap * (vis.size() - 1);
-        int fixedW          = totalGaps;
+        int fixedWidth = totalGapSize(visibleChildren);
         int totalFillWeight = 0;
 
-        int[] widths  = new int[vis.size()];
-        int[] heights = new int[vis.size()];
+        int[] childWidths = new int[visibleChildren.size()];
+        int[] childHeights = new int[visibleChildren.size()];
 
-        for (int i = 0; i < vis.size(); i++) {
-            BaseComponent c = vis.get(i);
-            int childAvailH = Math.max(0, innerH - c.margins().vertical());
-            int childAvailW = Math.max(0, innerW - c.margins().horizontal());
-            heights[i] = resolveHeight(c, childAvailH, childAvailW);
+        for (int index = 0; index < visibleChildren.size(); index++) {
+            BaseComponent<?> child = visibleChildren.get(index);
+            int childAvailableHeight = Math.max(0, contentHeight - child.margins().vertical());
+            int childAvailableWidth = Math.max(0, contentWidth - child.margins().horizontal());
+            childHeights[index] = resolveHeight(child, childAvailableHeight, childAvailableWidth);
 
-            switch (c.horizontalSizing()) {
-                case Sizing.Fixed  f -> { widths[i] = f.value(); fixedW += f.value() + c.margins().horizontal(); }
-                case Sizing.Content ignored -> {
-                    widths[i] = c.determineHorizontalContentSize(childAvailW);
-                    fixedW += widths[i] + c.margins().horizontal();
+            switch (child.horizontalSizing()) {
+                case Sizing.Fixed fixed -> {
+                    childWidths[index] = fixed.value();
+                    fixedWidth += fixed.value() + child.margins().horizontal();
                 }
-                case Sizing.Fill   f -> totalFillWeight += Math.max(0, f.weight());
+                case Sizing.Content ignored -> {
+                    childWidths[index] = child.determineHorizontalContentSize(childAvailableWidth);
+                    fixedWidth += childWidths[index] + child.margins().horizontal();
+                }
+                case Sizing.Fill fill -> totalFillWeight += Math.max(0, fill.weight());
             }
         }
 
-        int remaining  = Math.max(0, innerW - fixedW);
+        distributeFillSizes(visibleChildren, childWidths, Math.max(0, contentWidth - fixedWidth), totalFillWeight, Direction.HORIZONTAL);
+
+        int nextX = contentX;
+        for (int index = 0; index < visibleChildren.size(); index++) {
+            BaseComponent<?> child = visibleChildren.get(index);
+            int childY = resolveChildY(contentY, contentHeight, child, childHeights[index]);
+            child.mount(nextX + child.margins().left(), childY, childWidths[index], childHeights[index]);
+            nextX += childWidths[index] + child.margins().horizontal() + gapAfter(visibleChildren, index);
+        }
+    }
+
+    private void distributeFillSizes(List<BaseComponent<?>> visibleChildren, int[] mainAxisSizes, int remaining, int totalFillWeight, Direction fillDirection) {
         float fillUnit = totalFillWeight > 0 ? (float) remaining / totalFillWeight : 0;
 
-        for (int i = 0; i < vis.size(); i++) {
-            if (vis.get(i).horizontalSizing() instanceof Sizing.Fill(int weight)) {
-                widths[i] = Math.max(0, (int)(Math.max(0, weight) * fillUnit));
+        for (int index = 0; index < visibleChildren.size(); index++) {
+            Sizing sizing = fillDirection == Direction.VERTICAL
+                    ? visibleChildren.get(index).verticalSizing()
+                    : visibleChildren.get(index).horizontalSizing();
+            if (sizing instanceof Sizing.Fill(int weight)) {
+                mainAxisSizes[index] = Math.max(0, (int)(Math.max(0, weight) * fillUnit));
             }
         }
+    }
 
-        int curX = innerX;
-        for (int i = 0; i < vis.size(); i++) {
-            BaseComponent c = vis.get(i);
-            int childY = resolveChildY(innerY, innerH, c, heights[i]);
-            c.mount(curX + c.margins().left(), childY, widths[i], heights[i]);
-            curX += widths[i] + c.margins().horizontal() + (i < vis.size() - 1 ? gap : 0);
-        }
+    private int totalGapSize(List<BaseComponent<?>> visibleChildren) {
+        return gap * Math.max(0, visibleChildren.size() - 1);
+    }
+
+    private int gapAfter(List<BaseComponent<?>> visibleChildren, int index) {
+        return index < visibleChildren.size() - 1 ? gap : 0;
     }
 
     // ── Sizing helpers ────────────────────────────────────────
 
-    private int resolveWidth(BaseComponent c, int availW) {
-        return switch (c.horizontalSizing()) {
-            case Sizing.Fixed   f -> f.value();
-            case Sizing.Fill    ignored -> availW;
-            case Sizing.Content ignored -> c.determineHorizontalContentSize(availW);
+    private int resolveWidth(BaseComponent<?> child, int availableWidth) {
+        return switch (child.horizontalSizing()) {
+            case Sizing.Fixed fixed -> fixed.value();
+            case Sizing.Fill ignored -> availableWidth;
+            case Sizing.Content ignored -> child.determineHorizontalContentSize(availableWidth);
         };
     }
 
-    private int resolveHeight(BaseComponent c, int availH, int availW) {
-        return switch (c.verticalSizing()) {
-            case Sizing.Fixed   f -> f.value();
-            case Sizing.Fill    ignored -> availH;
-            case Sizing.Content ignored -> c.determineVerticalContentSize(availW);
+    private int resolveHeight(BaseComponent<?> child, int availableHeight, int availableWidth) {
+        return switch (child.verticalSizing()) {
+            case Sizing.Fixed fixed -> fixed.value();
+            case Sizing.Fill ignored -> availableHeight;
+            case Sizing.Content ignored -> child.determineVerticalContentSize(availableWidth);
         };
     }
 
-    private int resolveChildX(int innerX, int innerW, BaseComponent c, int childW) {
-        int margin = c.margins().left();
+    private int resolveChildX(int contentX, int contentWidth, BaseComponent<?> child, int childWidth) {
+        int leadingMargin = child.margins().left();
         return switch (crossAlign) {
-            case START  -> innerX + margin;
-            case CENTER -> innerX + (innerW - childW - c.margins().horizontal()) / 2 + margin;
-            case END    -> innerX + innerW - childW - c.margins().right();
+            case START -> contentX + leadingMargin;
+            case CENTER -> contentX + (contentWidth - childWidth - child.margins().horizontal()) / 2 + leadingMargin;
+            case END -> contentX + contentWidth - childWidth - child.margins().right();
         };
     }
 
-    private int resolveChildY(int innerY, int innerH, BaseComponent c, int childH) {
-        int margin = c.margins().top();
+    private int resolveChildY(int contentY, int contentHeight, BaseComponent<?> child, int childHeight) {
+        int leadingMargin = child.margins().top();
         return switch (crossAlign) {
-            case START  -> innerY + margin;
-            case CENTER -> innerY + (innerH - childH - c.margins().vertical()) / 2 + margin;
-            case END    -> innerY + innerH - childH - c.margins().bottom();
+            case START -> contentY + leadingMargin;
+            case CENTER -> contentY + (contentHeight - childHeight - child.margins().vertical()) / 2 + leadingMargin;
+            case END -> contentY + contentHeight - childHeight - child.margins().bottom();
         };
     }
 
-    private List<BaseComponent> visible() {
+    private List<BaseComponent<?>> visibleChildren() {
         return children.stream().filter(BaseComponent::isVisible).toList();
     }
 
-    // ── Content size (for Sizing.content() on this FlowLayout) ─
-
     @Override
     public int determineVerticalContentSize(int availableWidth) {
-        int innerW = Math.max(0, availableWidth - padding.horizontal());
-        List<BaseComponent> vis = visible();
-        if (vis.isEmpty()) return padding.vertical();
+        int contentWidth = Math.max(0, availableWidth - padding.horizontal());
+        List<BaseComponent<?>> visibleChildren = visibleChildren();
+        if (visibleChildren.isEmpty()) return padding.vertical();
 
         if (direction == Direction.VERTICAL) {
-            int total = padding.vertical() + gap * Math.max(0, vis.size() - 1);
-            for (BaseComponent c : vis) {
-                int childAvailW = Math.max(0, innerW - c.margins().horizontal());
-                total += childContentH(c, childAvailW) + c.margins().vertical();
+            int total = padding.vertical() + totalGapSize(visibleChildren);
+            for (BaseComponent<?> child : visibleChildren) {
+                int childAvailableWidth = Math.max(0, contentWidth - child.margins().horizontal());
+                total += childContentH(child, childAvailableWidth) + child.margins().vertical();
             }
             return total;
         } else {
-            int maxH = 0;
-            for (BaseComponent c : vis) {
-                int childAvailW = Math.max(0, innerW - c.margins().horizontal());
-                maxH = Math.max(maxH, childContentH(c, childAvailW) + c.margins().vertical());
+            int maxHeight = 0;
+            for (BaseComponent<?> child : visibleChildren) {
+                int childAvailableWidth = Math.max(0, contentWidth - child.margins().horizontal());
+                maxHeight = Math.max(maxHeight, childContentH(child, childAvailableWidth) + child.margins().vertical());
             }
-            return maxH + padding.vertical();
+            return maxHeight + padding.vertical();
         }
     }
 
     @Override
     public int determineHorizontalContentSize(int availableWidth) {
-        int innerW = Math.max(0, availableWidth - padding.horizontal());
-        List<BaseComponent> vis = visible();
-        if (vis.isEmpty()) return padding.horizontal();
+        int contentWidth = Math.max(0, availableWidth - padding.horizontal());
+        List<BaseComponent<?>> visibleChildren = visibleChildren();
+        if (visibleChildren.isEmpty()) return padding.horizontal();
 
         if (direction == Direction.HORIZONTAL) {
-            int total = padding.horizontal() + gap * Math.max(0, vis.size() - 1);
-            for (BaseComponent c : vis) {
-                int childAvailW = Math.max(0, innerW - c.margins().horizontal());
-                total += childContentW(c, childAvailW) + c.margins().horizontal();
+            int total = padding.horizontal() + totalGapSize(visibleChildren);
+            for (BaseComponent<?> child : visibleChildren) {
+                int childAvailableWidth = Math.max(0, contentWidth - child.margins().horizontal());
+                total += childContentW(child, childAvailableWidth) + child.margins().horizontal();
             }
             return total;
         } else {
-            int maxW = 0;
-            for (BaseComponent c : vis) {
-                int childAvailW = Math.max(0, innerW - c.margins().horizontal());
-                maxW = Math.max(maxW, childContentW(c, childAvailW) + c.margins().horizontal());
+            int maxWidth = 0;
+            for (BaseComponent<?> child : visibleChildren) {
+                int childAvailableWidth = Math.max(0, contentWidth - child.margins().horizontal());
+                maxWidth = Math.max(maxWidth, childContentW(child, childAvailableWidth) + child.margins().horizontal());
             }
-            return maxW + padding.horizontal();
+            return maxWidth + padding.horizontal();
         }
     }
 
-    private static int childContentH(BaseComponent c, int availW) {
-        return switch (c.verticalSizing()) {
-            case Sizing.Fixed   f -> f.value();
-            case Sizing.Content ignored -> c.determineVerticalContentSize(availW);
-            case Sizing.Fill    ignored -> 0;
+    private static int childContentH(BaseComponent<?> child, int availableWidth) {
+        return switch (child.verticalSizing()) {
+            case Sizing.Fixed fixed -> fixed.value();
+            case Sizing.Content ignored -> child.determineVerticalContentSize(availableWidth);
+            case Sizing.Fill ignored -> 0;
         };
     }
 
-    private static int childContentW(BaseComponent c, int availW) {
-        return switch (c.horizontalSizing()) {
-            case Sizing.Fixed   f -> f.value();
-            case Sizing.Content ignored -> c.determineHorizontalContentSize(availW);
-            case Sizing.Fill    ignored -> 0;
+    private static int childContentW(BaseComponent<?> child, int availableWidth) {
+        return switch (child.horizontalSizing()) {
+            case Sizing.Fixed fixed -> fixed.value();
+            case Sizing.Content ignored -> child.determineHorizontalContentSize(availableWidth);
+            case Sizing.Fill ignored -> 0;
         };
     }
 
@@ -311,7 +305,7 @@ public class FlowLayout extends BaseContainerComponent {
     }
 
     private boolean hasOpenChildAt(double x, double y) {
-        for (BaseComponent child : children) {
+        for (BaseComponent<?> child : children) {
             if (child.isVisible() && child.rendersAboveSiblings() && child.isMouseOver(x, y)) {
                 return true;
             }
@@ -325,26 +319,26 @@ public class FlowLayout extends BaseContainerComponent {
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (width <= 0 || height <= 0) return;
 
-        for (BaseComponent child : children) {
+        for (BaseComponent<?> child : children) {
             if (child.isVisible() && !child.rendersAboveSiblings()) {
                 extractChild(g, child, mouseX, mouseY, delta);
             }
         }
 
-        for (BaseComponent child : children) {
+        for (BaseComponent<?> child : children) {
             if (child.isVisible() && child.rendersAboveSiblings()) {
                 extractChild(g, child, mouseX, mouseY, delta);
             }
         }
     }
 
-    private void extractChild(GuiGraphicsExtractor g, BaseComponent child, int mouseX, int mouseY, float delta) {
+    private void extractChild(GuiGraphicsExtractor g, BaseComponent<?> child, int mouseX, int mouseY, float delta) {
         enableChildScissor(g, child);
         child.extractRenderState(g, mouseX, mouseY, delta);
         g.disableScissor();
     }
 
-    private void enableChildScissor(GuiGraphicsExtractor g, BaseComponent child) {
+    private void enableChildScissor(GuiGraphicsExtractor g, BaseComponent<?> child) {
         int clipLeft = Math.max(x, child.x() - child.renderClipLeftOutset());
         int clipTop = Math.max(y - child.renderClipTopOutset(), child.y() - child.renderClipTopOutset());
         int clipRight = Math.min(x + width, child.x() + child.width() + child.renderClipRightOutset());

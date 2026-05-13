@@ -4,15 +4,14 @@ import com.sypztep.plateau.client.v1.ui.core.RenderHelper;
 import com.sypztep.plateau.client.v1.ui.core.UISounds;
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
-import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
-import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ARGB;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
@@ -22,7 +21,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Environment(EnvType.CLIENT)
-public class DropdownComponent<T> extends BaseComponent {
+public class DropdownComponent<T> extends BaseComponent<DropdownComponent<T>> {
     private final List<T> values = new ArrayList<>();
     private Function<T, Component> labeler;
     private int selectedIndex = 0;
@@ -32,6 +31,7 @@ public class DropdownComponent<T> extends BaseComponent {
     private float hoverProgress = 0f;
     private float openProgress = 0f;
     private boolean wasHovered = false;
+    private float[] rowHoverProgress = new float[0];
 
     public DropdownComponent(List<T> values, Function<T, Component> labeler) {
         this.values.addAll(values);
@@ -101,13 +101,18 @@ public class DropdownComponent<T> extends BaseComponent {
             g.fill(arrowX + 2, arrowY + 2, arrowX + 5, arrowY + 3, arrowColor);
         }
 
-        if (!open) return;
+        if (openProgress <= 0f && !open) return;
+
+        // Grow rowHoverProgress array if values changed
+        if (rowHoverProgress.length != values.size()) {
+            rowHoverProgress = new float[values.size()];
+        }
 
         for (int i = 0; i < values.size(); i++) {
             int rowY = y + height * (i + 1);
-            boolean rowHot = mouseX >= x && mouseX < x + width && mouseY >= rowY && mouseY < rowY + height;
-            float optionHover = rowHot ? 1f : (i == selectedIndex ? 0.55f : openProgress * 0.15f);
-            drawRow(g, labeler.apply(values.get(i)), rowY, optionHover, 0f, false);
+            boolean rowHot = open && mouseX >= x && mouseX < x + width && mouseY >= rowY && mouseY < rowY + height;
+            rowHoverProgress[i] = stepAnimation(rowHoverProgress[i], rowHot, 0.5f, delta);
+            drawListRow(g, labeler.apply(values.get(i)), rowY, rowHoverProgress[i], i == selectedIndex, openProgress);
         }
     }
 
@@ -123,6 +128,44 @@ public class DropdownComponent<T> extends BaseComponent {
         int contentH = Math.max(0, height - padding.vertical());
         g.enableScissor(contentX, rowY, contentX + contentW, rowY + height);
         g.text(font, label, contentX, contentY + (contentH - font.lineHeight) / 2, colors.text(), true);
+        g.disableScissor();
+    }
+
+    /**
+     * Simple list-row style: flat bg that fades in with openProgress, subtle hover highlight,
+     * accent left-edge bar for the selected item. No button chrome (no gradient, no outline stack).
+     */
+    private void drawListRow(GuiGraphicsExtractor g, Component label, int rowY, float hover, boolean selected, float openProg) {
+        UITheme theme = UITheme.current();
+
+        // Fade entire row in/out with openProgress
+        int alpha = (int) (openProg * 0xFF) << 24;
+
+        // Base bg: panel bg tinted toward hover colour as hover rises
+        int baseBg  = (theme.panel().bg()    & 0x00FFFFFF) | alpha;
+        int hoverBg = (theme.panel().bgHover() & 0x00FFFFFF) | alpha;
+        int rowBg   = ARGB.srgbLerp(hover, baseBg, hoverBg);
+        g.fill(x, rowY, x + width, rowY + height, rowBg);
+
+        // Selected accent: a 2-px left bar in border-hover colour, also alpha-faded
+        if (selected) {
+            int accentColor = (theme.panel().borderHover() & 0x00FFFFFF) | alpha;
+            g.fill(x, rowY, x + 2, rowY + height, accentColor);
+        }
+
+        // Separator line at bottom (very subtle)
+        int sepColor = (theme.panel().border() & 0x00FFFFFF) | (int)(openProg * 0x55) << 24;
+        g.fill(x + 4, rowY + height - 1, x + width - 4, rowY + height, sepColor);
+
+        // Text: blend disabled→primary colour with openProgress
+        int textColor = enabled
+                ? ARGB.srgbLerp(openProg, theme.text().disabled(), selected ? theme.text().accent() : theme.text().primary())
+                : theme.text().disabled();
+        int contentX = innerX() + (selected ? 9 : 5);   // slight indent when selected
+        int contentY = rowY + padding.top();
+        int contentH = Math.max(0, height - padding.vertical());
+        g.enableScissor(x, rowY, x + width, rowY + height);
+        g.text(font, label, contentX, contentY + (contentH - font.lineHeight) / 2, textColor, true);
         g.disableScissor();
     }
 
@@ -208,12 +251,4 @@ public class DropdownComponent<T> extends BaseComponent {
     public DropdownComponent<T> labeler(Function<T, Component> labeler) { this.labeler = labeler; return this; }
     public DropdownComponent<T> enabled(boolean enabled) { this.enabled = enabled; return this; }
     public DropdownComponent<T> open(boolean open) { this.open = open; return this; }
-
-    @Override public DropdownComponent<T> padding(Insets padding) { super.padding(padding); return this; }
-    @Override public DropdownComponent<T> margins(Insets margins) { super.margins(margins); return this; }
-    @Override public DropdownComponent<T> surface(Surface surface) { super.surface(surface); return this; }
-    @Override public DropdownComponent<T> id(String id) { super.id(id); return this; }
-    @Override public DropdownComponent<T> visible(boolean visible) { super.visible(visible); return this; }
-    @Override public DropdownComponent<T> sizing(Sizing h, Sizing v) { super.sizing(h, v); return this; }
-    @Override public DropdownComponent<T> sizing(Sizing both) { super.sizing(both); return this; }
 }

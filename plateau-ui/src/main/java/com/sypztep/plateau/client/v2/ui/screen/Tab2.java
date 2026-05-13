@@ -22,12 +22,12 @@ import org.jetbrains.annotations.Nullable;
  *     MyTab(Identifier id) { super(id, Component.literal("My Tab")); }
  *
  *     @Override
- *     protected BaseComponent build(TabContext ctx) {
+ *     protected BaseComponent<?> build(TabContext ctx) {
  *         return Containers.vertical(Sizing.fill(), Sizing.fill())
  *             .padding(Insets.of(8))
  *             .gap(6)
  *             .child(Components.label("Hello World"))
- *             .child(Components.button("Click me", btn -> {}));
+ *             .child(Components.button("Click me", button -> {}));
  *     }
  * }
  * }</pre>
@@ -48,11 +48,11 @@ public abstract class Tab2 extends Tab {
      * Called once each time the tab is activated. The root component will be
      * automatically mounted to fill the available screen space below the nav bar.
      */
-    protected abstract BaseComponent build(TabContext ctx);
+    protected abstract BaseComponent<?> build(TabContext ctx);
 
     @Override
     protected final void buildWidgets(TabContext ctx) {
-        BaseComponent root = build(ctx);
+        BaseComponent<?> root = build(ctx);
         int contentY = ctx.contentStartY();
         int screenW  = ctx.screenWidth();
         int screenH  = ctx.screenHeight();

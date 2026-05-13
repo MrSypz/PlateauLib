@@ -3,9 +3,7 @@ package com.sypztep.plateau.client.v2.ui.widget;
 import com.sypztep.plateau.client.v1.ui.core.RenderHelper;
 import com.sypztep.plateau.client.v1.ui.core.UISounds;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
-import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
-import com.sypztep.plateau.client.v2.ui.core.Surface;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -23,7 +21,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
-public class ButtonComponent extends BaseComponent {
+public class ButtonComponent extends BaseComponent<ButtonComponent> {
     private static final int ANIMATION_CLIP_OUTSET = 3;
 
     private Component label;
@@ -121,14 +119,14 @@ public class ButtonComponent extends BaseComponent {
         extractor.fill(x + 1, y + height - 3, x + width - 1, y + height - 1, colors.underline());
 
         int contentW = font.width(label) + 16 + 5;
-        int curX = innerX() + (innerWidth() - contentW) / 2;
+        int nextContentX = innerX() + (innerWidth() - contentW) / 2;
         int textY = innerY() + (innerHeight() - font.lineHeight) / 2;
 
         int iconY = innerY() + (innerHeight() - 16) / 2;
-        extractor.blitSprite(RenderPipelines.GUI_TEXTURED, icon, curX, iconY, 16, 16);
-        curX += 16 + 5;
+        extractor.blitSprite(RenderPipelines.GUI_TEXTURED, icon, nextContentX, iconY, 16, 16);
+        nextContentX += 16 + 5;
 
-        extractor.text(font, label, curX, textY, colors.text(), true);
+        extractor.text(font, label, nextContentX, textY, colors.text(), true);
     }
     // Used by the non-scroll path (screen dispatches directly via GuiEventListener chain).
     @Override
@@ -183,7 +181,7 @@ public class ButtonComponent extends BaseComponent {
     }
 
     @Override
-    public void updateNarration(NarrationElementOutput output) {
+    public void updateNarration(@NonNull NarrationElementOutput output) {
         output.add(NarratedElementType.TITLE, label);
     }
 
@@ -201,12 +199,4 @@ public class ButtonComponent extends BaseComponent {
     public ButtonComponent enabled(boolean enabled)                    { this.enabled = enabled; return this; }
     public ButtonComponent label(Component label)                      { this.label = label; return this; }
     public boolean isEnabled()                                         { return enabled; }
-
-    @Override public ButtonComponent padding(Insets padding)  { super.padding(padding); return this; }
-    @Override public ButtonComponent margins(Insets margins)  { super.margins(margins); return this; }
-    @Override public ButtonComponent surface(Surface surface) { super.surface(surface); return this; }
-    @Override public ButtonComponent id(String id)            { super.id(id);           return this; }
-    @Override public ButtonComponent visible(boolean visible) { super.visible(visible); return this; }
-    @Override public ButtonComponent sizing(Sizing h, Sizing v){ super.sizing(h, v);    return this; }
-    @Override public ButtonComponent sizing(Sizing both)      { super.sizing(both);     return this; }
 }

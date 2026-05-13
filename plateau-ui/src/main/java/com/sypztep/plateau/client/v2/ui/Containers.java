@@ -4,6 +4,7 @@ import com.sypztep.plateau.client.v2.ui.core.Sizing;
 import com.sypztep.plateau.client.v2.ui.container.ScrollContainer;
 import com.sypztep.plateau.client.v2.ui.container.TabComponent;
 import com.sypztep.plateau.client.v2.ui.layout.FlowLayout;
+import com.sypztep.plateau.client.v2.ui.layout.SplitLayout;
 import com.sypztep.plateau.client.v2.ui.layout.StackLayout;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -15,7 +16,7 @@ import net.fabricmc.api.Environment;
  *     .padding(Insets.of(8))
  *     .gap(4)
  *     .child(Components.label("Title"))
- *     .child(Components.button("Click", btn -> {}))
+ *     .child(Components.button("Click", button -> {}))
  * }</pre>
  */
 @Environment(EnvType.CLIENT)
@@ -55,6 +56,18 @@ public final class Containers {
 
     public static StackLayout stackFill() {
         return stack(Sizing.fill(), Sizing.fill());
+    }
+
+    public static SplitLayout split(SplitLayout.Axis axis, float split) {
+        return new SplitLayout(axis, split);
+    }
+
+    public static SplitLayout horizontalSplit(float split) {
+        return SplitLayout.horizontal(split);
+    }
+
+    public static SplitLayout verticalSplit(float split) {
+        return SplitLayout.vertical(split);
     }
 
     public static ScrollContainer scrollable(Sizing horizontal, Sizing vertical) {

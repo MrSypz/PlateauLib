@@ -18,9 +18,9 @@ import java.util.List;
 import java.util.function.Consumer;
 
 @Environment(EnvType.CLIENT)
-public abstract class BaseContainerComponent extends BaseComponent implements ContainerEventHandler {
+public abstract class BaseContainerComponent<GenericBaseComponent extends BaseContainerComponent<GenericBaseComponent>> extends BaseComponent<GenericBaseComponent> implements ContainerEventHandler {
 
-    protected final List<BaseComponent> children = new ArrayList<>();
+    protected final List<BaseComponent<?>> children = new ArrayList<>();
 
     @Nullable
     private GuiEventListener focusedChild;
@@ -28,24 +28,24 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
 
     // ── Child management ─────────────────────────────────────
 
-    public BaseContainerComponent child(BaseComponent child) {
+    public GenericBaseComponent child(BaseComponent<?> child) {
         children.add(child);
-        return this;
+        return self();
     }
 
-    public BaseContainerComponent children(BaseComponent... components) {
+    public GenericBaseComponent children(BaseComponent<?>... components) {
         Collections.addAll(children, components);
-        return this;
+        return self();
     }
 
-    public BaseContainerComponent children(Iterable<? extends BaseComponent> components) {
-        for (BaseComponent component : components) {
+    public GenericBaseComponent children(Iterable<? extends BaseComponent<?>> components) {
+        for (BaseComponent<?> component : components) {
             children.add(component);
         }
-        return this;
+        return self();
     }
 
-    public List<BaseComponent> getChildren() {
+    public List<BaseComponent<?>> getChildren() {
         return children;
     }
 
@@ -107,7 +107,7 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
 
     @Override
     public void visitWidgets(Consumer<AbstractWidget> widgetVisitor) {
-        for (BaseComponent child : childComponents()) {
+        for (BaseComponent<?> child : childComponents()) {
             child.visitWidgets(widgetVisitor);
         }
     }
@@ -116,7 +116,7 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
         if (!isMouseOver(event.x(), event.y())) return false;
 
-        for (BaseComponent child : childrenBackToFront()) {
+        for (BaseComponent<?> child : childrenBackToFront()) {
             if (!child.isVisible() || !child.rendersAboveSiblings() || !child.isMouseOver(event.x(), event.y())) continue;
             if (child.mouseClicked(event, doubleClick)) {
                 focusAfterInteraction(child, event.button());
@@ -125,7 +125,7 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
             if (child.blocksLowerInput()) return true;
         }
 
-        for (BaseComponent child : childrenBackToFront()) {
+        for (BaseComponent<?> child : childrenBackToFront()) {
             if (!child.isVisible() || !child.isMouseOver(event.x(), event.y())) continue;
             if (child.mouseClicked(event, doubleClick)) {
                 focusAfterInteraction(child, event.button());
@@ -147,7 +147,7 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
             if (focused.mouseReleased(event)) return true;
         }
 
-        for (BaseComponent child : childrenBackToFront()) {
+        for (BaseComponent<?> child : childrenBackToFront()) {
             if (!child.isVisible() || !child.isMouseOver(event.x(), event.y())) continue;
             return child.mouseReleased(event);
         }
@@ -165,13 +165,13 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
     public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
         if (!isMouseOver(mouseX, mouseY)) return false;
 
-        for (BaseComponent child : childrenBackToFront()) {
+        for (BaseComponent<?> child : childrenBackToFront()) {
             if (!child.isVisible() || !child.rendersAboveSiblings() || !child.isMouseOver(mouseX, mouseY)) continue;
             if (child.mouseScrolled(mouseX, mouseY, hAmount, vAmount)) return true;
             if (child.blocksLowerInput()) return true;
         }
 
-        for (BaseComponent child : childrenBackToFront()) {
+        for (BaseComponent<?> child : childrenBackToFront()) {
             if (!child.isVisible() || !child.isMouseOver(mouseX, mouseY)) continue;
             return child.mouseScrolled(mouseX, mouseY, hAmount, vAmount);
         }
@@ -181,7 +181,7 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
 
     @Override
     public void mouseMoved(double mouseX, double mouseY) {
-        for (BaseComponent child : childComponents()) {
+        for (BaseComponent<?> child : childComponents()) {
             if (child.isVisible()) child.mouseMoved(mouseX, mouseY);
         }
     }
@@ -195,7 +195,7 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
     public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
         if (!hitTest(x, y)) return false;
 
-        for (BaseComponent child : childrenBackToFront()) {
+        for (BaseComponent<?> child : childrenBackToFront()) {
             if (!child.isVisible() || !child.rendersAboveSiblings() || !child.hitTest(x, y)) continue;
             if (child.onPointerClicked(event, doubleClick, x, y)) {
                 focusAfterInteraction(child, event.button());
@@ -204,7 +204,7 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
             if (child.blocksLowerInput()) return true;
         }
 
-        for (BaseComponent child : childrenBackToFront()) {
+        for (BaseComponent<?> child : childrenBackToFront()) {
             if (!child.isVisible() || !child.hitTest(x, y)) continue;
             if (child.onPointerClicked(event, doubleClick, x, y)) {
                 focusAfterInteraction(child, event.button());
@@ -218,23 +218,23 @@ public abstract class BaseContainerComponent extends BaseComponent implements Co
         return false;
     }
 
-    protected List<BaseComponent> childComponents() {
-        List<BaseComponent> result = new ArrayList<>();
+    protected List<BaseComponent<?>> childComponents() {
+        List<BaseComponent<?>> result = new ArrayList<>();
         for (GuiEventListener listener : children()) {
-            if (listener instanceof BaseComponent component) {
+            if (listener instanceof BaseComponent<?> component) {
                 result.add(component);
             }
         }
         return result;
     }
 
-    protected List<BaseComponent> childrenBackToFront() {
-        List<BaseComponent> result = childComponents();
+    protected List<BaseComponent<?>> childrenBackToFront() {
+        List<BaseComponent<?>> result = childComponents();
         Collections.reverse(result);
         return result;
     }
 
-    protected void focusAfterInteraction(BaseComponent child, int button) {
+    protected void focusAfterInteraction(BaseComponent<?> child, int button) {
         if (child != getFocused() && child.shouldTakeFocusAfterInteraction()) {
             setFocused(child);
         }
