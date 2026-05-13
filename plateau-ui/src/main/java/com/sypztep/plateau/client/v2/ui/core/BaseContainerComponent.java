@@ -191,33 +191,6 @@ public abstract class BaseContainerComponent<GenericBaseComponent extends BaseCo
         return getFocused() != null && getFocused().keyPressed(event);
     }
 
-    @Override
-    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
-        if (!hitTest(x, y)) return false;
-
-        for (BaseComponent<?> child : childrenBackToFront()) {
-            if (!child.isVisible() || !child.rendersAboveSiblings() || !child.hitTest(x, y)) continue;
-            if (child.onPointerClicked(event, doubleClick, x, y)) {
-                focusAfterInteraction(child, event.button());
-                return true;
-            }
-            if (child.blocksLowerInput()) return true;
-        }
-
-        for (BaseComponent<?> child : childrenBackToFront()) {
-            if (!child.isVisible() || !child.hitTest(x, y)) continue;
-            if (child.onPointerClicked(event, doubleClick, x, y)) {
-                focusAfterInteraction(child, event.button());
-                return true;
-            }
-
-            break;
-        }
-
-        setFocused(null);
-        return false;
-    }
-
     protected List<BaseComponent<?>> childComponents() {
         List<BaseComponent<?>> result = new ArrayList<>();
         for (GuiEventListener listener : children()) {

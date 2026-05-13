@@ -94,13 +94,6 @@ public class CheckBoxComponent extends BaseComponent<CheckBoxComponent> {
     }
 
     @Override
-    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
-        if (!enabled || event.button() != 0 || !hitTest(x, y)) return false;
-        toggle();
-        return true;
-    }
-
-    @Override
     public boolean keyPressed(@NonNull KeyEvent event) {
         if (!enabled || !focused) return false;
         int key = event.key();

@@ -101,13 +101,6 @@ public class TextAreaComponent extends BaseComponent<TextAreaComponent> {
     }
 
     @Override
-    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
-        if (!hitTest(x, y) || event.button() != 0) return false;
-        cursor = cursorAt(x, y);
-        return true;
-    }
-
-    @Override
     public boolean charTyped(@NonNull CharacterEvent event) {
         if (!focused || !event.isAllowedChatCharacter()) return false;
         insert(event.codepointAsString());

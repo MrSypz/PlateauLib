@@ -37,7 +37,6 @@ public class FlowLayout extends BaseContainerComponent<FlowLayout> {
     public FlowLayout gap(int gap)               { this.gap = gap; return this; }
     public FlowLayout crossAlign(Align align)    { this.crossAlign = align; return this; }
 
-    // ── PointerInteractable ───────────────────────────────────
     // ── Layout ───────────────────────────────────────────────
 
     @Override

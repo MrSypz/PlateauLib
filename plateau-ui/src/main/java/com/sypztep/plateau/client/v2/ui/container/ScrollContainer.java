@@ -37,8 +37,8 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
 
     // ── Input ─────────────────────────────────────────────────
 
-    // mouseClicked dispatches through the PointerInteractable chain using content-space
-    // coordinates so that hit-testing works correctly regardless of scroll offset.
+    // mouseClicked dispatches a normal MouseButtonEvent with content-space coordinates
+    // so that hit-testing works correctly regardless of scroll offset.
     // Screen-space mouse Y and layout-space child Y only agree when scroll offset is zero,
     // so contentY (= screenY + scrollOffset) is computed once here and passed all the way down.
     @Override
@@ -48,12 +48,13 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
 
         double cx = event.x();
         double cy = event.y() + scroll.getScrollOffset(); // content-space Y
+        MouseButtonEvent contentEvent = contentEvent(event);
 
         for (int i = children.size() - 1; i >= 0; i--) {
             BaseComponent<?> child = children.get(i);
             if (!child.isVisible() || !child.rendersAboveSiblings()) continue;
-            if (child.hitTest(cx, cy)) {
-                if (child.onPointerClicked(event, doubleClick, cx, cy)) {
+            if (child.isMouseOver(cx, cy)) {
+                if (child.mouseClicked(contentEvent, doubleClick)) {
                     if (child != getFocused() && child.shouldTakeFocusAfterInteraction()) {
                         setFocused(child);
                     }
@@ -67,11 +68,11 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
         for (int i = children.size() - 1; i >= 0; i--) {
             BaseComponent<?> child = children.get(i);
             if (!child.isVisible()) continue;
-            if (child.hitTest(cx, cy)) {
-                if (child.onPointerClicked(event, doubleClick, cx, cy)) {
+            if (child.isMouseOver(cx, cy)) {
+                if (child.mouseClicked(contentEvent, doubleClick)) {
                     // Only update focusedChild when the section changes — re-focusing the same
                     // child would call setFocused(false) on it, erasing the button focus that
-                    // onPointerClicked just established inside the FlowLayout.
+                    // mouseClicked just established inside the FlowLayout.
                     if (child != getFocused() && child.shouldTakeFocusAfterInteraction()) {
                         setFocused(child);
                     }
@@ -82,54 +83,6 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
             }
         }
         // Click on empty area or non-interactive content — clear keyboard focus.
-        setFocused(null);
-        return false;
-    }
-
-    @Override
-    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
-        if (!hitTest(x, y)) return false;
-        if (scroll.mouseClicked(event, doubleClick)) return true;
-
-        double cx = x;
-        double cy = y + scroll.getScrollOffset();
-
-        for (int i = children.size() - 1; i >= 0; i--) {
-            BaseComponent<?> child = children.get(i);
-            if (!child.isVisible() || !child.rendersAboveSiblings()) continue;
-
-            if (child.hitTest(cx, cy)) {
-                if (child.onPointerClicked(event, doubleClick, cx, cy)) {
-                    if (child != getFocused() && child.shouldTakeFocusAfterInteraction()) {
-                        setFocused(child);
-                    }
-
-                    setDragging(true);
-                    return true;
-                }
-
-                if (child.blocksLowerInput()) return true;
-            }
-        }
-
-        for (int i = children.size() - 1; i >= 0; i--) {
-            BaseComponent<?> child = children.get(i);
-            if (!child.isVisible()) continue;
-
-            if (child.hitTest(cx, cy)) {
-                if (child.onPointerClicked(event, doubleClick, cx, cy)) {
-                    if (child != getFocused() && child.shouldTakeFocusAfterInteraction()) {
-                        setFocused(child);
-                    }
-
-                    setDragging(true);
-                    return true;
-                }
-
-                break;
-            }
-        }
-
         setFocused(null);
         return false;
     }
@@ -158,7 +111,7 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
             BaseComponent<?> child = children.get(i);
             if (!child.isVisible() || !child.rendersAboveSiblings()) continue;
 
-            if (child.hitTest(mouseX, contentY)) {
+            if (child.isMouseOver(mouseX, contentY)) {
                 if (child.mouseScrolled(mouseX, contentY, hAmount, vAmount)) return true;
                 if (child.blocksLowerInput()) return true;
             }
@@ -168,7 +121,7 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
             BaseComponent<?> child = children.get(i);
             if (!child.isVisible()) continue;
 
-            if (child.hitTest(mouseX, contentY)) {
+            if (child.isMouseOver(mouseX, contentY)) {
                 if (child.mouseScrolled(mouseX, contentY, hAmount, vAmount)) return true;
                 break;
             }
@@ -297,4 +250,8 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
     public ScrollBehavior getScrollBehavior() { return scroll; }
 
     private static final int SCROLLBAR_RESERVED = 8;
+
+    private MouseButtonEvent contentEvent(MouseButtonEvent event) {
+        return new MouseButtonEvent(event.x(), event.y() + scroll.getScrollOffset(), event.buttonInfo());
+    }
 }

@@ -27,7 +27,7 @@ import java.util.function.Consumer;
  * {@link Sizing} and let the layout engine do the math.
  */
 @Environment(EnvType.CLIENT)
-public abstract class BaseComponent<GenericComponent extends BaseComponent<GenericComponent>> implements GuiEventListener, Renderable, NarratableEntry, LayoutElement, PointerInteractable {
+public abstract class BaseComponent<GenericComponent extends BaseComponent<GenericComponent>> implements GuiEventListener, Renderable, NarratableEntry, LayoutElement {
 
     protected int x, y, width, height;
     protected Sizing horizontalSizing = Sizing.content();
@@ -176,24 +176,14 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
 
     protected boolean isFocusable() { return false; }
 
-    // ── PointerInteractable ───────────────────────────────────
+    // ── Hit Testing ───────────────────────────────────
 
     /**
      * Bounds check using content-space coordinates (already scroll-adjusted by the parent).
      * Matches the same bounds used by layout, so hit-test and rendered position always agree.
      */
-    @Override
     public boolean hitTest(double x, double y) {
         return visible && x >= this.x && x < this.x + width && y >= this.y && y < this.y + height;
-    }
-
-    /**
-     * Default: no-op. Leaf components (e.g. {@link com.sypztep.plateau.client.v2.ui.widget.ButtonComponent}) override to fire their
-     * action; container components (e.g. {@link com.sypztep.plateau.client.v2.ui.layout.FlowLayout}) override to dispatch to children.
-     */
-    @Override
-    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
-        return false;
     }
 
     // ── NarratableEntry ───────────────────────────────────────

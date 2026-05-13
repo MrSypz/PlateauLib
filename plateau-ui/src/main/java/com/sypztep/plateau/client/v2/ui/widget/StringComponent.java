@@ -89,13 +89,6 @@ public class StringComponent extends BaseComponent<StringComponent> {
     }
 
     @Override
-    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
-        if (!hitTest(x, y) || event.button() != 0) return false;
-        cursor = cursorAt(x);
-        return true;
-    }
-
-    @Override
     public boolean charTyped(@NonNull CharacterEvent event) {
         if (!focused || !editable || !event.isAllowedChatCharacter()) return false;
         insert(event.codepointAsString());

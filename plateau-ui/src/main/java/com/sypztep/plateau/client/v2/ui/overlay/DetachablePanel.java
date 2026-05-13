@@ -259,18 +259,6 @@ public class DetachablePanel extends BaseComponent<DetachablePanel> {
         return !isFloatingActive() && dockChild != null && dockChild.keyPressed(event);
     }
 
-    @Override
-    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
-        if (clickDockHeader(event.button(), x, y)) return true;
-
-        BaseComponent<?> dockChild = dockChild();
-        if (!isFloatingActive() && dockChild != null && dockChild.onPointerClicked(event, doubleClick, x, y)) {
-            dockChildPressed = event.button() == 0;
-            return true;
-        }
-        return false;
-    }
-
     public void open() {
         if (isFloatingActive()) return;
         animatedBounds = dockBounds();

@@ -186,22 +186,6 @@ public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownC
     }
 
     @Override
-    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
-        if (!enabled || event.button() != 0 || !isMouseOver(x, y)) return false;
-
-        if (open && y >= this.y + height) {
-            int index = (int) ((y - this.y) / height) - 1;
-            if (index >= 0 && index < values.size()) selectedIndex(index);
-            open = false;
-            return true;
-        }
-
-        open = !open;
-        UISounds.playClick();
-        return true;
-    }
-
-    @Override
     public boolean keyPressed(@NonNull KeyEvent event) {
         if (!enabled || !focused) return false;
 

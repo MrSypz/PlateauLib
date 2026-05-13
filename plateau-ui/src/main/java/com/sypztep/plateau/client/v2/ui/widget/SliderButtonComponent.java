@@ -72,22 +72,12 @@ public class SliderButtonComponent extends BaseComponent<SliderButtonComponent> 
         g.centeredText(font, text, innerX() + innerWidth() / 2, innerY() + 4, textColor);
         g.disableScissor();
     }
-    // ERROR: THIS IS ARE NOW ISSUE it code smell I don't know the issue but this are should be the main interact of mouse event but! the thing it work are onPointerClicked() not this method
     @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
-//        if (!enabled || event.button() != 0 || !isMouseOver(event.x(), event.y())) return false;
-//        dragging = true;
-//        setValueFromMouse(event.x());
-//        UISounds.playClick();
-        return true;
-    }
-
-    @Override
-    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
-        if (!enabled || event.button() != 0 || !hitTest(x, y)) return false;
+        if (!enabled || event.button() != 0 || !isMouseOver(event.x(), event.y())) return false;
         dragging = true;
-        setValueFromMouse(x);
-        UISounds.playHover();
+        setValueFromMouse(event.x());
+        UISounds.playClick();
         return true;
     }
 

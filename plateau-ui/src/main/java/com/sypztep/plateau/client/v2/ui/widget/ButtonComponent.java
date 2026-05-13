@@ -145,17 +145,6 @@ public class ButtonComponent extends BaseComponent<ButtonComponent> {
         return false;
     }
 
-    // Used by the scroll path (ScrollContainer forwards content-space coords via PointerInteractable).
-    @Override
-    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
-        if (!enabled || event.button() != 0) return false;
-        if (!hitTest(x, y)) return false;
-        pressed = true;
-        UISounds.playClick();
-        if (onClick != null) onClick.accept(this);
-        return true;
-    }
-
     @Override
     public boolean keyPressed(@NonNull KeyEvent event) {
         if (!enabled || !focused) return false;

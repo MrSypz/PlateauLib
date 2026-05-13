@@ -102,30 +102,6 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
     }
 
     @Override
-    public boolean onPointerClicked(MouseButtonEvent event, boolean doubleClick, double x, double y) {
-        if (!hitTest(x, y)) return false;
-
-        int tab = tabAt(x, y);
-        if (tab >= 0) {
-            if (tab != activeIndex) active(tab);
-            setFocused(true);
-            return true;
-        }
-
-        BaseComponent<?> content = activeContent();
-        if (content != null && content.hitTest(x, y)) {
-            if (content.onPointerClicked(event, doubleClick, x, y)) {
-                if (content.shouldTakeFocusAfterInteraction()) setFocused(content);
-                if (event.button() == 0) setDragging(true);
-                return true;
-            }
-        }
-
-        setFocused(null);
-        return false;
-    }
-
-    @Override
     public boolean mouseReleased(@NonNull MouseButtonEvent event) {
         setDragging(false); // was missing — BaseContainerComponent does not reset this automatically
         BaseComponent<?> content = activeContent();
