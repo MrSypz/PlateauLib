@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "plateau-ui-testmod",
+  "version": "1.0.0",
+
+  "name": "PlateauLib UI Testmod",
+  "description": "In-game test client for plateau-ui widgets and screens",
+
+  "authors": [ "MrSypz" ],
+  "contact": {},
+
+  "license": "All-Rights-Reserved",
+
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.sypztep.plateau.test.UITestClient"
+    ]
+  },
+
+  "depends": {
+    "fabricloader": ">=0.18.5",
+    "minecraft": ">=26.1-",
+    "java": ">=25",
+    "plateau-ui": "*"
+  }
+}
