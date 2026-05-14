@@ -15,6 +15,11 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
+import org.jspecify.annotations.NonNull;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 public record AddTextParticlePayloadS2C(int entityId, Component text, int color, float maxSize,
                                         float yPos) implements CustomPacketPayload {
@@ -31,8 +36,14 @@ public record AddTextParticlePayloadS2C(int entityId, Component text, int color,
             );
 
     @Override
-    public Type<? extends CustomPacketPayload> type() {
+    public @NonNull Type<? extends CustomPacketPayload> type() {
         return ID;
+    }
+
+    private static final List<Predicate<AddTextParticlePayloadS2C>> FILTERS = new ArrayList<>();
+
+    public static void registerFilter(Predicate<AddTextParticlePayloadS2C> filter) {
+        FILTERS.add(filter);
     }
 
     public static void send(ServerPlayer receiver, int entityId, Component text, int color, float maxSize, float yPos) {
@@ -41,7 +52,10 @@ public record AddTextParticlePayloadS2C(int entityId, Component text, int color,
 
     public static class Receiver implements ClientPlayNetworking.PlayPayloadHandler<AddTextParticlePayloadS2C> {
         @Override
-        public void receive(AddTextParticlePayloadS2C payload, ClientPlayNetworking.Context context) {
+        public void receive(AddTextParticlePayloadS2C payload, ClientPlayNetworking.@NonNull Context context) {
+            for (Predicate<AddTextParticlePayloadS2C> filter : FILTERS)
+                if (!filter.test(payload)) return;
+
             Entity entity = context.player().level().getEntity(payload.entityId());
             if (entity == null) return;
 
