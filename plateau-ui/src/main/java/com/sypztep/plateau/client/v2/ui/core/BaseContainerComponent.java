@@ -7,6 +7,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import org.jspecify.annotations.NonNull;
@@ -181,6 +182,11 @@ public abstract class BaseContainerComponent<GenericBaseComponent extends BaseCo
     @Override
     public boolean keyPressed(@NonNull KeyEvent event) {
         return getFocused() != null && getFocused().keyPressed(event);
+    }
+
+    @Override
+    public boolean charTyped(@NonNull CharacterEvent event) {
+        return getFocused() != null && getFocused().charTyped(event);
     }
 
     protected List<BaseComponent<?>> childComponents() {

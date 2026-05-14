@@ -8,6 +8,7 @@ import com.sypztep.plateau.client.v2.ui.core.Sizing;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -409,6 +410,12 @@ public class DetachablePanel extends BaseComponent<DetachablePanel> {
             return true;
         }
         return content != null && content.keyPressed(event);
+    }
+
+    public boolean charTypedFloating(@NonNull CharacterEvent event) {
+        if (!isFloatingActive()) return false;
+        mountFloatingContent();
+        return content != null && content.charTyped(event);
     }
 
     private void remountDockContent() {

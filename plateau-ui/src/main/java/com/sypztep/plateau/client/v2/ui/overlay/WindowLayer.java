@@ -7,6 +7,7 @@ import com.sypztep.plateau.client.v2.ui.interaction.DragDrop;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import org.jspecify.annotations.NonNull;
@@ -165,6 +166,21 @@ public class WindowLayer extends BaseContainerComponent<WindowLayer> {
         }
 
         return content().map(component -> component.keyPressed(event)).orElse(false);
+    }
+
+    @Override
+    public boolean charTyped(@NonNull CharacterEvent event) {
+        syncZOrder(floatingPanels());
+        if (focusedFloating instanceof DetachablePanel panel && panel.charTypedFloating(event)) {
+            return true;
+        }
+
+        for (int i = zOrder.size() - 1; i >= 0; i--) {
+            DetachablePanel panel = zOrder.get(i);
+            if (panel.isFloatingActive() && panel.charTypedFloating(event)) return true;
+        }
+
+        return content().map(component -> component.charTyped(event)).orElse(false);
     }
 
     @Override
