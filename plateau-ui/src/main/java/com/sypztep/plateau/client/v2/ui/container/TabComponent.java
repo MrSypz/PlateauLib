@@ -92,6 +92,15 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
         return List.of(tabs.get(activeIndex).content());
     }
 
+    @Override
+    public List<BaseComponent<?>> getChildren() {
+        List<BaseComponent<?>> contents = new ArrayList<>(tabs.size());
+        for (Tab tab : tabs) {
+            contents.add(tab.content());
+        }
+        return contents;
+    }
+
     // ── Input ─────────────────────────────────────────────────
 
     @Override

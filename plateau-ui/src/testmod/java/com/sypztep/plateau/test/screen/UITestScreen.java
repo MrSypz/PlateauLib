@@ -16,6 +16,7 @@ public class UITestScreen extends PlateauScreen {
     @Override
     protected void initComponents() {
         tabManager = new TabManager(this);
+        tabManager.registerTab(new ComponentDocsTab());
         tabManager.registerTab(new WidgetsTab());
         tabManager.registerTab(new ScrollTab());
         tabManager.registerTab(new DragDropStressTab());
