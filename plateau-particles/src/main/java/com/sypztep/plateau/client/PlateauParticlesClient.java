@@ -3,6 +3,7 @@ package com.sypztep.plateau.client;
 import com.sypztep.plateau.common.v1.network.AddEmitterParticlePayloadS2C;
 import com.sypztep.plateau.common.v1.network.AddParticlePayloadS2C;
 import com.sypztep.plateau.common.v1.network.AddTextParticlePayloadS2C;
+import com.sypztep.plateau.common.v1.network.AddTypedTextParticlePayloadS2C;
 import com.sypztep.plateau.client.v1.particle.state.TextParticleGroup;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -17,8 +18,8 @@ public class PlateauParticlesClient implements ClientModInitializer {
         ParticleGroupRegistry.register(TEXT_PARTICLE, TextParticleGroup::new);
 
         ClientPlayNetworking.registerGlobalReceiver(AddTextParticlePayloadS2C.ID, new AddTextParticlePayloadS2C.Receiver());
+        ClientPlayNetworking.registerGlobalReceiver(AddTypedTextParticlePayloadS2C.ID, new AddTypedTextParticlePayloadS2C.Receiver());
         ClientPlayNetworking.registerGlobalReceiver(AddEmitterParticlePayloadS2C.ID, new AddEmitterParticlePayloadS2C.Receiver());
         ClientPlayNetworking.registerGlobalReceiver(AddParticlePayloadS2C.ID, new AddParticlePayloadS2C.Receiver());
-
     }
 }
