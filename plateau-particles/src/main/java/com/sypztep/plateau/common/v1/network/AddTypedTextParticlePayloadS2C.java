@@ -34,8 +34,8 @@ public record AddTypedTextParticlePayloadS2C(int entityId, Identifier typeId) im
         return ID;
     }
 
-    public static void send(ServerPlayer receiver, int entityId, TextParticleType type) {
-        ServerPlayNetworking.send(receiver, new AddTypedTextParticlePayloadS2C(entityId, type.id()));
+    public static void send(ServerPlayer receiver, int entityId, Identifier typeId) {
+        ServerPlayNetworking.send(receiver, new AddTypedTextParticlePayloadS2C(entityId, typeId));
     }
 
     public static class Receiver implements ClientPlayNetworking.PlayPayloadHandler<AddTypedTextParticlePayloadS2C> {
