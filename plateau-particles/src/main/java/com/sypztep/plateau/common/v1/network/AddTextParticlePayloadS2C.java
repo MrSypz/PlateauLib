@@ -17,33 +17,23 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.NonNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Predicate;
-
 public record AddTextParticlePayloadS2C(int entityId, Component text, int color, float maxSize,
                                         float yPos) implements CustomPacketPayload {
 
     public static final Type<AddTextParticlePayloadS2C> ID = new Type<>(PlateauParticles.id("add_text_particle"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, AddTextParticlePayloadS2C> CODEC = StreamCodec.composite(
-                    ByteBufCodecs.VAR_INT, AddTextParticlePayloadS2C::entityId,
-                    ComponentSerialization.STREAM_CODEC, AddTextParticlePayloadS2C::text,
-                    ByteBufCodecs.INT, AddTextParticlePayloadS2C::color,
-                    ByteBufCodecs.FLOAT, AddTextParticlePayloadS2C::maxSize,
-                    ByteBufCodecs.FLOAT, AddTextParticlePayloadS2C::yPos,
-                    AddTextParticlePayloadS2C::new
-            );
+            ByteBufCodecs.VAR_INT, AddTextParticlePayloadS2C::entityId,
+            ComponentSerialization.STREAM_CODEC, AddTextParticlePayloadS2C::text,
+            ByteBufCodecs.INT, AddTextParticlePayloadS2C::color,
+            ByteBufCodecs.FLOAT, AddTextParticlePayloadS2C::maxSize,
+            ByteBufCodecs.FLOAT, AddTextParticlePayloadS2C::yPos,
+            AddTextParticlePayloadS2C::new
+    );
 
     @Override
     public @NonNull Type<? extends CustomPacketPayload> type() {
         return ID;
-    }
-
-    private static final List<Predicate<AddTextParticlePayloadS2C>> FILTERS = new ArrayList<>();
-
-    public static void registerFilter(Predicate<AddTextParticlePayloadS2C> filter) {
-        FILTERS.add(filter);
     }
 
     public static void send(ServerPlayer receiver, int entityId, Component text, int color, float maxSize, float yPos) {
@@ -53,22 +43,18 @@ public record AddTextParticlePayloadS2C(int entityId, Component text, int color,
     public static class Receiver implements ClientPlayNetworking.PlayPayloadHandler<AddTextParticlePayloadS2C> {
         @Override
         public void receive(AddTextParticlePayloadS2C payload, ClientPlayNetworking.@NonNull Context context) {
-            for (Predicate<AddTextParticlePayloadS2C> filter : FILTERS)
-                if (!filter.test(payload)) return;
-
-            Entity entity = context.player().level().getEntity(payload.entityId());
-            if (entity == null) return;
-
             Minecraft client = Minecraft.getInstance();
             ClientLevel world = client.level;
             if (world == null) return;
+
+            Entity entity = world.getEntity(payload.entityId());
+            if (entity == null) return;
 
             Vec3 pos = entity.position().add(0, entity.getBbHeight() + 0.95 + payload.yPos(), 0);
             TextParticle particle = new TextParticle(world, pos.x, pos.y, pos.z);
             particle.setText(payload.text().getString());
             particle.setColor(payload.color());
             particle.setMaxSize(payload.maxSize());
-
             client.particleEngine.add(particle);
         }
     }
