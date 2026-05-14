@@ -5,6 +5,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.util.Mth;
 
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
@@ -17,6 +18,8 @@ public final class DropTarget<PayloadValue> {
     private Predicate<PayloadValue> accepts = ignored -> true;
     private BiConsumer<PayloadValue, MouseButtonEvent> onDrop = (ignored, event) -> {};
     private DropHint<PayloadValue> hintRenderer = DragDrop::defaultDropHint;
+    private float hintSpeed = 0.45f;
+    private float hintProgress;
 
     DropTarget(BaseComponent<?> owner, Class<PayloadValue> type) {
         this.owner = owner;
@@ -38,11 +41,23 @@ public final class DropTarget<PayloadValue> {
         return this;
     }
 
+    public DropTarget<PayloadValue> hintAnimation(float speed) {
+        this.hintSpeed = Math.max(0f, speed);
+        return this;
+    }
+
     public void extractHint(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         DragPayload<PayloadValue> payload = DragDrop.payload(type);
-        if (payload == null || !owner.isMouseOver(mouseX, mouseY) || !canAccept(payload)) return;
+        if (payload == null) {
+            hintProgress = 0f;
+            return;
+        }
 
-        DragDrop.register(this);
+        boolean hovered = owner.isMouseOver(mouseX, mouseY) && canAccept(payload);
+        hintProgress = Mth.lerp(DragDrop.animationStep(hintSpeed, delta), hintProgress, hovered ? 1f : 0f);
+        if (hintProgress <= 0.01f) return;
+
+        if (hovered) DragDrop.register(this);
         hintRenderer.extractRenderState(graphics, this, payload, mouseX, mouseY, delta);
     }
 
@@ -50,13 +65,14 @@ public final class DropTarget<PayloadValue> {
         return payload.value() != null && accepts.test(payload.value());
     }
 
-    void drop(DragPayload<?> payload, MouseButtonEvent event) {
-        if (!payload.matches(type)) return;
+    boolean drop(DragPayload<?> payload, MouseButtonEvent event) {
+        if (!payload.matches(type)) return false;
 
         PayloadValue value = type.cast(payload.value());
-        if (!accepts.test(value)) return;
+        if (!accepts.test(value)) return false;
 
         onDrop.accept(value, event);
+        return true;
     }
 
     public BaseComponent<?> owner() {
@@ -65,5 +81,9 @@ public final class DropTarget<PayloadValue> {
 
     public Class<PayloadValue> type() {
         return type;
+    }
+
+    public float hintProgress() {
+        return hintProgress;
     }
 }

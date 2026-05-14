@@ -10,6 +10,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -29,9 +30,13 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
     private int headerGap = 3;
     private int contentGap = 6;
     private int tabPaddingX = 10;
+    private float contentSlideSpeed = 0.35f;
 
     // Per-tab hover animation — resized whenever tabs change.
     private float[] tabHoverProgress = new float[0];
+    private int previousIndex = -1;
+    private int slideDirection = 1;
+    private float slideProgress = 1f;
 
     public TabComponent() {
         this.horizontalSizing = Sizing.fill();
@@ -50,10 +55,15 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
 
     public TabComponent active(int index) {
         if (index >= 0 && index < tabs.size()) {
+            if (index == activeIndex) return this;
+            previousIndex = activeIndex;
+            slideDirection = index > activeIndex ? 1 : -1;
+            slideProgress = 0f;
             activeIndex = index;
             transferFocus(); // clear child focus on tab switch
             UISounds.playClick();
-            mountActiveContent();
+            mountContent(tabs.get(activeIndex).content());
+            if (previousIndex >= 0) mountContent(tabs.get(previousIndex).content());
         }
         return this;
     }
@@ -69,6 +79,10 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
     public TabComponent headerGap(int v)     { this.headerGap    = v; return this; }
     public TabComponent contentGap(int v)    { this.contentGap   = v; return this; }
     public TabComponent tabPaddingX(int v)   { this.tabPaddingX  = v; return this; }
+    public TabComponent contentSlideAnimation(float speed) {
+        this.contentSlideSpeed = Math.max(0f, speed);
+        return this;
+    }
 
     // ── ContainerEventHandler ─────────────────────────────────
 
@@ -151,8 +165,13 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
     private void mountActiveContent() {
         if (tabs.isEmpty()) return;
 
-        BaseComponent<?> content = tabs.get(activeIndex).content();
+        mountContent(tabs.get(activeIndex).content());
+        if (previousIndex >= 0 && previousIndex < tabs.size()) {
+            mountContent(tabs.get(previousIndex).content());
+        }
+    }
 
+    private void mountContent(BaseComponent<?> content) {
         int contentX = innerX();
         int contentY = innerY() + headerHeight + contentGap;
         int contentW = innerWidth();
@@ -194,7 +213,42 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
         extractHeaders(g, mouseX, mouseY, delta);
 
         BaseComponent<?> content = activeContent();
-        if (content != null) content.extractRenderState(g, mouseX, mouseY, delta);
+        if (content != null) extractContent(g, content, mouseX, mouseY, delta);
+    }
+
+    private void extractContent(GuiGraphicsExtractor graphics, BaseComponent<?> activeContent, int mouseX, int mouseY, float delta) {
+        slideProgress = Mth.lerp(Mth.clamp(contentSlideSpeed * Math.max(0f, delta), 0f, 1f), slideProgress, 1f);
+        if (slideProgress >= 0.995f) {
+            slideProgress = 1f;
+            previousIndex = -1;
+        }
+
+        int contentX = innerX();
+        int contentY = innerY() + headerHeight + contentGap;
+        int contentW = innerWidth();
+        int contentH = Math.max(0, innerHeight() - headerHeight - contentGap);
+
+        graphics.enableScissor(contentX, contentY, contentX + contentW, contentY + contentH);
+        if (previousIndex >= 0 && previousIndex < tabs.size() && previousIndex != activeIndex) {
+            int previousOffset = Math.round(Mth.lerp(easeOutCubic(slideProgress), 0f, -slideDirection * contentW));
+            extractTranslatedContent(graphics, tabs.get(previousIndex).content(), previousOffset, hoverSuppressedMouse(), hoverSuppressedMouse(), delta);
+        }
+
+        int activeOffset = Math.round(Mth.lerp(easeOutCubic(slideProgress), slideDirection * contentW, 0f));
+        extractTranslatedContent(graphics, activeContent, activeOffset, mouseX - activeOffset, mouseY, delta);
+        graphics.disableScissor();
+    }
+
+    private void extractTranslatedContent(GuiGraphicsExtractor graphics, BaseComponent<?> content, int offsetX, int mouseX, int mouseY, float delta) {
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(offsetX, 0f);
+        content.extractRenderState(graphics, mouseX, mouseY, delta);
+        graphics.pose().popMatrix();
+    }
+
+    private static float easeOutCubic(float progress) {
+        float inverse = 1f - Mth.clamp(progress, 0f, 1f);
+        return 1f - inverse * inverse * inverse;
     }
 
     private void extractHeaders(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {

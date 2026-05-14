@@ -10,6 +10,9 @@ import net.minecraft.util.ARGB;
 
 @Environment(EnvType.CLIENT)
 public final class RenderHelper {
+    private static final int DEFAULT_PREVIEW_BG = 0xEE15171E;
+    private static final int DEFAULT_PREVIEW_TEXT = 0xFFFFFFFF;
+
     private RenderHelper() {}
 
     public static void rectangle(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int color) {
@@ -27,6 +30,44 @@ public final class RenderHelper {
         outline(graphics, x, y, w, h, borderColor);
     }
 
+    public static void floatingPanel(GuiGraphicsExtractor graphics, int x, int y, int width, int height,
+                                     int bgColor, int borderColor) {
+        floatingPanel(graphics, x, y, width, height, 0x66000000, bgColor, borderColor);
+    }
+
+    public static void floatingPanel(GuiGraphicsExtractor graphics, int x, int y, int width, int height,
+                                     int shadowColor, int bgColor, int borderColor) {
+        graphics.fill(x + 1, y + 1, x + width + 1, y + height + 1, shadowColor);
+        graphics.fill(x, y, x + width, y + height, bgColor);
+        graphics.outline(x, y, width, height, borderColor);
+    }
+
+    public static void swatchLabelPreview(GuiGraphicsExtractor graphics, Font font, Component label,
+                                          int x, int y, int minWidth, int height,
+                                          int swatchColor) {
+        swatchLabelPreview(graphics, font, label,
+                x, y, minWidth, height,
+                swatchColor, DEFAULT_PREVIEW_BG, swatchColor, DEFAULT_PREVIEW_TEXT, true);
+    }
+
+    public static void swatchLabelPreview(GuiGraphicsExtractor graphics, Font font, Component label,
+                                          int x, int y, int minWidth, int height,
+                                          int swatchColor, int bgColor, int borderColor, int textColor,
+                                          boolean shadow) {
+        int swatchSize = Math.max(0, height - 10);
+        int previewWidth = Math.max(minWidth, font.width(label) + swatchSize + 18);
+
+        floatingPanel(graphics, x, y, previewWidth, height, bgColor, borderColor);
+
+        if (swatchSize > 0) {
+            int swatchX = x + 5;
+            int swatchY = y + (height - swatchSize) / 2;
+            graphics.fill(swatchX, swatchY, swatchX + swatchSize, swatchY + swatchSize, swatchColor);
+        }
+
+        graphics.text(font, label, x + swatchSize + 10, y + (height - font.lineHeight) / 2, textColor, shadow);
+    }
+
     public static void panelWithHover(GuiGraphicsExtractor graphics, int x, int y, int w, int h,
                                       float hoverProgress, boolean border) {
         UITheme theme = UITheme.current();
@@ -41,8 +82,8 @@ public final class RenderHelper {
         }
     }
 
-    public static int header(GuiGraphicsExtractor graphics, Font font, Component title,
-                             int x, int y, int width, int padding, float hoverProgress) {
+    public static void header(GuiGraphicsExtractor graphics, Font font, Component title,
+                              int x, int y, int width, int padding, float hoverProgress) {
         UITheme theme = UITheme.current();
         UITheme.Panel panel = theme.panel();
         UITheme.Text text = theme.text();
@@ -55,7 +96,6 @@ public final class RenderHelper {
         graphics.centeredText(font, title, x + width / 2, y + padding,
                 ARGB.srgbLerp(hoverProgress * 0.3f, text.accent(), text.primary()));
 
-        return headerH;
     }
 
     public static void progressBar(GuiGraphicsExtractor graphics, int x, int y, int width, int height,
@@ -67,6 +107,7 @@ public final class RenderHelper {
             rectangle(graphics, x, y, fillW, Math.max(1, height / 3), UIColors.lighten(fillColor, 0.3f));
         }
     }
+
     public record ButtonColors(int bg, int bgTop, int border, int outline, int underline, int text) {}
     public static ButtonColors buttonColors(boolean enabled, float hoverProgress, float pressProgress) {
         UITheme        theme  = UITheme.current();
@@ -137,11 +178,4 @@ public final class RenderHelper {
 
         graphics.text(font, label, textX, textY, colors.text(), shadow);
     }
-
-    @Deprecated (forRemoval = true) public static void drawRect(GuiGraphicsExtractor g, int x, int y, int w, int h, int c) { rectangle(g, x, y, w, h, c); }
-    @Deprecated (forRemoval = true) public static void drawBorder(GuiGraphicsExtractor g, int x, int y, int w, int h, int c) { outline(g, x, y, w, h, c); }
-    @Deprecated (forRemoval = true) public static void drawPanel(GuiGraphicsExtractor g, int x, int y, int w, int h, int c, int bc) { panel(g, x, y, w, h, c, bc); }
-    @Deprecated (forRemoval = true) public static void drawPanelWithHover(GuiGraphicsExtractor g, int x, int y, int w, int h, float p, boolean b) { panelWithHover(g, x, y, w, h, p, b); }
-    @Deprecated (forRemoval = true) public static int drawHeader(GuiGraphicsExtractor g, Font f, Component t, int x, int y, int w, int p, float hp) { return header(g, f, t, x, y, w, p, hp); }
-    @Deprecated (forRemoval = true) public static void drawProgressBar(GuiGraphicsExtractor g, int x, int y, int w, int h, float r, int fc, int bc) { progressBar(g, x, y, w, h, r, fc, bc); }
 }

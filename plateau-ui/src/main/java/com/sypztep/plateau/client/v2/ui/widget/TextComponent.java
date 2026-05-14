@@ -120,7 +120,7 @@ public class TextComponent extends BaseComponent<TextComponent> {
         if (hoveredStyle == null) return;
 
         int runX = lineX;
-        int underlineColor = ARGB.white((int) (200 * linkHoverProgress));
+        int underlineColor = ARGB.white(linkHoverProgress * (200f / 255f));
         for (StyleRun run : styleRuns(line)) {
             int runWidth = font.width(FormattedText.of(run.text(), run.style()));
             if (isSameInteraction(run.style(), hoveredStyle)) {

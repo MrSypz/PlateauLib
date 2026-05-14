@@ -1,5 +1,6 @@
 package com.sypztep.plateau.test.screen;
 
+import com.sypztep.plateau.client.v1.ui.core.RenderHelper;
 import com.sypztep.plateau.client.v1.ui.screen.TabContext;
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
 import com.sypztep.plateau.client.v2.ui.WidgetComponents;
@@ -10,8 +11,8 @@ import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
 import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
 import com.sypztep.plateau.client.v2.ui.interaction.DragDrop;
+import com.sypztep.plateau.client.v2.ui.interaction.DragSlot;
 import com.sypztep.plateau.client.v2.ui.interaction.DragSource;
-import com.sypztep.plateau.client.v2.ui.interaction.DropTarget;
 import com.sypztep.plateau.client.v2.ui.overlay.DetachablePanel;
 import com.sypztep.plateau.client.v2.ui.screen.Tab2;
 import com.sypztep.plateau.test.UITestClient;
@@ -47,7 +48,7 @@ public class  DragDropStressTab extends Tab2 {
         return Overlays.windowLayer().content(Containers.verticalFill()
                 .padding(Insets.of(10, 20, 20, 20))
                 .gap(6)
-                .child(WidgetComponents.text("Drag an item from Sources, hover Target A/B tab while still dragging, then drop into a slot. Also detach the panel and repeat.")
+                .child(WidgetComponents.text("Drag from Sources into slots, then drag filled slots to move or swap across Target A/B tabs.")
                         .secondary()
                         .sizing(Sizing.fill(), Sizing.content()))
                 .child(Panels.detachable("Tabbed Drag Window")
@@ -146,25 +147,30 @@ public class  DragDropStressTab extends Tab2 {
 
         private void extractPreview(GuiGraphicsExtractor graphics, com.sypztep.plateau.client.v2.ui.interaction.DragPayload<DragItem> payload, int mouseX, int mouseY, float delta) {
             DragItem value = payload.value();
-            int previewX = mouseX + 12;
-            int previewY = mouseY + 12;
-            int previewWidth = Math.max(84, font.width(value.name()) + 28);
-            graphics.fill(previewX + 1, previewY + 1, previewX + previewWidth + 1, previewY + 21, 0x66000000);
-            graphics.fill(previewX, previewY, previewX + previewWidth, previewY + 20, 0xEE15171E);
-            graphics.outline(previewX, previewY, previewWidth, 20, value.color());
-            graphics.fill(previewX + 5, previewY + 5, previewX + 15, previewY + 15, value.color());
-            graphics.text(font, Component.literal(value.name()), previewX + 20, previewY + 6, 0xFFFFFFFF, true);
+            RenderHelper.swatchLabelPreview(graphics, font, Component.literal(value.name()),
+                    mouseX + 12, mouseY + 12, 84, 20, value.color());
         }
     }
 
     private final class DropSlotComponent extends BaseComponent<DropSlotComponent> {
         private final String id;
-        private final DropTarget<DragItem> dropTarget;
+        private final DragSlot<DragItem> slot;
 
         private DropSlotComponent(String id) {
             this.id = id;
-            this.dropTarget = DragDrop.target(this, DragItem.class)
-                    .onDrop((item, event) -> drops.put(id, item));
+            this.slot = DragDrop.slot(this, DragItem.class)
+                    .value(() -> drops.get(id), item -> {
+                        if (item == null) drops.remove(id);
+                        else drops.put(id, item);
+                    })
+                    .label(item -> Component.literal(item.name()))
+                    .preview(this::extractPreview)
+                    .startDistance(3);
+        }
+
+        @Override
+        protected boolean isFocusable() {
+            return true;
         }
 
         @Override
@@ -183,7 +189,28 @@ public class  DragDropStressTab extends Tab2 {
                 graphics.text(font, Component.literal(item.name()), x + 36, y + 32, theme.text().primary(), true);
             }
 
-            dropTarget.extractHint(graphics, mouseX, mouseY, delta);
+            slot.extractHint(graphics, mouseX, mouseY, delta);
+        }
+
+        @Override
+        public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
+            return slot.mouseClicked(event, doubleClick);
+        }
+
+        @Override
+        public boolean mouseDragged(@NonNull MouseButtonEvent event, double dragX, double dragY) {
+            return slot.mouseDragged(event, dragX, dragY);
+        }
+
+        @Override
+        public boolean mouseReleased(@NonNull MouseButtonEvent event) {
+            return slot.mouseReleased(event);
+        }
+
+        private void extractPreview(GuiGraphicsExtractor graphics, com.sypztep.plateau.client.v2.ui.interaction.DragPayload<DragItem> payload, int mouseX, int mouseY, float delta) {
+            DragItem value = payload.value();
+            RenderHelper.swatchLabelPreview(graphics, font, Component.literal(value.name()),
+                    mouseX + 12, mouseY + 12, 84, 20, value.color());
         }
     }
 }

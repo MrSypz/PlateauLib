@@ -73,7 +73,7 @@ public class CheckBoxComponent extends BaseComponent<CheckBoxComponent> {
 
         if (checkProgress > 0.01f) {
             int checkColor = enabled ? theme.text().accent() : theme.text().disabled();
-            int color = ARGB.color((int)(checkProgress * 255f), checkColor);
+            int color = ARGB.color(checkProgress, checkColor);
             int iconSize = 16;
             int iconX = boxX + (BOX - iconSize) / 2;
             int iconY = boxY + (BOX - iconSize) / 2;

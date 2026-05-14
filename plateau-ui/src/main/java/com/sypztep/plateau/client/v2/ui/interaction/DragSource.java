@@ -23,9 +23,12 @@ public final class DragSource<PayloadValue> {
     private DragPreviewRenderer<PayloadValue> previewRenderer = DragDrop::defaultPreview;
     private Consumer<PayloadValue> onClick = ignored -> {};
     private Consumer<PayloadValue> onDragStart = ignored -> {};
+    private Consumer<PayloadValue> onDropAccepted = ignored -> {};
     private Consumer<PayloadValue> onDragEnd = ignored -> {};
     private int button = 0;
     private double startDistance = 4.0;
+    private float previewFollowSpeed = 1.0f;
+    private float previewAppearSpeed = 1.0f;
 
     private @Nullable DragPayload<PayloadValue> pressedPayload;
     private double pressX;
@@ -66,6 +69,11 @@ public final class DragSource<PayloadValue> {
         return this;
     }
 
+    public DragSource<PayloadValue> onDropAccepted(Consumer<PayloadValue> onDropAccepted) {
+        this.onDropAccepted = onDropAccepted == null ? ignored -> {} : onDropAccepted;
+        return this;
+    }
+
     public DragSource<PayloadValue> onDragEnd(Consumer<PayloadValue> onDragEnd) {
         this.onDragEnd = onDragEnd == null ? ignored -> {} : onDragEnd;
         return this;
@@ -78,6 +86,12 @@ public final class DragSource<PayloadValue> {
 
     public DragSource<PayloadValue> startDistance(double startDistance) {
         this.startDistance = Math.max(0, startDistance);
+        return this;
+    }
+
+    public DragSource<PayloadValue> previewAnimation(float followSpeed, float appearSpeed) {
+        this.previewFollowSpeed = Math.max(0f, followSpeed);
+        this.previewAppearSpeed = Math.max(0f, appearSpeed);
         return this;
     }
 
@@ -99,11 +113,10 @@ public final class DragSource<PayloadValue> {
         if (pressedPayload == null || event.button() != button) return false;
 
         if (!DragDrop.isDragging(this) && distanceFromPress(event) >= startDistance) {
-            DragDrop.start(this, pressedPayload);
+            DragDrop.start(this, pressedPayload, (float) event.x(), (float) event.y());
             onDragStart.accept(pressedPayload.value());
         }
 
-        DragDrop.updateMouse();
         return true;
     }
 
@@ -122,13 +135,22 @@ public final class DragSource<PayloadValue> {
         pressedPayload = null;
     }
 
-    void finishDrag(DragPayload<PayloadValue> payload) {
+    void finishDrag(DragPayload<PayloadValue> payload, boolean accepted) {
+        if (accepted) onDropAccepted.accept(payload.value());
         onDragEnd.accept(payload.value());
         clearPress();
     }
 
     void renderPreview(GuiGraphicsExtractor graphics, DragPayload<PayloadValue> payload, int mouseX, int mouseY, float delta) {
         previewRenderer.render(graphics, payload, mouseX, mouseY, delta);
+    }
+
+    float previewFollowSpeed() {
+        return previewFollowSpeed;
+    }
+
+    float previewAppearSpeed() {
+        return previewAppearSpeed;
     }
 
     private double distanceFromPress(MouseButtonEvent event) {
