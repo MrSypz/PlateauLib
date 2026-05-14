@@ -262,28 +262,4 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
     private MouseButtonEvent contentEvent(MouseButtonEvent event) {
         return new MouseButtonEvent(event.x(), event.y() + scroll.getScrollOffset(), event.buttonInfo());
     }
-
-    private boolean isMouseBlockedByTopChild(BaseComponent<?> target, int mouseX, int mouseY) {
-        for (BaseComponent<?> child : children) {
-            if (child != target
-                    && child.isVisible()
-                    && child.rendersAboveSiblings()
-                    && child.blocksLowerInput()
-                    && child.isMouseOver(mouseX, mouseY)) {
-                return true;
-            }
-        }
-
-        for (int index = children.size() - 1; index >= 0; index--) {
-            BaseComponent<?> child = children.get(index);
-            if (child == target) return false;
-            if (child.isVisible()
-                    && !child.rendersAboveSiblings()
-                    && child.blocksLowerInput()
-                    && child.isMouseOver(mouseX, mouseY)) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

@@ -3,6 +3,7 @@ package com.sypztep.plateau.client.v2.ui.container;
 import com.sypztep.plateau.client.v1.ui.core.RenderHelper;
 import com.sypztep.plateau.client.v1.ui.core.UISounds;
 import com.sypztep.plateau.client.v2.ui.core.*;
+import com.sypztep.plateau.client.v2.ui.interaction.DragDrop;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -207,6 +208,11 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
             boolean selected = (i == activeIndex);
             boolean hovered  = mouseX >= nextTabX && mouseX < nextTabX + tabW
                     && mouseY >= tabY && mouseY < tabY + headerHeight;
+
+            if (DragDrop.active() && hovered && !selected) {
+                active(i);
+                selected = true;
+            }
 
             // Animate each tab's hover independently.
             tabHoverProgress[i] = stepAnimation(tabHoverProgress[i], hovered || selected, 0.5f, delta);

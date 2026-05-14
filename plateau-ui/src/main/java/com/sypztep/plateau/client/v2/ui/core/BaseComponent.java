@@ -104,7 +104,7 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
     public final void extractRenderState(@NonNull GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (!visible) return;
         boolean rootRender = renderDepth == 0;
-        if (rootRender) TooltipOverlay.clear();
+        if (rootRender) TooltipOverlay.beginFrame(mouseX, mouseY);
 
         renderDepth++;
         try {

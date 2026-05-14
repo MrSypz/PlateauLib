@@ -28,9 +28,9 @@ import java.util.function.Function;
  * }</pre>
  */
 @Environment(EnvType.CLIENT)
-public final class Components {
+public final class WidgetComponents {
 
-    private Components() {}
+    private WidgetComponents() {}
 
     public static LabelComponent label(Component text)           { return new LabelComponent(text); }
     public static LabelComponent label(String text)              { return new LabelComponent(Component.literal(text)); }

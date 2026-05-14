@@ -32,6 +32,7 @@ public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownC
     private float openProgress = 0f;
     private boolean wasHovered = false;
     private float[] rowHoverProgress = new float[0];
+    private boolean[] rowWasHovered = new boolean[0];
 
     public DropdownComponent(List<GenericComponent> values, Function<GenericComponent, Component> labeler) {
         this.values.addAll(values);
@@ -110,11 +111,14 @@ public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownC
         // Grow rowHoverProgress array if values changed
         if (rowHoverProgress.length != values.size()) {
             rowHoverProgress = new float[values.size()];
+            rowWasHovered = new boolean[values.size()];
         }
 
         for (int i = 0; i < values.size(); i++) {
             int rowY = y + height * (i + 1);
             boolean rowHot = open && mouseX >= x && mouseX < x + width && mouseY >= rowY && mouseY < rowY + height;
+            if (rowHot && !rowWasHovered[i]) UISounds.playHover();
+            rowWasHovered[i] = rowHot;
             rowHoverProgress[i] = stepAnimation(rowHoverProgress[i], rowHot, 0.5f, delta);
             drawListRow(g, labeler.apply(values.get(i)), rowY, rowHoverProgress[i], i == selectedIndex, openProgress);
         }

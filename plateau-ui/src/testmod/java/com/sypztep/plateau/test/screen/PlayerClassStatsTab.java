@@ -3,7 +3,7 @@ package com.sypztep.plateau.test.screen;
 import com.sypztep.plateau.client.v1.ui.core.UISounds;
 import com.sypztep.plateau.client.v1.ui.screen.TabContext;
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
-import com.sypztep.plateau.client.v2.ui.Components;
+import com.sypztep.plateau.client.v2.ui.WidgetComponents;
 import com.sypztep.plateau.client.v2.ui.Containers;
 import com.sypztep.plateau.client.v2.ui.Overlays;
 import com.sypztep.plateau.client.v2.ui.Panels;
@@ -50,7 +50,7 @@ public class PlayerClassStatsTab extends Tab2 {
     protected BaseComponent<?> build(TabContext ctx) {
         derivedStatsList = Panels.scrollBody();
 
-        searchBox = Components.string("Search stat")
+        searchBox = WidgetComponents.string("Search stat")
                 .onChanged(this::refreshDerivedStats)
                 .sizing(Sizing.fill(), Sizing.fixed(20));
 
@@ -92,7 +92,7 @@ public class PlayerClassStatsTab extends Tab2 {
     private BaseComponent<?> statAllocationContent() {
         ScrollContainer content = Panels.scrollBody();
         content.surface(Surface.NONE);
-        content.child(Components.text("Hover a value to see base + added. Points only increase in this mock.")
+        content.child(WidgetComponents.text("Hover a value to see base + added. Points only increase in this mock.")
                 .secondary()
                 .sizing(Sizing.fill(), Sizing.content()));
 
@@ -145,7 +145,7 @@ public class PlayerClassStatsTab extends Tab2 {
                 continue;
             }
 
-            derivedStatsList.child(Components.label(stat.name() + ": " + stat.value())
+            derivedStatsList.child(WidgetComponents.label(stat.name() + ": " + stat.value())
                     .sizing(Sizing.fill(), Sizing.fixed(14)));
         }
 

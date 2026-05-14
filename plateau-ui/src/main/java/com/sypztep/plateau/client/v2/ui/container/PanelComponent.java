@@ -127,17 +127,7 @@ public class PanelComponent extends BaseContainerComponent<PanelComponent> {
         graphics.text(font, title, WindowControls.titleX(x, controls.size()), y + 6, theme.text().accent(), true);
         graphics.fill(x + 2, y + headerHeight, x + width - 2, y + headerHeight + 1, theme.panel().border());
 
-        graphics.enableScissor(x, y + headerHeight, x + width, y + height);
-        for (BaseComponent<?> child : children) {
-            if (child.isVisible()) {
-                boolean hoverBlocked = isMouseBlockedByTopChild(child, mouseX, mouseY);
-                child.extractRenderState(graphics,
-                        hoverBlocked ? hoverSuppressedMouse() : mouseX,
-                        hoverBlocked ? hoverSuppressedMouse() : mouseY,
-                        delta);
-            }
-        }
-        graphics.disableScissor();
+        extractChildrenInLayerOrder(graphics, mouseX, mouseY, delta);
     }
 
     @Override
@@ -230,28 +220,85 @@ public class PanelComponent extends BaseContainerComponent<PanelComponent> {
         };
     }
 
-    private boolean isMouseBlockedByTopChild(BaseComponent<?> target, int mouseX, int mouseY) {
-        for (BaseComponent<?> child : children) {
-            if (child != target
-                    && child.isVisible()
-                    && child.rendersAboveSiblings()
-                    && child.blocksLowerInput()
-                    && child.isMouseOver(mouseX, mouseY)) {
-                return true;
-            }
-        }
+    @Override
+    public boolean isMouseOver(double mouseX, double mouseY) {
+        return hitTest(mouseX, mouseY);
+    }
 
-        for (int index = children.size() - 1; index >= 0; index--) {
-            BaseComponent<?> child = children.get(index);
-            if (child == target) return false;
-            if (child.isVisible()
-                    && !child.rendersAboveSiblings()
-                    && child.blocksLowerInput()
-                    && child.isMouseOver(mouseX, mouseY)) {
+    @Override
+    public boolean hitTest(double mouseX, double mouseY) {
+        if (super.hitTest(mouseX, mouseY)) return true;
+
+        for (BaseComponent<?> child : children) {
+            if (child.isVisible() && child.rendersAboveSiblings() && child.isMouseOver(mouseX, mouseY)) {
                 return true;
             }
         }
         return false;
+    }
+
+    @Override
+    public int renderClipTopOutset() {
+        int panelTop = y;
+        return children.stream()
+                .filter(BaseComponent::isVisible)
+                .mapToInt(child -> Math.max(0, panelTop - (child.y() - child.renderClipTopOutset())))
+                .max()
+                .orElse(0);
+    }
+
+    @Override
+    public int renderClipRightOutset() {
+        int panelRight = x + width;
+        return children.stream()
+                .filter(BaseComponent::isVisible)
+                .mapToInt(child -> Math.max(0, child.x() + child.width() + child.renderClipRightOutset() - panelRight))
+                .max()
+                .orElse(0);
+    }
+
+    @Override
+    public int renderClipBottomOutset() {
+        int panelBottom = y + height;
+        return children.stream()
+                .filter(BaseComponent::isVisible)
+                .mapToInt(child -> Math.max(0, child.y() + child.height() + child.renderClipBottomOutset() - panelBottom))
+                .max()
+                .orElse(0);
+    }
+
+    @Override
+    public int renderClipLeftOutset() {
+        int panelLeft = x;
+        return children.stream()
+                .filter(BaseComponent::isVisible)
+                .mapToInt(child -> Math.max(0, panelLeft - (child.x() - child.renderClipLeftOutset())))
+                .max()
+                .orElse(0);
+    }
+
+    @Override
+    public boolean rendersAboveSiblings() {
+        return children.stream()
+                .filter(BaseComponent::isVisible)
+                .anyMatch(BaseComponent::rendersAboveSiblings);
+    }
+
+    @Override
+    public boolean blocksLowerInput() {
+        return children.stream()
+                .filter(BaseComponent::isVisible)
+                .anyMatch(BaseComponent::blocksLowerInput);
+    }
+
+    @Override
+    protected void enableChildScissor(GuiGraphicsExtractor graphics, BaseComponent<?> child) {
+        int bodyTop = y + headerHeight;
+        int clipLeft = Math.max(x, child.x() - child.renderClipLeftOutset());
+        int clipTop = Math.max(bodyTop, child.y() - child.renderClipTopOutset());
+        int clipRight = Math.min(x + width, child.x() + child.width() + child.renderClipRightOutset());
+        int clipBottom = Math.min(y + height + child.renderClipBottomOutset(), child.y() + child.height() + child.renderClipBottomOutset());
+        graphics.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
     }
 
     // NOTE: this one is critical it not suppose to using Runnable

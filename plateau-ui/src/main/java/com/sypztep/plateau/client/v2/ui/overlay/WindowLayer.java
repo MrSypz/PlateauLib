@@ -3,12 +3,14 @@ package com.sypztep.plateau.client.v2.ui.overlay;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
 import com.sypztep.plateau.client.v2.ui.core.BaseContainerComponent;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
+import com.sypztep.plateau.client.v2.ui.interaction.DragDrop;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import org.jspecify.annotations.NonNull;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +46,8 @@ public class WindowLayer extends BaseContainerComponent<WindowLayer> {
 
     @Override
     public void extract(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        DragDrop.beginFrame();
+
         boolean contentHoverBlocked = isContentHoverBlocked(mouseX, mouseY);
         content().ifPresent(component -> {
             component.mount(innerX(), innerY(), innerWidth(), innerHeight());
@@ -60,6 +64,8 @@ public class WindowLayer extends BaseContainerComponent<WindowLayer> {
             panel.tickFloating(innerX(), innerY(), innerWidth(), innerHeight(), delta);
             panel.extractFloating(graphics, mouseX, mouseY, delta);
         }
+
+        DragDrop.renderPreview(graphics, mouseX, mouseY, delta);
     }
 
     @Override
@@ -85,6 +91,10 @@ public class WindowLayer extends BaseContainerComponent<WindowLayer> {
 
     @Override
     public boolean mouseReleased(@NonNull MouseButtonEvent event) {
+        if (DragDrop.active()) {
+            return DragDrop.release(event);
+        }
+
         syncZOrder(floatingPanels());
         if (focusedFloating instanceof DetachablePanel panel && panel.mouseReleasedFloating(event)) {
             return true;
@@ -102,6 +112,8 @@ public class WindowLayer extends BaseContainerComponent<WindowLayer> {
 
     @Override
     public boolean mouseDragged(@NonNull MouseButtonEvent event, double dragX, double dragY) {
+        if (DragDrop.active()) return true;
+
         syncZOrder(floatingPanels());
         if (focusedFloating instanceof DetachablePanel panel && panel.mouseDraggedFloating(event, dragX, dragY)) {
             return true;
@@ -137,6 +149,11 @@ public class WindowLayer extends BaseContainerComponent<WindowLayer> {
 
     @Override
     public boolean keyPressed(@NonNull KeyEvent event) {
+        if (DragDrop.active() && event.key() == GLFW.GLFW_KEY_ESCAPE) {
+            DragDrop.cancel();
+            return true;
+        }
+
         syncZOrder(floatingPanels());
         if (focusedFloating instanceof DetachablePanel panel && panel.keyPressedFloating(event)) {
             return true;

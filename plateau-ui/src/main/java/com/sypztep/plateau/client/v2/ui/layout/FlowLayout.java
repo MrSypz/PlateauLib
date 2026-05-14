@@ -318,59 +318,6 @@ public class FlowLayout extends BaseContainerComponent<FlowLayout> {
     @Override
     public void extract(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (width <= 0 || height <= 0) return;
-
-        for (BaseComponent<?> child : children) {
-            if (child.isVisible() && !child.rendersAboveSiblings()) {
-                extractChild(g, child, mouseX, mouseY, delta);
-            }
-        }
-
-        for (BaseComponent<?> child : children) {
-            if (child.isVisible() && child.rendersAboveSiblings()) {
-                extractChild(g, child, mouseX, mouseY, delta);
-            }
-        }
-    }
-
-    private void extractChild(GuiGraphicsExtractor g, BaseComponent<?> child, int mouseX, int mouseY, float delta) {
-        enableChildScissor(g, child);
-        boolean hoverBlocked = isMouseBlockedByTopChild(child, mouseX, mouseY);
-        child.extractRenderState(g,
-                hoverBlocked ? hoverSuppressedMouse() : mouseX,
-                hoverBlocked ? hoverSuppressedMouse() : mouseY,
-                delta);
-        g.disableScissor();
-    }
-
-    private boolean isMouseBlockedByTopChild(BaseComponent<?> target, int mouseX, int mouseY) {
-        for (BaseComponent<?> child : children) {
-            if (child != target
-                    && child.isVisible()
-                    && child.rendersAboveSiblings()
-                    && child.blocksLowerInput()
-                    && child.isMouseOver(mouseX, mouseY)) {
-                return true;
-            }
-        }
-
-        for (int index = children.size() - 1; index >= 0; index--) {
-            BaseComponent<?> child = children.get(index);
-            if (child == target) return false;
-            if (child.isVisible()
-                    && !child.rendersAboveSiblings()
-                    && child.blocksLowerInput()
-                    && child.isMouseOver(mouseX, mouseY)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void enableChildScissor(GuiGraphicsExtractor g, BaseComponent<?> child) {
-        int clipLeft = Math.max(x, child.x() - child.renderClipLeftOutset());
-        int clipTop = Math.max(y - child.renderClipTopOutset(), child.y() - child.renderClipTopOutset());
-        int clipRight = Math.min(x + width, child.x() + child.width() + child.renderClipRightOutset());
-        int clipBottom = Math.min(y + height + child.renderClipBottomOutset(), child.y() + child.height() + child.renderClipBottomOutset());
-        g.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
+        extractChildrenInLayerOrder(g, mouseX, mouseY, delta);
     }
 }

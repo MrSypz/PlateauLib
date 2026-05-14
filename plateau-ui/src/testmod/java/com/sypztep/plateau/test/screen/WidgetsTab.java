@@ -3,7 +3,7 @@ package com.sypztep.plateau.test.screen;
 import com.sypztep.plateau.client.PlateauUIClient;
 import com.sypztep.plateau.client.v1.ui.screen.TabContext;
 import com.sypztep.plateau.client.v1.ui.theme.UIThemeRegistry;
-import com.sypztep.plateau.client.v2.ui.Components;
+import com.sypztep.plateau.client.v2.ui.WidgetComponents;
 import com.sypztep.plateau.client.v2.ui.Containers;
 import com.sypztep.plateau.client.v2.ui.Panels;
 import com.sypztep.plateau.client.v2.ui.container.PanelComponent;
@@ -21,6 +21,8 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 
+import java.net.URI;
+
 @Environment(EnvType.CLIENT)
 public class WidgetsTab extends Tab2 {
 
@@ -32,14 +34,14 @@ public class WidgetsTab extends Tab2 {
 
     @Override
     protected BaseComponent<?> build(TabContext ctx) {
-        LabelComponent clickStatus = Components.label("Clicks: " + clickCount)
+        LabelComponent clickStatus = WidgetComponents.label("Clicks: " + clickCount)
                 .sizing(Sizing.fill(), Sizing.fixed(9));
 
         DialogComponent dialog = new DialogComponent()
                 .title("Widget Test Dialog")
                 .dialogWidth(240)
                 .dialogHeight(120)
-                .content(Components.text("""
+                .content(WidgetComponents.text("""
                     This dialog is mounted as the last child of the widget test root.
 
                     Expected:
@@ -74,19 +76,29 @@ public class WidgetsTab extends Tab2 {
         return Panels.fixed(title)
                 .bodyPadding(Insets.of(6, 8))
                 .gap(6)
-                .child(Components.separator());
+                .child(WidgetComponents.separator());
     }
 
 
     private BaseComponent<?> infoSection() {
         // Vertical flow: wrapped text inside a panel.
         return section("Info")
-                .child(Components.text("plateau-ui v2 - no x/y math, no getContentY(). This is TextComponent, not LabelComponent, so it should wrap instead of overflowing.")
+                .child(WidgetComponents.text("plateau-ui v2 - no x/y math, no getContentY(). This is TextComponent, not LabelComponent, so it should wrap instead of overflowing.")
                         .sizing(Sizing.fill(), Sizing.content()))
-                .child(Components.text("Sizing.fill() distributes space. PanelComponent draws the box. This second line should wrap correctly when the panel width gets smaller.")
+                .child(WidgetComponents.text("Sizing.fill() distributes space. PanelComponent draws the box. This second line should wrap correctly when the panel width gets smaller.")
                         .secondary()
                         .sizing(Sizing.fill(), Sizing.content()))
-                .child(Components.text(Component.literal("Rich text: ")
+                .child(WidgetComponents.text(Component.literal("Web Link: ")
+                        .append(Component.literal("Test")
+                                .withStyle(style -> style
+                                        .withBold(true)
+                                        .withUnderlined(true)
+                                        .withColor(0x5AB66A)
+                                        .withClickEvent(new ClickEvent.OpenUrl(URI.create("https://www.youtube.com/watch?v=dQw4w9WgXcQ")))
+                                        .withHoverEvent(new HoverEvent.ShowText(Component.literal("fully doc to see how this lib work."))))))
+                        .sizing(Sizing.fill(), Sizing.content())
+                )
+                .child(WidgetComponents.text(Component.literal("Rich text: ")
                         .append(Component.literal("bold underlined command link")
                                 .withStyle(style -> style
                                         .withBold(true)
@@ -101,7 +113,7 @@ public class WidgetsTab extends Tab2 {
     private BaseComponent<?> childInChildSection(LabelComponent clickStatus) {
         // Tabs: outer tabs mounted inside a vertical section.
         return section("Child-in-child Layout")
-                .child(Components.text("Outer TabComponent lives inside this section. Its children include ScrollContainer, nested TabComponent, TextComponent, FlowLayout and buttons.")
+                .child(WidgetComponents.text("Outer TabComponent lives inside this section. Its children include ScrollContainer, nested TabComponent, TextComponent, FlowLayout and buttons.")
                         .secondary()
                         .sizing(Sizing.fill(), Sizing.content()))
                 .child(Containers.tabs()
@@ -118,7 +130,7 @@ public class WidgetsTab extends Tab2 {
         return Panels.scroll("Scrollable Tab Content")
                 .scrollPadding(Insets.of(8))
                 .gap(8)
-                .child(Components.text("""
+                .child(WidgetComponents.text("""
                         This is TextComponent inside ScrollContainer inside TabComponent.
 
                         Expected:
@@ -129,14 +141,14 @@ public class WidgetsTab extends Tab2 {
                         """)
                         .sizing(Sizing.fill(), Sizing.content()))
                 .child(clickStatus)
-                .child(Components.button("Click inside tab scroll", button -> {
+                .child(WidgetComponents.button("Click inside tab scroll", button -> {
                     clickCount++;
                     clickStatus.text(Component.literal("Clicks: " + clickCount));
                 }).sizing(Sizing.fill(), Sizing.fixed(22)))
-                .child(Components.button("Disabled inside scroll").enabled(false)
+                .child(WidgetComponents.button("Disabled inside scroll").enabled(false)
                         .sizing(Sizing.fill(), Sizing.fixed(22)))
-                .child(Components.separator())
-                .child(Components.text("""
+                .child(WidgetComponents.separator())
+                .child(WidgetComponents.text("""
                         Filler text for scroll testing.
                         Line 01 - the scroll container should clip this content.
                         Line 02 - mouse coordinates should still hit the button correctly.
@@ -159,7 +171,7 @@ public class WidgetsTab extends Tab2 {
                 .tab("Inner A", Panels.scroll("Inner A Scroll")
                         .scrollPadding(Insets.of(8))
                         .gap(8)
-                        .child(Components.text("""
+                        .child(WidgetComponents.text("""
                                 Inner A:
                                 This is a ScrollContainer inside an inner TabComponent,
                                 inside an outer TabComponent.
@@ -171,10 +183,10 @@ public class WidgetsTab extends Tab2 {
                                 - button inside inner scroll
                                 """)
                                 .sizing(Sizing.fill(), Sizing.content()))
-                        .child(Components.button("Inner A Button", b -> {
+                        .child(WidgetComponents.button("Inner A Button", b -> {
                             System.out.println("Inner A clicked");
                         }).sizing(Sizing.fill(), Sizing.fixed(22)))
-                        .child(Components.text("""
+                        .child(WidgetComponents.text("""
                                 More lines for inner scroll.
                                 More lines for inner scroll.
                                 More lines for inner scroll.
@@ -187,12 +199,12 @@ public class WidgetsTab extends Tab2 {
                 .tab("Inner B", Containers.vertical(Sizing.fill(), Sizing.fill())
                         .padding(Insets.of(8))
                         .gap(8)
-                        .child(Components.text("Inner B uses FlowLayout directly, no scroll.")
+                        .child(WidgetComponents.text("Inner B uses FlowLayout directly, no scroll.")
                                 .sizing(Sizing.fill(), Sizing.content()))
                         .child(Containers.horizontal(Sizing.fill(), Sizing.fixed(22)).gap(4)
-                                .child(Components.button("Accept", b -> System.out.println("Accept")).sizing(Sizing.fill(), Sizing.fixed(22)))
-                                .child(Components.button("Cancel", b -> System.out.println("Cancel")).sizing(Sizing.fill(), Sizing.fixed(22))))
-                        .child(Components.text("If this panel renders correctly, nested mount/layout is working.")
+                                .child(WidgetComponents.button("Accept", b -> System.out.println("Accept")).sizing(Sizing.fill(), Sizing.fixed(22)))
+                                .child(WidgetComponents.button("Cancel", b -> System.out.println("Cancel")).sizing(Sizing.fill(), Sizing.fixed(22))))
+                        .child(WidgetComponents.text("If this panel renders correctly, nested mount/layout is working.")
                                 .secondary()
                                 .sizing(Sizing.fill(), Sizing.content())));
     }
@@ -203,14 +215,14 @@ public class WidgetsTab extends Tab2 {
                 .padding(Insets.of(8))
                 .gap(8)
                 .surface(Surface.outline())
-                .child(Components.text("Mixed tab content: text, separator, horizontal row, and a fill spacer.")
+                .child(WidgetComponents.text("Mixed tab content: text, separator, horizontal row, and a fill spacer.")
                         .sizing(Sizing.fill(), Sizing.content()))
-                .child(Components.separator())
+                .child(WidgetComponents.separator())
                 .child(Containers.horizontal(Sizing.fill(), Sizing.fixed(22)).gap(4)
-                        .child(Components.button("Left").sizing(Sizing.fill(), Sizing.fixed(22)))
-                        .child(Components.button("Middle").sizing(Sizing.fill(), Sizing.fixed(22)))
-                        .child(Components.button("Right").sizing(Sizing.fill(), Sizing.fixed(22))))
-                .child(Components.text("""
+                        .child(WidgetComponents.button("Left").sizing(Sizing.fill(), Sizing.fixed(22)))
+                        .child(WidgetComponents.button("Middle").sizing(Sizing.fill(), Sizing.fixed(22)))
+                        .child(WidgetComponents.button("Right").sizing(Sizing.fill(), Sizing.fixed(22))))
+                .child(WidgetComponents.text("""
                         This tab intentionally does not scroll.
                         If text becomes too large here, it should be clipped by parent height,
                         which makes the difference between FlowLayout content and ScrollContainer obvious.
@@ -223,31 +235,31 @@ public class WidgetsTab extends Tab2 {
     private BaseComponent<?> rowSection() {
         // Horizontal flow: fill-sized buttons divide the row evenly.
         return section("Row Layout")
-                .child(Components.text("Each button uses Sizing.fill() - equal share automatically.")
+                .child(WidgetComponents.text("Each button uses Sizing.fill() - equal share automatically.")
                         .secondary()
                         .sizing(Sizing.fill(), Sizing.content()))
                 .child(Containers.horizontal(Sizing.fill(), Sizing.fixed(22)).gap(4)
-                        .child(Components.button("A").sizing(Sizing.fill(), Sizing.fixed(22)))
-                        .child(Components.button("B").sizing(Sizing.fill(), Sizing.fixed(22)))
-                        .child(Components.button("C").sizing(Sizing.fill(), Sizing.fixed(22))));
+                        .child(WidgetComponents.button("A").sizing(Sizing.fill(), Sizing.fixed(22)))
+                        .child(WidgetComponents.button("B").sizing(Sizing.fill(), Sizing.fixed(22)))
+                        .child(WidgetComponents.button("C").sizing(Sizing.fill(), Sizing.fixed(22))));
     }
 
     private BaseComponent<?> formSection() {
         return section("Form Components")
-                .child(Components.text("Slider, string input, text area, checkbox, and dropdown are v2-native components.")
+                .child(WidgetComponents.text("Slider, string input, text area, checkbox, and dropdown are v2-native components.")
                         .secondary()
                         .sizing(Sizing.fill(), Sizing.content()))
-                .child(Components.slider("Volume", 0.0, 1.0, 0.65)
+                .child(WidgetComponents.slider("Volume", 0.0, 1.0, 0.65)
                         .sizing(Sizing.fill(), Sizing.fixed(20)))
-                .child(Components.string("Single line string")
+                .child(WidgetComponents.string("Single line string")
                         .value("Edit me")
                         .sizing(Sizing.fill(), Sizing.fixed(20)))
-                .child(Components.textArea("Text area")
+                .child(WidgetComponents.textArea("Text area")
                         .value("Line one\nLine two")
                         .sizing(Sizing.fill(), Sizing.fixed(58)))
-                .child(Components.checkbox("Enable particles", true)
+                .child(WidgetComponents.checkbox("Enable particles", true)
                         .sizing(Sizing.fill(), Sizing.fixed(18)))
-                .child(Components.dropdown("Small", "Medium", "Large", "Huge")
+                .child(WidgetComponents.dropdown("Small", "Medium", "Large", "Huge")
                         .sizing(Sizing.fill(), Sizing.fixed(20)));
     }
 
@@ -255,40 +267,40 @@ public class WidgetsTab extends Tab2 {
     private BaseComponent<?> themeSection() {
         return section("Theme")
                 .child(Containers.horizontal(Sizing.fill(), Sizing.fixed(22)).gap(6)
-                        .child(Components.button("Dark", b -> UIThemeRegistry.INSTANCE.apply(PlateauUIClient.id("dark")))
+                        .child(WidgetComponents.button("Dark", b -> UIThemeRegistry.INSTANCE.apply(PlateauUIClient.id("dark")))
                                 .sizing(Sizing.fill(), Sizing.fixed(22)))
-                        .child(Components.button("Legacy", b -> UIThemeRegistry.INSTANCE.apply(PlateauUIClient.id("legacy")))
+                        .child(WidgetComponents.button("Legacy", b -> UIThemeRegistry.INSTANCE.apply(PlateauUIClient.id("legacy")))
                                 .sizing(Sizing.fill(), Sizing.fixed(22))));
     }
 
 
     private BaseComponent<?> v1CompareSection() {
         return section("v1 vs v2 Button (hover + press comparison)")
-                .child(Components.text("v1 - bounce + shadow + glow").secondary()
+                .child(WidgetComponents.text("v1 - bounce + shadow + glow").secondary()
                         .sizing(Sizing.fill(), Sizing.content()))
                 .child(Containers.horizontal(Sizing.fill(), Sizing.fixed(22)).gap(4)
                         .child(new V1ButtonWrapper("v1 Normal").sizing(Sizing.fill(), Sizing.fixed(22)))
                         .child(new V1ButtonWrapper("v1 Disabled").enabled(false).sizing(Sizing.fill(), Sizing.fixed(22))))
-                .child(Components.text("v2 - flat dim + ease-out").secondary()
+                .child(WidgetComponents.text("v2 - flat dim + ease-out").secondary()
                         .sizing(Sizing.fill(), Sizing.content()))
                 .child(Containers.horizontal(Sizing.fill(), Sizing.fixed(22)).gap(4)
-                        .child(Components.button("v2 Normal").sizing(Sizing.fill(), Sizing.fixed(22)))
-                        .child(Components.button("v2 Disabled").enabled(false).sizing(Sizing.fill(), Sizing.fixed(22))));
+                        .child(WidgetComponents.button("v2 Normal").sizing(Sizing.fill(), Sizing.fixed(22)))
+                        .child(WidgetComponents.button("v2 Disabled").enabled(false).sizing(Sizing.fill(), Sizing.fixed(22))));
     }
 
     private BaseComponent<?> dialogSection(DialogComponent dialog) {
         // Stack overlay: dialog is mounted as the last root child.
         return section("Dialog")
-                .child(Components.text("""
+                .child(WidgetComponents.text("""
                     DialogComponent must be mounted outside the ScrollContainer and added as the last child
                     of an overlay/root container. Otherwise the backdrop can be clipped by scroll scissor.
                     """)
                         .secondary()
                         .sizing(Sizing.fill(), Sizing.content()))
                 .child(Containers.horizontal(Sizing.fill(), Sizing.fixed(22)).gap(4)
-                        .child(Components.button("Open Dialog", b -> dialog.open())
+                        .child(WidgetComponents.button("Open Dialog", b -> dialog.open())
                                 .sizing(Sizing.fill(), Sizing.fixed(22)))
-                        .child(Components.button("Toggle Dialog", b -> dialog.toggle())
+                        .child(WidgetComponents.button("Toggle Dialog", b -> dialog.toggle())
                                 .sizing(Sizing.fill(), Sizing.fixed(22))));
     }
 }

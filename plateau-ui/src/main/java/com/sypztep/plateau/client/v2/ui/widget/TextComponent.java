@@ -1,5 +1,6 @@
 package com.sypztep.plateau.client.v2.ui.widget;
 
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import com.sypztep.plateau.client.v1.ui.core.SoundConfig;
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
@@ -112,7 +113,7 @@ public class TextComponent extends BaseComponent<TextComponent> {
         }
         g.disableScissor();
 
-        if (hoveredStyle != null) queueTooltip(hoveredStyle, mouseX, mouseY);
+        if (hoveredStyle != null) queueDeferredTextEffects(g, hoveredStyle);
     }
 
     private void renderLineHighlight(GuiGraphicsExtractor graphics, FormattedCharSequence line, int lineX, int lineY) {
@@ -129,10 +130,14 @@ public class TextComponent extends BaseComponent<TextComponent> {
         }
     }
 
-    private void queueTooltip(Style style, int mouseX, int mouseY) {
+    private void queueDeferredTextEffects(GuiGraphicsExtractor graphics, Style style) {
+        if (style.getClickEvent() != null) {
+            graphics.requestCursor(CursorTypes.POINTING_HAND);
+        }
+
         HoverEvent hoverEvent = style.getHoverEvent();
         if (!(hoverEvent instanceof HoverEvent.ShowText(Component tooltipText))) return;
-        TooltipOverlay.show(tooltipText, mouseX, mouseY, width);
+        TooltipOverlay.showAtMouse(tooltipText, width);
     }
 
     private void rebuildIfNeeded(int wrapWidth) {

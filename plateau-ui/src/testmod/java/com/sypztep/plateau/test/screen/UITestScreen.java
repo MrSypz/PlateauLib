@@ -18,6 +18,7 @@ public class UITestScreen extends PlateauScreen {
         tabManager = new TabManager(this);
         tabManager.registerTab(new WidgetsTab());
         tabManager.registerTab(new ScrollTab());
+        tabManager.registerTab(new DragDropStressTab());
         tabManager.registerTab(new PlayerClassStatsTab());
     }
 }

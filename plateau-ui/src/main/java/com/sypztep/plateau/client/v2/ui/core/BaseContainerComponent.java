@@ -3,6 +3,7 @@ package com.sypztep.plateau.client.v2.ui.core;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.ComponentPath;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
@@ -196,6 +197,62 @@ public abstract class BaseContainerComponent<GenericBaseComponent extends BaseCo
         List<BaseComponent<?>> result = childComponents();
         Collections.reverse(result);
         return result;
+    }
+
+    protected final void extractChildrenInLayerOrder(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        for (BaseComponent<?> child : children) {
+            if (child.isVisible() && !child.rendersAboveSiblings()) {
+                extractChild(graphics, child, mouseX, mouseY, delta);
+            }
+        }
+
+        for (BaseComponent<?> child : children) {
+            if (child.isVisible() && child.rendersAboveSiblings()) {
+                extractChild(graphics, child, mouseX, mouseY, delta);
+            }
+        }
+    }
+
+    protected void extractChild(GuiGraphicsExtractor graphics, BaseComponent<?> child, int mouseX, int mouseY, float delta) {
+        enableChildScissor(graphics, child);
+        boolean hoverBlocked = isMouseBlockedByTopChild(child, mouseX, mouseY);
+        child.extractRenderState(graphics,
+                hoverBlocked ? hoverSuppressedMouse() : mouseX,
+                hoverBlocked ? hoverSuppressedMouse() : mouseY,
+                delta);
+        graphics.disableScissor();
+    }
+
+    protected void enableChildScissor(GuiGraphicsExtractor graphics, BaseComponent<?> child) {
+        int clipLeft = Math.max(x, child.x() - child.renderClipLeftOutset());
+        int clipTop = Math.max(y - child.renderClipTopOutset(), child.y() - child.renderClipTopOutset());
+        int clipRight = Math.min(x + width, child.x() + child.width() + child.renderClipRightOutset());
+        int clipBottom = Math.min(y + height + child.renderClipBottomOutset(), child.y() + child.height() + child.renderClipBottomOutset());
+        graphics.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
+    }
+
+    protected final boolean isMouseBlockedByTopChild(BaseComponent<?> target, int mouseX, int mouseY) {
+        for (BaseComponent<?> child : children) {
+            if (child != target
+                    && child.isVisible()
+                    && child.rendersAboveSiblings()
+                    && child.blocksLowerInput()
+                    && child.isMouseOver(mouseX, mouseY)) {
+                return true;
+            }
+        }
+
+        for (int index = children.size() - 1; index >= 0; index--) {
+            BaseComponent<?> child = children.get(index);
+            if (child == target) return false;
+            if (child.isVisible()
+                    && !child.rendersAboveSiblings()
+                    && child.blocksLowerInput()
+                    && child.isMouseOver(mouseX, mouseY)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected void focusAfterInteraction(BaseComponent<?> child, int button) {
