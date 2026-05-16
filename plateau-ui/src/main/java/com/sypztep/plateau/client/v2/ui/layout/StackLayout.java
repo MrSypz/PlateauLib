@@ -133,19 +133,20 @@ public class StackLayout extends BaseContainerComponent<StackLayout> {
     public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
         if (!isMouseOver(mouseX, mouseY)) return false;
 
-        // Top-most child first. Blocking children absorb lower scroll.
+        // Top-most child first.
+        // Blocking children absorb scroll even when they don't handle it.
+        // Non-blocking children that don't handle scroll are transparent — the event continues
+        // to the next child. This allows fill×fill overlays (ContextMenu, HoverCard) to sit
+        // on top without swallowing scroll when they are inactive.
         for (int i = children.size() - 1; i >= 0; i--) {
             BaseComponent<?> child = children.get(i);
             if (!child.isVisible()) continue;
             boolean blocking = child.blocksLowerInput();
             if (!blocking && !child.isMouseOver(mouseX, mouseY)) continue;
 
-            if (child.mouseScrolled(mouseX, mouseY, hAmount, vAmount)) {
-                return true;
-            }
-
-            // Stop at first child under mouse so lower layers don't receive scroll through it.
-            return blocking;
+            if (child.mouseScrolled(mouseX, mouseY, hAmount, vAmount)) return true;
+            if (blocking) return false; // blocking but didn't handle = still absorbs
+            // non-blocking and didn't handle = fall through to the child below
         }
 
         return false;

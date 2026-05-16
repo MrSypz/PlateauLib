@@ -1,5 +1,6 @@
 package com.sypztep.plateau.client.v2.ui.core;
 
+import com.sypztep.plateau.client.v2.ui.overlay.HoverCardOverlay;
 import com.sypztep.plateau.client.v2.ui.overlay.TooltipOverlay;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -18,6 +19,8 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
+
+import java.util.function.Consumer;
 
 /**
  * Base for all v2 UI components. Unlike v1, components do not take x/y/w/h in their constructors —
@@ -39,6 +42,9 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
     protected boolean focused  = false;
     protected @Nullable String id;
     private static int renderDepth = 0;
+    private static int lastScreenMouseX, lastScreenMouseY;
+    private static float lastDelta;
+    private @Nullable Consumer<MouseButtonEvent> onRightClickHandler;
 
     protected final Minecraft minecraft;
     protected final Font font;
@@ -104,7 +110,13 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
     public final void extractRenderState(@NonNull GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         if (!visible) return;
         boolean rootRender = renderDepth == 0;
-        if (rootRender) TooltipOverlay.beginFrame(mouseX, mouseY);
+        if (rootRender) {
+            lastScreenMouseX = mouseX;
+            lastScreenMouseY = mouseY;
+            lastDelta = delta;
+            TooltipOverlay.beginFrame(mouseX, mouseY);
+            HoverCardOverlay.beginFrame();
+        }
 
         renderDepth++;
         try {
@@ -112,8 +124,44 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
             extract(g, mouseX, mouseY, delta);
         } finally {
             renderDepth--;
-            if (rootRender) TooltipOverlay.render(g);
+            if (rootRender) {
+                TooltipOverlay.render(g);
+                HoverCardOverlay.render(g);
+            }
         }
+    }
+
+    // ── Overlay render helpers ────────────────────────────────
+
+    /** Increment render depth so overlay renderers don't trigger root-render logic. */
+    public static void enterOverlayRender() { renderDepth++; }
+    /** Decrement render depth after an overlay render. Pair with {@link #enterOverlayRender()}. */
+    public static void exitOverlayRender()  { if (renderDepth > 0) renderDepth--; }
+
+    /** Screen-space mouse X from the most recent root render. */
+    public static int lastScreenMouseX() { return lastScreenMouseX; }
+    /** Screen-space mouse Y from the most recent root render. */
+    public static int lastScreenMouseY() { return lastScreenMouseY; }
+    /** Partial tick from the most recent root render (used by overlay renderers). */
+    public static float lastDelta()       { return lastDelta; }
+
+    /**
+     * Current screen-space mouse X in GUI coordinates, sampled directly from the OS cursor.
+     * Use this inside {@code onRightClick} handlers to get the real-time click position
+     * rather than the previous frame's render position.
+     */
+    public static int currentScreenMouseX() {
+        Minecraft mc = Minecraft.getInstance();
+        return (int) (mc.mouseHandler.xpos() / mc.getWindow().getGuiScale());
+    }
+
+    /**
+     * Current screen-space mouse Y in GUI coordinates, sampled directly from the OS cursor.
+     * Use this inside {@code onRightClick} handlers to get the real-time click position.
+     */
+    public static int currentScreenMouseY() {
+        Minecraft mc = Minecraft.getInstance();
+        return (int) (mc.mouseHandler.ypos() / mc.getWindow().getGuiScale());
     }
 
     /** Override to render this component's content. Surface is already drawn before this is called. */
@@ -135,7 +183,13 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
     // ── GuiEventListener ─────────────────────────────────────
 
     @Override
-    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) { return false; }
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
+        if (event.button() == 1 && onRightClickHandler != null && isMouseOver(event.x(), event.y())) {
+            onRightClickHandler.accept(event);
+            return true;
+        }
+        return false;
+    }
     @Override
     public boolean mouseReleased(@NonNull MouseButtonEvent event) { return false; }
     @Override
@@ -201,6 +255,17 @@ public abstract class BaseComponent<GenericComponent extends BaseComponent<Gener
     public void updateNarration(@NonNull NarrationElementOutput output) {}
 
     // ── Fluent API ────────────────────────────────────────────
+
+    /**
+     * Register a right-click handler on this component. The handler fires when the user
+     * right-clicks while the mouse is over this component. Use {@link #lastScreenMouseX()} /
+     * {@link #lastScreenMouseY()} inside the handler to get screen-space coordinates for
+     * positioning context menus.
+     */
+    public GenericComponent onRightClick(Consumer<MouseButtonEvent> handler) {
+        this.onRightClickHandler = handler;
+        return self();
+    }
 
     @SuppressWarnings("unchecked")
     protected final GenericComponent self() {

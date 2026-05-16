@@ -3,7 +3,7 @@ package com.sypztep.plateau.client.v2.ui.widget;
 import com.sypztep.plateau.client.v1.ui.core.RenderHelper;
 import com.sypztep.plateau.client.v1.ui.core.UISounds;
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
-import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
+import com.sypztep.plateau.client.v2.ui.core.BaseExpandingComponent;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -21,11 +21,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Environment(EnvType.CLIENT)
-public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownComponent<GenericComponent>> {
+public class DropdownComponent<GenericComponent> extends BaseExpandingComponent<DropdownComponent<GenericComponent>> {
     private final List<GenericComponent> values = new ArrayList<>();
     private Function<GenericComponent, Component> labeler;
     private int selectedIndex = 0;
-    private boolean open = false;
     private boolean enabled = true;
     private Consumer<GenericComponent> onChanged = ignored -> {};
     private float hoverProgress = 0f;
@@ -47,38 +46,12 @@ public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownC
     @Override
     public int determineVerticalContentSize(int space) { return 20 + padding.vertical(); }
 
-    @Override
-    protected boolean isFocusable() { return enabled; }
-
-    @Override
-    public int renderClipBottomOutset() {
-        return open ? values.size() * height + 2 : 0;
-    }
-
-    @Override
-    public boolean rendersAboveSiblings() {
-        return open;
-    }
-
-    @Override
-    public boolean blocksLowerInput() {
-        return open;
-    }
+    @Override protected boolean isFocusable()    { return enabled; }
+    @Override protected int    expandedExtra()   { return values.size() * height + 2; }
 
     @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
         return hitTest(mouseX, mouseY);
-    }
-
-    @Override
-    public boolean hitTest(double mouseX, double mouseY) {
-        if (!visible) return false;
-        if (super.hitTest(mouseX, mouseY)) return true;
-        return open
-                && mouseX >= x
-                && mouseX < x + width
-                && mouseY >= y + height
-                && mouseY < y + height * (values.size() + 1);
     }
 
     @Override
@@ -90,13 +63,13 @@ public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownC
         if (hot && !wasHovered) UISounds.playHover();
         wasHovered = hot;
         hoverProgress = stepAnimation(hoverProgress, enabled && (hot || focused), 0.5f, delta);
-        openProgress = stepAnimation(openProgress, open, 0.45f, delta);
+        openProgress = stepAnimation(openProgress, isExpanded(), 0.45f, delta);
         drawRow(g, selectedLabel(), y, hoverProgress, 0f, true);
 
         int arrowX = innerX() + innerWidth() - 12;
         int arrowY = innerY() + innerHeight() / 2 - 2;
         int arrowColor = enabled ? theme.text().primary() : theme.text().disabled();
-        if (open) {
+        if (isExpanded()) {
             g.fill(arrowX, arrowY + 3, arrowX + 7, arrowY + 4, arrowColor);
             g.fill(arrowX + 1, arrowY + 2, arrowX + 6, arrowY + 3, arrowColor);
             g.fill(arrowX + 2, arrowY + 1, arrowX + 5, arrowY + 2, arrowColor);
@@ -106,7 +79,7 @@ public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownC
             g.fill(arrowX + 2, arrowY + 2, arrowX + 5, arrowY + 3, arrowColor);
         }
 
-        if (openProgress <= 0f && !open) return;
+        if (openProgress <= 0f && !isExpanded()) return;
 
         // Grow rowHoverProgress array if values changed
         if (rowHoverProgress.length != values.size()) {
@@ -116,7 +89,7 @@ public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownC
 
         for (int i = 0; i < values.size(); i++) {
             int rowY = y + height * (i + 1);
-            boolean rowHot = open && mouseX >= x && mouseX < x + width && mouseY >= rowY && mouseY < rowY + height;
+            boolean rowHot = isExpanded() && mouseX >= x && mouseX < x + width && mouseY >= rowY && mouseY < rowY + height;
             if (rowHot && !rowWasHovered[i]) UISounds.playHover();
             rowWasHovered[i] = rowHot;
             rowHoverProgress[i] = stepAnimation(rowHoverProgress[i], rowHot, 0.5f, delta);
@@ -181,14 +154,14 @@ public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownC
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
         if (!enabled || event.button() != 0 || !isMouseOver(event.x(), event.y())) return false;
 
-        if (open && event.y() >= y + height) {
+        if (isExpanded() && event.y() >= y + height) {
             int index = (int) ((event.y() - y) / height) - 1;
             if (index >= 0 && index < values.size()) selectedIndex(index);
-            open = false;
+            setExpanded(false);
             return true;
         }
 
-        open = !open;
+        setExpanded(!isExpanded());
         UISounds.playClick();
         return true;
     }
@@ -198,8 +171,8 @@ public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownC
         if (!enabled || !focused) return false;
 
         return switch (event.key()) {
-            case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> { open = !open; yield true; }
-            case GLFW.GLFW_KEY_ESCAPE -> { open = false; yield true; }
+            case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> { setExpanded(!isExpanded()); yield true; }
+            case GLFW.GLFW_KEY_ESCAPE -> { setExpanded(false); yield true; }
             case GLFW.GLFW_KEY_UP -> { selectedIndex(selectedIndex - 1); yield true; }
             case GLFW.GLFW_KEY_DOWN -> { selectedIndex(selectedIndex + 1); yield true; }
             default -> false;
@@ -242,5 +215,5 @@ public class DropdownComponent<GenericComponent> extends BaseComponent<DropdownC
     public DropdownComponent<GenericComponent> onChanged(Consumer<GenericComponent> onChanged) { this.onChanged = onChanged != null ? onChanged : ignored -> {}; return this; }
     public DropdownComponent<GenericComponent> labeler(Function<GenericComponent, Component> labeler) { this.labeler = labeler; return this; }
     public DropdownComponent<GenericComponent> enabled(boolean enabled) { this.enabled = enabled; return this; }
-    public DropdownComponent<GenericComponent> open(boolean open) { this.open = open; return this; }
+    public DropdownComponent<GenericComponent> open(boolean open) { setExpanded(open); return this; }
 }

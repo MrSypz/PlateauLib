@@ -102,6 +102,56 @@ public abstract class BaseContainerComponent<GenericBaseComponent extends BaseCo
         return true;
     }
 
+    /**
+     * Extend hit-testing to include the out-of-bounds area rendered by any
+     * {@code rendersAboveSiblings} child (e.g. an open dropdown list that extends
+     * below this container's own bounds). Without this, a ScrollContainer that
+     * contains this panel would fail to dispatch clicks to the expanded overlay area.
+     */
+    @Override
+    public boolean hitTest(double mouseX, double mouseY) {
+        if (!visible) return false;
+        if (super.hitTest(mouseX, mouseY)) return true;
+        for (BaseComponent<?> child : children) {
+            if (child.isVisible() && child.rendersAboveSiblings() && child.hitTest(mouseX, mouseY)) return true;
+        }
+        return false;
+    }
+
+    /** Propagate rendersAboveSiblings if any visible child has it open. */
+    @Override
+    public boolean rendersAboveSiblings() {
+        for (BaseComponent<?> child : children) {
+            if (child.isVisible() && child.rendersAboveSiblings()) return true;
+        }
+        return false;
+    }
+
+    /** Propagate blocksLowerInput while any visible child is blocking (e.g. open dropdown). */
+    @Override
+    public boolean blocksLowerInput() {
+        for (BaseComponent<?> child : children) {
+            if (child.isVisible() && child.blocksLowerInput()) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Propagate the maximum bottom-outset contributed by any rendersAboveSiblings child
+     * so that parent containers set their scissor region large enough to show the overlay.
+     */
+    @Override
+    public int renderClipBottomOutset() {
+        int max = 0;
+        for (BaseComponent<?> child : children) {
+            if (!child.isVisible() || !child.rendersAboveSiblings()) continue;
+            int childBottom = child.y() + child.height() + child.renderClipBottomOutset();
+            int ourBottom   = y + height;
+            if (childBottom > ourBottom) max = Math.max(max, childBottom - ourBottom);
+        }
+        return max;
+    }
+
     protected void transferFocus() {
         setFocused(null);
     }

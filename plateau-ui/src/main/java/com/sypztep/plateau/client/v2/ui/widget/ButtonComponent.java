@@ -132,12 +132,14 @@ public class ButtonComponent extends BaseComponent<ButtonComponent> {
     // Used by the non-scroll path (screen dispatches directly via GuiEventListener chain).
     @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
-        if (!enabled || event.button() != 0) return false;
         if (!isMouseOver(event.x(), event.y())) return false;
-        pressed = true;
-        UISounds.playClick();
-        if (onClick != null) onClick.accept(this);
-        return true;
+        if (event.button() == GLFW.GLFW_MOUSE_BUTTON_1 && enabled) {
+            pressed = true;
+            UISounds.playClick();
+            if (onClick != null) onClick.accept(this);
+            return true;
+        }
+        return super.mouseClicked(event, doubleClick); // handles onRightClick
     }
 
     @Override

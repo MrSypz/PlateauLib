@@ -4,6 +4,7 @@ import com.sypztep.plateau.client.v2.ui.core.Sizing;
 import com.sypztep.plateau.client.v2.ui.widget.ButtonComponent;
 import com.sypztep.plateau.client.v2.ui.widget.CheckBoxComponent;
 import com.sypztep.plateau.client.v2.ui.widget.DropdownComponent;
+import com.sypztep.plateau.client.v2.ui.widget.SearchableDropdownComponent;
 import com.sypztep.plateau.client.v2.ui.widget.LabelComponent;
 import com.sypztep.plateau.client.v2.ui.widget.SeparatorComponent;
 import com.sypztep.plateau.client.v2.ui.widget.SliderButtonComponent;
@@ -90,6 +91,14 @@ public final class WidgetComponents {
 
     public static DropdownComponent<String> dropdown(String... values) {
         return new DropdownComponent<>(List.of(values), Component::literal);
+    }
+
+    public static <T> SearchableDropdownComponent<T> searchableDropdown(List<T> values, Function<T, String> labeler) {
+        return new SearchableDropdownComponent<>(values, labeler);
+    }
+
+    public static SearchableDropdownComponent<String> searchableDropdown(String... values) {
+        return new SearchableDropdownComponent<>(List.of(values), s -> s);
     }
 
 

@@ -3,16 +3,19 @@ package com.sypztep.plateau.test.screen;
 import com.sypztep.plateau.client.PlateauUIClient;
 import com.sypztep.plateau.client.v1.ui.screen.TabContext;
 import com.sypztep.plateau.client.v1.ui.theme.UIThemeRegistry;
-import com.sypztep.plateau.client.v2.ui.WidgetComponents;
 import com.sypztep.plateau.client.v2.ui.Containers;
+import com.sypztep.plateau.client.v2.ui.Overlays;
 import com.sypztep.plateau.client.v2.ui.Panels;
+import com.sypztep.plateau.client.v2.ui.WidgetComponents;
 import com.sypztep.plateau.client.v2.ui.container.PanelComponent;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
 import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
 import com.sypztep.plateau.client.v2.ui.core.Surface;
-import com.sypztep.plateau.client.v2.ui.screen.Tab2;
+import com.sypztep.plateau.client.v2.ui.overlay.ContextMenuComponent;
 import com.sypztep.plateau.client.v2.ui.overlay.DialogComponent;
+import com.sypztep.plateau.client.v2.ui.overlay.HoverCardComponent;
+import com.sypztep.plateau.client.v2.ui.screen.Tab2;
 import com.sypztep.plateau.client.v2.ui.widget.LabelComponent;
 import com.sypztep.plateau.client.v2.ui.widget.StringComponent;
 import com.sypztep.plateau.test.UITestClient;
@@ -38,6 +41,46 @@ public class WidgetsTab extends Tab2 {
         LabelComponent clickStatus = WidgetComponents.label("Clicks: " + clickCount)
                 .sizing(Sizing.fill(), Sizing.fixed(9));
 
+        // ── Context menu ──────────────────────────────────────
+        LabelComponent contextMenuStatus = WidgetComponents.label("No action yet.")
+                .secondary()
+                .sizing(Sizing.fill(), Sizing.fixed(9));
+
+        // Declare menu first so trigger's onRightClick lambda can reference it.
+        ContextMenuComponent contextMenu = Overlays.contextMenu()
+                .label("Edit")
+                .item("Undo", "Ctrl+Z", () -> contextMenuStatus.text(Component.literal("Action: Undo")))
+                .item("Redo", "Ctrl+Y", false, () -> {})
+                .separator()
+                .item("Cut",   "Ctrl+X", () -> contextMenuStatus.text(Component.literal("Action: Cut")))
+                .item("Copy",  "Ctrl+C", () -> contextMenuStatus.text(Component.literal("Action: Copy")))
+                .item("Paste", "Ctrl+V", () -> contextMenuStatus.text(Component.literal("Action: Paste")))
+                .separator()
+                .checkItem("Word Wrap", false, checked ->
+                        contextMenuStatus.text(Component.literal("Word Wrap: " + checked)));
+
+        LabelComponent contextMenuTrigger = WidgetComponents.label("Right-click anywhere in this area")
+                .secondary()
+                .sizing(Sizing.fill(), Sizing.fixed(9))
+                .onRightClick(e -> contextMenu.openAt(BaseComponent.currentScreenMouseX(), BaseComponent.currentScreenMouseY()));
+
+        // ── Hover card ────────────────────────────────────────
+        // HoverCard wraps the trigger inline — no separate root overlay needed.
+        HoverCardComponent hoverCard = Overlays.hoverCard()
+                .wrap(WidgetComponents.label("Hover over me (500 ms delay)").sizing(Sizing.fill(), Sizing.fixed(9)))
+                .card(Containers.vertical(Sizing.fill(), Sizing.content())
+                        .padding(Insets.of(4))
+                        .gap(4)
+                        .child(WidgetComponents.label("HoverCard").sizing(Sizing.fill(), Sizing.fixed(9)))
+                        .child(WidgetComponents.separator())
+                        .child(WidgetComponents.text("This card appears near the cursor via HoverCardOverlay, above all scissor regions.")
+                                .secondary()
+                                .sizing(Sizing.fill(), Sizing.content())))
+                .openDelay(500)
+                .closeDelay(200)
+                .cardWidth(200);
+
+        // ── Dialog ────────────────────────────────────────────
         DialogComponent dialog = new DialogComponent()
                 .title("Widget Test Dialog")
                 .dialogWidth(240)
@@ -98,13 +141,17 @@ public class WidgetsTab extends Tab2 {
                         .child(infoSection())
                         .child(dialogSection(dialog))
                         .child(inputDialogSection(inputDialog, inputResult))
+                        .child(contextMenuSection(contextMenuTrigger, contextMenuStatus))
+                        .child(hoverCardSection(hoverCard))
+                        .child(searchableDropdownSection())
                         .child(childInChildSection(clickStatus))
                         .child(rowSection())
                         .child(formSection())
                         .child(themeSection())
                         .child(v1CompareSection()))
                 .child(dialog)
-                .child(inputDialog);
+                .child(inputDialog)
+                .child(contextMenu);
     }
 
 
@@ -348,5 +395,47 @@ public class WidgetsTab extends Tab2 {
                 .child(WidgetComponents.button("Open Input Dialog", b -> inputDialog.open())
                         .sizing(Sizing.fill(), Sizing.fixed(22)))
                 .child(inputResult);
+    }
+
+    private BaseComponent<?> searchableDropdownSection() {
+        LabelComponent selectionLabel = WidgetComponents.label("Selected: (none)")
+                .secondary()
+                .sizing(Sizing.fill(), Sizing.fixed(9));
+
+        var dropdown = WidgetComponents.searchableDropdown(
+                        "Apple", "Banana", "Cherry", "Date", "Elderberry",
+                        "Fig", "Grape", "Honeydew", "Kiwi", "Lemon",
+                        "Mango", "Nectarine", "Orange", "Papaya", "Quince")
+                .onChanged(v -> selectionLabel.text(Component.literal("Selected: " + v)));
+
+        return section("Searchable Dropdown")
+                .child(WidgetComponents.text("Type to filter, click a suggestion to select. List floats above siblings — no scissor issues.")
+                        .secondary()
+                        .sizing(Sizing.fill(), Sizing.content()))
+                .child(dropdown)
+                .child(selectionLabel);
+    }
+
+    private BaseComponent<?> contextMenuSection(LabelComponent trigger, LabelComponent statusLabel) {
+        return section("Context Menu")
+                .child(WidgetComponents.text("Right-click the highlighted area below to open a context menu.")
+                        .secondary()
+                        .sizing(Sizing.fill(), Sizing.content()))
+                .child(Containers.vertical(Sizing.fill(), Sizing.fixed(36))
+                        .padding(Insets.of(8))
+                        .surface(Surface.outline())
+                        .child(trigger))
+                .child(statusLabel);
+    }
+
+    private BaseComponent<?> hoverCardSection(HoverCardComponent hoverCard) {
+        return section("Hover Card")
+                .child(WidgetComponents.text("Hover over the label below for 500 ms to open a card. Card renders above all content via HoverCardOverlay (no scissor conflicts).")
+                        .secondary()
+                        .sizing(Sizing.fill(), Sizing.content()))
+                .child(Containers.vertical(Sizing.fill(), Sizing.fixed(36))
+                        .padding(Insets.of(8))
+                        .surface(Surface.outline())
+                        .child(hoverCard));
     }
 }
