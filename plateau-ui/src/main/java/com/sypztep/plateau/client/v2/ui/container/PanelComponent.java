@@ -13,6 +13,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ARGB;
+import net.minecraft.util.Mth;
 import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
@@ -109,7 +110,8 @@ public class PanelComponent extends BaseContainerComponent<PanelComponent> {
     public void extract(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         UITheme theme = UITheme.current();
         if (hoverSurface) {
-            hoverProgress = stepAnimation(hoverProgress, isMouseOver(mouseX, mouseY), 0.5f, delta);
+            boolean ownBoundsHovered = visible && bounds().containsPoint(Mth.floor(mouseX), Mth.floor(mouseY));
+            hoverProgress = stepAnimation(hoverProgress, ownBoundsHovered, theme.animation().hoverSpeed(), delta);
         }
         int bg     = ARGB.srgbLerp(hoverProgress, theme.panel().bg(), theme.panel().bgHover());
         int border = ARGB.srgbLerp(hoverProgress, theme.panel().border(), theme.panel().borderHover());
@@ -218,23 +220,6 @@ public class PanelComponent extends BaseContainerComponent<PanelComponent> {
             case Sizing.Content ignored -> child.determineHorizontalContentSize(availableWidth);
             case Sizing.Fill ignored -> availableWidth;
         };
-    }
-
-    @Override
-    public boolean isMouseOver(double mouseX, double mouseY) {
-        return hitTest(mouseX, mouseY);
-    }
-
-    @Override
-    public boolean hitTest(double mouseX, double mouseY) {
-        if (super.hitTest(mouseX, mouseY)) return true;
-
-        for (BaseComponent<?> child : children) {
-            if (child.isVisible() && child.rendersAboveSiblings() && child.isMouseOver(mouseX, mouseY)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override

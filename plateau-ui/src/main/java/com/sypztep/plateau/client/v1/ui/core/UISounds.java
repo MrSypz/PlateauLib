@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import org.jetbrains.annotations.Nullable;
 
 @Environment(EnvType.CLIENT)
@@ -35,7 +36,8 @@ public final class UISounds {
 
     public static void play(@Nullable SoundEvent sound, float pitch, float volume) {
         if (!globalEnabled || sound == null) return;
-        Minecraft.getInstance().getSoundManager().play(
-                SimpleSoundInstance.forUI(sound, pitch, volume));
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.options.getSoundSourceVolume(SoundSource.UI) <= 0f) return;
+        mc.getSoundManager().play(SimpleSoundInstance.forUI(sound, pitch, volume));
     }
 }

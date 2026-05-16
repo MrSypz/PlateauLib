@@ -159,6 +159,7 @@ public class WidgetsTab extends Tab2 {
         return Panels.fixed(title)
                 .bodyPadding(Insets.of(6, 8))
                 .gap(6)
+                .hoverSurface(false)
                 .child(WidgetComponents.separator());
     }
 

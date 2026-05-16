@@ -5,6 +5,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
+import java.util.Map;
+
 @Environment(EnvType.CLIENT)
 public record UITheme(
         int screenBackground,
@@ -13,16 +15,25 @@ public record UITheme(
         Button button,
         Nav nav,
         Progress progress,
-        Animation animation
+        Animation animation,
+        Map<String, Integer> extras
 ) {
     public static UITheme current() {
         return UIThemeRegistry.INSTANCE.current();
+    }
+
+    /** Look up an extra color token by key. Returns {@code fallback} if the key is absent. */
+    public int color(String key, int fallback) {
+        return extras.getOrDefault(key, fallback);
     }
 
     public static final Codec<Integer> COLOR_CODEC = Codec.STRING.xmap(
             UITheme::parseColor,
             UITheme::formatColor
     );
+
+    private static final Codec<Map<String, Integer>> EXTRAS_CODEC =
+            Codec.unboundedMap(Codec.STRING, COLOR_CODEC);
 
     public static final Codec<UITheme> CODEC = RecordCodecBuilder.create(i -> i.group(
             COLOR_CODEC.fieldOf("screen_background").forGetter(UITheme::screenBackground),
@@ -31,7 +42,8 @@ public record UITheme(
             Button.CODEC.fieldOf("button").forGetter(UITheme::button),
             Nav.CODEC.fieldOf("nav").forGetter(UITheme::nav),
             Progress.CODEC.fieldOf("progress").forGetter(UITheme::progress),
-            Animation.CODEC.fieldOf("animation").forGetter(UITheme::animation)
+            Animation.CODEC.fieldOf("animation").forGetter(UITheme::animation),
+            EXTRAS_CODEC.optionalFieldOf("extras", Map.of()).forGetter(UITheme::extras)
     ).apply(i, UITheme::new));
 
     public record Panel(
