@@ -10,6 +10,7 @@ import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.PreeditEvent;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -185,8 +186,25 @@ public abstract class BaseContainerComponent<GenericBaseComponent extends BaseCo
     }
 
     @Override
+    public boolean keyReleased(@NonNull KeyEvent event) {
+        return getFocused() != null && getFocused().keyReleased(event);
+    }
+
+    @Override
     public boolean charTyped(@NonNull CharacterEvent event) {
         return getFocused() != null && getFocused().charTyped(event);
+    }
+
+    @Override
+    public boolean preeditUpdated(@Nullable PreeditEvent event) {
+        return getFocused() != null && getFocused().preeditUpdated(event);
+    }
+
+    @Override
+    public @Nullable ComponentPath getCurrentFocusPath() {
+        if (focusedChild == null) return null;
+        ComponentPath childPath = focusedChild.getCurrentFocusPath();
+        return childPath != null ? ComponentPath.path(this, childPath) : null;
     }
 
     protected List<BaseComponent<?>> childComponents() {
@@ -267,5 +285,19 @@ public abstract class BaseContainerComponent<GenericBaseComponent extends BaseCo
         }
 
         if (button == 0) setDragging(true);
+    }
+
+    /**
+     * Safe helper for custom mouseClicked overrides: dispatches the click to the child and
+     * automatically calls focusAfterInteraction if it was handled. Use this instead of calling
+     * child.mouseClicked() directly so the focus/drag state is never accidentally skipped.
+     */
+    protected boolean dispatchClick(BaseComponent<?> child, MouseButtonEvent event, boolean doubleClick) {
+        if (!child.isVisible() || !child.isMouseOver(event.x(), event.y())) return false;
+        if (child.mouseClicked(event, doubleClick)) {
+            focusAfterInteraction(child, event.button());
+            return true;
+        }
+        return child.blocksLowerInput();
     }
 }

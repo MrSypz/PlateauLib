@@ -9,9 +9,11 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.PreeditEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ public class TextAreaComponent extends BaseComponent<TextAreaComponent> {
     private int cursor = 0;
     private int scrollLine = 0;
     private int maxLength = 4096;
+    private int preeditLength = 0;
     private Consumer<String> onChanged = ignored -> {};
     private long focusedTime = Util.getMillis();
 
@@ -103,7 +106,25 @@ public class TextAreaComponent extends BaseComponent<TextAreaComponent> {
     @Override
     public boolean charTyped(@NonNull CharacterEvent event) {
         if (!focused || !event.isAllowedChatCharacter()) return false;
+        if (preeditLength > 0) return false; // IME is composing; charTyped fires after preedit commits
         insert(event.codepointAsString());
+        return true;
+    }
+
+    @Override
+    public boolean preeditUpdated(@Nullable PreeditEvent event) {
+        if (!focused) return false;
+        if (preeditLength > 0) {
+            int start = cursor - preeditLength;
+            value = value.substring(0, start) + value.substring(cursor);
+            cursor = start;
+            preeditLength = 0;
+        }
+        String text = (event != null) ? event.fullText() : null;
+        if (text != null && !text.isEmpty()) {
+            insert(text);
+            preeditLength = text.length();
+        }
         return true;
     }
 

@@ -1,6 +1,7 @@
 package com.sypztep.plateau.client.v1.ui.screen;
 
 import com.sypztep.plateau.client.v1.ui.theme.UITheme;
+import com.sypztep.plateau.client.v2.ui.interaction.DragDrop;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -58,10 +59,14 @@ public abstract class PlateauScreen extends Screen {
         int bg = UITheme.current().screenBackground();
         graphics.fillGradient(0, 0, width, height, bg, bg);
 
+        DragDrop.beginFrame();
+
         super.extractRenderState(graphics, mouseX, mouseY, delta);
 
         if (tabManager != null) {
             tabManager.renderOverlay(graphics, mouseX, mouseY, delta);
         }
+
+        DragDrop.renderPreview(graphics, mouseX, mouseY, delta);
     }
 }

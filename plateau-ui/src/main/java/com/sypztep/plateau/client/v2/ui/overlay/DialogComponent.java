@@ -171,11 +171,11 @@ public class DialogComponent extends BaseContainerComponent<DialogComponent> {
 
         // Buttons first
         for (ButtonComponent button : buttonWidgets) {
-            if (button.mouseClicked(event, doubleClick)) return true;
+            if (dispatchClick(button, event, doubleClick)) return true;
         }
 
         // Content
-        if (content != null && content.mouseClicked(event, doubleClick)) return true;
+        if (content != null && dispatchClick(content, event, doubleClick)) return true;
 
         // Backdrop click — close if enabled and click was outside the box
         if (closeOnBackdrop && !isOverBox(event.x(), event.y())) {

@@ -8,9 +8,11 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.PreeditEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.function.Consumer;
@@ -22,6 +24,7 @@ public class StringComponent extends BaseComponent<StringComponent> {
     private int cursor = 0;
     private int display = 0;
     private int maxLength = 256;
+    private int preeditLength = 0;
     private boolean editable = true;
     private boolean shadow = true;
     private Consumer<String> onChanged = ignored -> {};
@@ -91,7 +94,27 @@ public class StringComponent extends BaseComponent<StringComponent> {
     @Override
     public boolean charTyped(@NonNull CharacterEvent event) {
         if (!focused || !editable || !event.isAllowedChatCharacter()) return false;
+        if (preeditLength > 0) return false; // IME is composing; charTyped fires after preedit commits
         insert(event.codepointAsString());
+        return true;
+    }
+
+    @Override
+    public boolean preeditUpdated(@Nullable PreeditEvent event) {
+        if (!focused || !editable) return false;
+        // Remove the previous preedit text from the value
+        if (preeditLength > 0) {
+            int start = cursor - preeditLength;
+            value = value.substring(0, start) + value.substring(cursor);
+            cursor = start;
+            preeditLength = 0;
+        }
+        // Insert the new composition text
+        String text = (event != null) ? event.fullText() : null;
+        if (text != null && !text.isEmpty()) {
+            insert(text);
+            preeditLength = text.length();
+        }
         return true;
     }
 

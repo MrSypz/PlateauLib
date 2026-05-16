@@ -14,6 +14,7 @@ import com.sypztep.plateau.client.v2.ui.core.Surface;
 import com.sypztep.plateau.client.v2.ui.screen.Tab2;
 import com.sypztep.plateau.client.v2.ui.overlay.DialogComponent;
 import com.sypztep.plateau.client.v2.ui.widget.LabelComponent;
+import com.sypztep.plateau.client.v2.ui.widget.StringComponent;
 import com.sypztep.plateau.test.UITestClient;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -57,18 +58,53 @@ public class WidgetsTab extends Tab2 {
                 })
                 .button("Cancel", DialogComponent::close);
 
+        LabelComponent inputResult = WidgetComponents.label("No input yet.")
+                .secondary()
+                .sizing(Sizing.fill(), Sizing.fixed(9));
+
+        StringComponent inputField = WidgetComponents.string("Type something...")
+                .sizing(Sizing.fill(), Sizing.fixed(20));
+
+        DialogComponent inputDialog = new DialogComponent()
+                .title("Input Dialog Test")
+                .dialogWidth(260)
+                .dialogHeight(130)
+                .closeOnBackdrop(false)
+                .content(Containers.vertical(Sizing.fill(), Sizing.content())
+                        .gap(6)
+                        .child(WidgetComponents.text("Type a word and press Submit. Output goes to console and the label below.")
+                                .secondary()
+                                .sizing(Sizing.fill(), Sizing.content()))
+                        .child(inputField))
+                .button("Submit", d -> {
+                    String typed = inputField.value().trim();
+                    System.out.println("[InputDialog] submitted: \"" + typed + "\"");
+                    inputResult.text(Component.literal("Last input: \"" + typed + "\""));
+                    d.close();
+                })
+                .button("Clear", d -> {
+                    inputField.value("");
+                    inputResult.text(Component.literal("Cleared."));
+                })
+                .button("Cancel", d -> {
+                    inputField.value("");
+                    d.close();
+                });
+
         return Containers.stack(Sizing.fill(), Sizing.fill())
                 .child(Containers.scrollable(Sizing.fill(), Sizing.fill())
                         .padding(Insets.of(8, 14))
                         .gap(8)
                         .child(infoSection())
                         .child(dialogSection(dialog))
+                        .child(inputDialogSection(inputDialog, inputResult))
                         .child(childInChildSection(clickStatus))
                         .child(rowSection())
                         .child(formSection())
                         .child(themeSection())
                         .child(v1CompareSection()))
-                .child(dialog);
+                .child(dialog)
+                .child(inputDialog);
     }
 
 
@@ -302,5 +338,15 @@ public class WidgetsTab extends Tab2 {
                                 .sizing(Sizing.fill(), Sizing.fixed(22)))
                         .child(WidgetComponents.button("Toggle Dialog", b -> dialog.toggle())
                                 .sizing(Sizing.fill(), Sizing.fixed(22))));
+    }
+
+    private BaseComponent<?> inputDialogSection(DialogComponent inputDialog, LabelComponent inputResult) {
+        return section("Input Dialog (type + submit)")
+                .child(WidgetComponents.text("Opens a dialog with a StringComponent. Submit prints the typed value to console and updates the label. Clear resets without closing. Cancel discards and closes.")
+                        .secondary()
+                        .sizing(Sizing.fill(), Sizing.content()))
+                .child(WidgetComponents.button("Open Input Dialog", b -> inputDialog.open())
+                        .sizing(Sizing.fill(), Sizing.fixed(22)))
+                .child(inputResult);
     }
 }
