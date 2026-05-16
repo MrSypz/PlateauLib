@@ -21,6 +21,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -42,6 +43,7 @@ public class SearchableDropdownComponent<T> extends BaseExpandingComponent<Searc
     private List<T>           filtered;
     private @Nullable T       selectedValue;
     private @Nullable Consumer<T> onChanged;
+    private @Nullable BiPredicate<T, String> filterPredicate = null;
     private boolean           enabled = true;
 
     private float   hoverProgress = 0f;
@@ -83,6 +85,17 @@ public class SearchableDropdownComponent<T> extends BaseExpandingComponent<Searc
 
     public @Nullable T      value()              { return selectedValue; }
     public SearchableDropdownComponent<T> enabled(boolean v) { this.enabled = v; return self(); }
+
+    /**
+     * Provide a custom filter predicate: {@code (item, rawQuery) -> matches}.
+     * When set, this replaces the default label-contains check entirely —
+     * the predicate receives the raw (un-lowercased) query string so it can
+     * implement special syntax such as {@code #tag:path} lookups.
+     */
+    public SearchableDropdownComponent<T> filterPredicate(BiPredicate<T, String> predicate) {
+        this.filterPredicate = predicate;
+        return self();
+    }
 
     // ── Rendering ─────────────────────────────────────────────────
 
@@ -246,10 +259,16 @@ public class SearchableDropdownComponent<T> extends BaseExpandingComponent<Searc
     }
 
     private void filter(String query) {
-        String lower = query.toLowerCase(Locale.ROOT);
-        filtered = allValues.stream()
-                .filter(v -> labeler.apply(v).toLowerCase(Locale.ROOT).contains(lower))
-                .toList();
+        if (filterPredicate != null) {
+            filtered = allValues.stream()
+                    .filter(v -> filterPredicate.test(v, query))
+                    .toList();
+        } else {
+            String lower = query.toLowerCase(Locale.ROOT);
+            filtered = allValues.stream()
+                    .filter(v -> labeler.apply(v).toLowerCase(Locale.ROOT).contains(lower))
+                    .toList();
+        }
         rowHover  = new float[Math.min(filtered.size(), MAX_ROWS)];
         rowWasHov = new boolean[Math.min(filtered.size(), MAX_ROWS)];
     }
