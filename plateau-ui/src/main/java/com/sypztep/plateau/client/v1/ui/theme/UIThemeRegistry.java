@@ -32,88 +32,40 @@ public final class UIThemeRegistry implements ResourceManagerReloadListener {
 
     @Override
     public void onResourceManagerReload(ResourceManager resourceManager) {
-        PlateauUIClient.LOGGER.info("[UITheme] Reload started");
-        PlateauUIClient.LOGGER.info("[UITheme] Step 1/5: Scanning assets/*/{}/ for theme json files", DIRECTORY);
-
         Map<Identifier, UITheme> next = new LinkedHashMap<>();
 
         resourceManager.listResources(DIRECTORY, path -> path.getPath().endsWith(".json"))
                 .forEach((resourceId, resource) -> {
-                    PlateauUIClient.LOGGER.info("[UITheme]   Found resource: {}", resourceId);
-
                     try (Reader reader = resource.openAsReader()) {
-                        PlateauUIClient.LOGGER.info("[UITheme]   Reading json: {}", resourceId);
-
                         JsonElement json = JsonParser.parseReader(reader);
                         Identifier themeId = themeIdFromResource(resourceId);
-
-                        PlateauUIClient.LOGGER.info("[UITheme]   Decoding theme id: {} -> {}", resourceId, themeId);
-
                         UITheme theme = UITheme.CODEC
                                 .parse(JsonOps.INSTANCE, json)
                                 .getOrThrow(error -> new IllegalArgumentException(
                                         "Invalid UI theme " + resourceId + ": " + error
                                 ));
-
                         next.put(themeId, theme);
-
-                        PlateauUIClient.LOGGER.info("[UITheme]   Loaded theme: {}", themeId);
                     } catch (Exception e) {
-                        PlateauUIClient.LOGGER.error(
-                                "[UITheme]   Failed to load theme resource: {}",
-                                resourceId,
-                                e
-                        );
+                        PlateauUIClient.LOGGER.error("[UITheme] Failed to load {}", resourceId, e);
                     }
                 });
 
-        PlateauUIClient.LOGGER.info("[UITheme] Step 2/5: Validating required default theme: {}", DARK_ID);
-
         UITheme darkTheme = next.get(DARK_ID);
         if (darkTheme == null) {
-            PlateauUIClient.LOGGER.error("[UITheme] Reload failed");
-            PlateauUIClient.LOGGER.error("[UITheme]   Missing required default theme id: {}", DARK_ID);
-            PlateauUIClient.LOGGER.error(
-                    "[UITheme]   Expected file path: assets/{}/{}/dark.json",
-                    DARK_ID.getNamespace(),
-                    DIRECTORY
-            );
-            PlateauUIClient.LOGGER.error("[UITheme]   Loaded theme ids: {}", next.keySet());
-
             throw new IllegalStateException(
                     "[UITheme] Missing required default theme: assets/"
-                            + DARK_ID.getNamespace()
-                            + "/"
-                            + DIRECTORY
-                            + "/dark.json"
+                            + DARK_ID.getNamespace() + "/" + DIRECTORY + "/dark.json"
             );
         }
-
-        PlateauUIClient.LOGGER.info("[UITheme] Step 3/5: Applying loaded theme map");
-        PlateauUIClient.LOGGER.info("[UITheme]   Previous theme count: {}", themes.size());
-        PlateauUIClient.LOGGER.info("[UITheme]   New theme count: {}", next.size());
 
         themes.clear();
         themes.putAll(next);
 
-        PlateauUIClient.LOGGER.info("[UITheme] Step 4/5: Resolving selected theme");
-        PlateauUIClient.LOGGER.info("[UITheme]   Requested selected theme: {}", selectedTheme);
-
-        current = themes.getOrDefault(selectedTheme, darkTheme);
-
-        if (themes.containsKey(selectedTheme)) {
-            PlateauUIClient.LOGGER.info("[UITheme]   Selected theme applied: {}", selectedTheme);
-        } else {
-            PlateauUIClient.LOGGER.warn(
-                    "[UITheme]   Selected theme {} was not found; falling back to default theme {}",
-                    selectedTheme,
-                    DARK_ID
-            );
+        if (!themes.containsKey(selectedTheme)) {
+            PlateauUIClient.LOGGER.warn("[UITheme] Theme {} not found, falling back to {}", selectedTheme, DARK_ID);
         }
 
-        PlateauUIClient.LOGGER.info("[UITheme] Step 5/5: Reload complete");
-        PlateauUIClient.LOGGER.info("[UITheme]   Available themes: {}", themes.keySet());
-        PlateauUIClient.LOGGER.info("[UITheme]   Active theme: {}", themes.containsKey(selectedTheme) ? selectedTheme : DARK_ID);
+        current = themes.getOrDefault(selectedTheme, darkTheme);
     }
 
     public UITheme current() {
