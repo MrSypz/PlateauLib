@@ -2,6 +2,41 @@ base {
     archivesName = "Attributes"
 }
 
+sourceSets {
+    testmod {
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath
+    }
+}
+
+loom {
+    mods {
+        "plateau-attributes" {
+            sourceSet sourceSets.main
+        }
+        "plateau-attributes-testmod" {
+            sourceSet sourceSets.testmod
+        }
+    }
+
+    runs {
+        testmodClient {
+            client()
+            ideConfigGenerated = true
+            name = "Attributes Testmod Client"
+            source sourceSets.testmod
+            runDir "run-testmod"
+        }
+    }
+}
+
 dependencies {
     api project(":")
 }
+
+tasks.register("testmodJar", Jar) {
+    from sourceSets.testmod.output
+    archiveClassifier = "testmod"
+}
+
+build.dependsOn testmodJar

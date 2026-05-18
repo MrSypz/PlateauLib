@@ -35,7 +35,6 @@ public final class PlateauAttributeRegistry {
         List<PlateauAttributeEntrypoint> entrypoints = FabricLoader.getInstance()
                 .getEntrypoints("plateau_attributes", PlateauAttributeEntrypoint.class);
 
-        entrypoints.forEach(PlateauAttributeEntrypoint::load);
         frozen = true;
 
         long elapsed = (System.nanoTime() - start) / 1_000_000;

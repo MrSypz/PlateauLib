@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "plateau-attributes-testmod",
+  "version": "1.0.0",
+
+  "name": "PlateauLib Attributes Testmod",
+  "description": "In-game test for plateau-attributes registration and entity injection",
+
+  "authors": [ "MrSypz" ],
+  "contact": {},
+
+  "license": "All-Rights-Reserved",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.sypztep.plateau.test.AttributesTestMod"
+    ],
+    "plateau_attributes": [
+      "com.sypztep.plateau.test.TestAttributes"
+    ]
+  },
+
+  "depends": {
+    "fabricloader": ">=0.18.5",
+    "minecraft": "~26.1",
+    "java": ">=25",
+    "plateau-attributes": "*"
+  }
+}
