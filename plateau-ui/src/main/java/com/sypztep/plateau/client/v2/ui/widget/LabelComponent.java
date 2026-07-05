@@ -8,6 +8,11 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
+/**
+ * Single-line, non-wrapping text display.
+ *
+ * @see net.minecraft.client.gui.components.AbstractStringWidget
+ */
 @Environment(EnvType.CLIENT)
 public class LabelComponent extends BaseComponent<LabelComponent> {
 

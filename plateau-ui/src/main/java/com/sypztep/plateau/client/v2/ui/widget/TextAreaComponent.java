@@ -21,11 +21,26 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * Multi-line text input with a vanilla-style cursor/selection model.
+ * <p>
+ * Mirrors {@code net.minecraft.client.gui.components.MultilineTextField} (the model backing
+ * {@code MultiLineEditBox}): a {@link #cursor} and a {@link #highlight} anchor define the
+ * selection range. Word boundaries use {@link Character#isWhitespace(char)} like
+ * {@code MultilineTextField#getPreviousWord()}/{@code getNextWord()}, and the selection is
+ * painted per visible line the same way {@code MultiLineEditBox#extractContents} does.
+ *
+ * @see net.minecraft.client.gui.components.MultilineTextField
+ * @see net.minecraft.client.gui.components.MultiLineEditBox
+ */
 @Environment(EnvType.CLIENT)
 public class TextAreaComponent extends BaseComponent<TextAreaComponent> {
     private String value = "";
     private Component placeholder = Component.empty();
+    /** Caret position. Together with {@link #highlight} this defines the selection range. */
     private int cursor = 0;
+    /** Selection anchor. Equal to {@link #cursor} when there is no selection. */
+    private int highlight = 0;
     private int scrollLine = 0;
     private int maxLength = 4096;
     private int preeditLength = 0;
@@ -82,6 +97,8 @@ public class TextAreaComponent extends BaseComponent<TextAreaComponent> {
                 g.text(font, lines.get(scrollLine + i), ix, iy + i * font.lineHeight, theme.text().primary(), true);
             }
 
+            if (hasSelection()) drawSelectionHighlight(g, lines, ix, iy, maxLines);
+
             if (focused && cursorVisible()) {
                 int[] lc = lineColumnAt(cursor, lines);
                 int cursorLine = lc[0] - scrollLine;
@@ -96,9 +113,40 @@ public class TextAreaComponent extends BaseComponent<TextAreaComponent> {
         g.disableScissor();
     }
 
+    private void drawSelectionHighlight(GuiGraphicsExtractor g, List<String> lines, int ix, int iy, int maxLines) {
+        int selStart = selectionStart();
+        int selEnd = selectionEnd();
+        for (int i = 0; i < maxLines && scrollLine + i < lines.size(); i++) {
+            int line = scrollLine + i;
+            String text = lines.get(line);
+            int lineBegin = indexAt(line, 0, lines);
+            int lineEndIdx = lineBegin + text.length();
+            if (selStart > lineEndIdx || selEnd < lineBegin) continue;
+
+            int from = Math.max(selStart, lineBegin) - lineBegin;
+            int to = Math.min(selEnd, lineEndIdx) - lineBegin;
+            int hx1 = ix + font.width(text.substring(0, from));
+            int hx2 = ix + font.width(text.substring(0, to));
+            int hy = iy + i * font.lineHeight;
+            g.textHighlight(hx1, hy, hx2, hy + font.lineHeight, true);
+        }
+    }
+
     @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
         if (!isMouseOver(event.x(), event.y()) || event.button() != 0) return false;
+        if (doubleClick) {
+            selectWordAt(event.x(), event.y());
+        } else {
+            cursor = cursorAt(event.x(), event.y());
+            if (!event.hasShiftDown()) highlight = cursor;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean mouseDragged(@NonNull MouseButtonEvent event, double dragX, double dragY) {
+        if (!focused || !isMouseOver(event.x(), event.y())) return false;
         cursor = cursorAt(event.x(), event.y());
         return true;
     }
@@ -118,6 +166,7 @@ public class TextAreaComponent extends BaseComponent<TextAreaComponent> {
             int start = cursor - preeditLength;
             value = value.substring(0, start) + value.substring(cursor);
             cursor = start;
+            highlight = cursor;
             preeditLength = 0;
         }
         String text = (event != null) ? event.fullText() : null;
@@ -131,21 +180,30 @@ public class TextAreaComponent extends BaseComponent<TextAreaComponent> {
     @Override
     public boolean keyPressed(@NonNull KeyEvent event) {
         if (!focused) return false;
-        if (event.isSelectAll()) { cursor = value.length(); return true; }
-        if (event.isCopy()) { minecraft.keyboardHandler.setClipboard(value); return true; }
+        if (event.isSelectAll()) { highlight = 0; cursor = value.length(); return true; }
+        if (event.isCopy()) { minecraft.keyboardHandler.setClipboard(selectedText()); return true; }
         if (event.isPaste()) { insert(minecraft.keyboardHandler.getClipboard()); return true; }
-        if (event.isCut()) { minecraft.keyboardHandler.setClipboard(value); value(""); return true; }
+        if (event.isCut()) { minecraft.keyboardHandler.setClipboard(selectedText()); insert(""); return true; }
 
+        boolean shift = event.hasShiftDown();
         return switch (event.key()) {
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> { insert("\n"); yield true; }
-            case GLFW.GLFW_KEY_BACKSPACE -> { deleteBefore(); yield true; }
-            case GLFW.GLFW_KEY_DELETE -> { deleteAfter(); yield true; }
-            case GLFW.GLFW_KEY_LEFT -> { cursor = Math.max(0, cursor - 1); yield true; }
-            case GLFW.GLFW_KEY_RIGHT -> { cursor = Math.min(value.length(), cursor + 1); yield true; }
-            case GLFW.GLFW_KEY_UP -> { moveVertical(-1); yield true; }
-            case GLFW.GLFW_KEY_DOWN -> { moveVertical(1); yield true; }
-            case GLFW.GLFW_KEY_HOME -> { cursor = lineStart(cursor); yield true; }
-            case GLFW.GLFW_KEY_END -> { cursor = lineEnd(cursor); yield true; }
+            case GLFW.GLFW_KEY_BACKSPACE -> { deleteBefore(event.hasControlDownWithQuirk()); yield true; }
+            case GLFW.GLFW_KEY_DELETE -> { deleteAfter(event.hasControlDownWithQuirk()); yield true; }
+            case GLFW.GLFW_KEY_LEFT -> {
+                int to = event.hasControlDownWithQuirk() ? wordPosition(-1, cursor) : Math.max(0, cursor - 1);
+                moveCursor(to, shift);
+                yield true;
+            }
+            case GLFW.GLFW_KEY_RIGHT -> {
+                int to = event.hasControlDownWithQuirk() ? wordPosition(1, cursor) : Math.min(value.length(), cursor + 1);
+                moveCursor(to, shift);
+                yield true;
+            }
+            case GLFW.GLFW_KEY_UP -> { moveVertical(-1, shift); yield true; }
+            case GLFW.GLFW_KEY_DOWN -> { moveVertical(1, shift); yield true; }
+            case GLFW.GLFW_KEY_HOME -> { moveCursor(lineStart(cursor), shift); yield true; }
+            case GLFW.GLFW_KEY_END -> { moveCursor(lineEnd(cursor), shift); yield true; }
             default -> false;
         };
     }
@@ -158,34 +216,55 @@ public class TextAreaComponent extends BaseComponent<TextAreaComponent> {
         return true;
     }
 
+    /** Moves the caret to {@code pos}; when {@code extendSelection} is false the anchor follows it (collapsing any selection). */
+    private void moveCursor(int pos, boolean extendSelection) {
+        cursor = Math.max(0, Math.min(value.length(), pos));
+        if (!extendSelection) highlight = cursor;
+    }
+
+    private boolean hasSelection() { return cursor != highlight; }
+    private int selectionStart() { return Math.min(cursor, highlight); }
+    private int selectionEnd() { return Math.max(cursor, highlight); }
+    private String selectedText() { return value.substring(selectionStart(), selectionEnd()); }
+
+    /** Inserts {@code text} in place of the current selection (or at the caret if there is none). */
     private void insert(String text) {
-        if (text == null || text.isEmpty()) return;
-        int room = Math.max(0, maxLength - value.length());
-        if (text.length() > room) text = text.substring(0, room);
-        if (text.isEmpty()) return;
-        value = value.substring(0, cursor) + text + value.substring(cursor);
-        cursor += text.length();
+        if (text == null) text = "";
+        int start = selectionStart();
+        int end = selectionEnd();
+        int room = Math.max(0, maxLength - (value.length() - (end - start)));
+        String filtered = text.length() > room ? text.substring(0, room) : text;
+        if (filtered.isEmpty() && start == end) return;
+        value = value.substring(0, start) + filtered + value.substring(end);
+        cursor = start + filtered.length();
+        highlight = cursor;
         onChanged.accept(value);
     }
 
-    private void deleteBefore() {
-        if (cursor <= 0) return;
-        value = value.substring(0, cursor - 1) + value.substring(cursor);
-        cursor--;
+    private void deleteBefore(boolean wholeWord) {
+        if (hasSelection()) { insert(""); return; }
+        int to = wholeWord ? wordPosition(-1, cursor) : Math.max(0, cursor - 1);
+        if (to == cursor) return;
+        value = value.substring(0, to) + value.substring(cursor);
+        cursor = to;
+        highlight = cursor;
         onChanged.accept(value);
     }
 
-    private void deleteAfter() {
-        if (cursor >= value.length()) return;
-        value = value.substring(0, cursor) + value.substring(cursor + 1);
+    private void deleteAfter(boolean wholeWord) {
+        if (hasSelection()) { insert(""); return; }
+        int to = wholeWord ? wordPosition(1, cursor) : Math.min(value.length(), cursor + 1);
+        if (to == cursor) return;
+        value = value.substring(0, cursor) + value.substring(to);
         onChanged.accept(value);
     }
 
-    private void moveVertical(int delta) {
+    private void moveVertical(int delta, boolean extendSelection) {
         List<String> lines = lines();
         int[] lc = lineColumnAt(cursor, lines);
         int line = Math.max(0, Math.min(lines.size() - 1, lc[0] + delta));
-        cursor = indexAt(line, Math.min(lc[1], lines.get(line).length()), lines);
+        int pos = indexAt(line, Math.min(lc[1], lines.get(line).length()), lines);
+        moveCursor(pos, extendSelection);
     }
 
     private int cursorAt(double mouseX, double mouseY) {
@@ -193,6 +272,44 @@ public class TextAreaComponent extends BaseComponent<TextAreaComponent> {
         int line = Math.max(0, Math.min(lines.size() - 1, scrollLine + (int) ((mouseY - (innerY() + 5)) / font.lineHeight)));
         int col = font.plainSubstrByWidth(lines.get(line), Math.max(0, (int) (mouseX - (innerX() + 5)))).length();
         return indexAt(line, col, lines);
+    }
+
+    /** Selects the word under the mouse, matching {@code MultilineTextField#selectWordAtCursor()}. */
+    private void selectWordAt(double mouseX, double mouseY) {
+        int pos = cursorAt(mouseX, mouseY);
+        int[] bounds = wordBoundsAt(pos);
+        highlight = bounds[0];
+        cursor = bounds[1];
+    }
+
+    /** Word start/end around {@code pos}, mirroring {@code MultilineTextField#getPreviousWord()}. */
+    private int[] wordBoundsAt(int pos) {
+        if (value.isEmpty()) return new int[]{0, 0};
+        int start = Math.max(0, Math.min(pos, value.length() - 1));
+        while (start > 0 && Character.isWhitespace(value.charAt(start - 1))) start--;
+        while (start > 0 && !Character.isWhitespace(value.charAt(start - 1))) start--;
+        int end = start;
+        while (end < value.length() && !Character.isWhitespace(value.charAt(end))) end++;
+        return new int[]{start, end};
+    }
+
+    /**
+     * Finds the start of the previous (dir &lt; 0) or next (dir &gt; 0) word relative to {@code from}.
+     * Mirrors {@code MultilineTextField#getPreviousWord()}/{@code getNextWord()}.
+     */
+    private int wordPosition(int dir, int from) {
+        int length = value.length();
+        if (dir < 0) {
+            int result = from;
+            while (result > 0 && Character.isWhitespace(value.charAt(result - 1))) result--;
+            while (result > 0 && !Character.isWhitespace(value.charAt(result - 1))) result--;
+            return result;
+        } else {
+            int result = from;
+            while (result < length && !Character.isWhitespace(value.charAt(result))) result++;
+            while (result < length && Character.isWhitespace(value.charAt(result))) result++;
+            return result;
+        }
     }
 
     private int[] lineColumnAt(int index, List<String> lines) {
@@ -235,6 +352,7 @@ public class TextAreaComponent extends BaseComponent<TextAreaComponent> {
     public TextAreaComponent value(String value) {
         this.value = value == null ? "" : value.substring(0, Math.min(value.length(), maxLength));
         this.cursor = Math.min(cursor, this.value.length());
+        this.highlight = cursor;
         onChanged.accept(this.value);
         return this;
     }

@@ -59,15 +59,28 @@ public class WidgetsTab extends Tab2 {
                 .checkItem("Word Wrap", false, checked ->
                         contextMenuStatus.text(Component.literal("Word Wrap: " + checked)));
 
-        LabelComponent contextMenuTrigger = WidgetComponents.label("Right-click anywhere in this area")
+        // sizing(fill, fixed(36)) here matters: the trigger IS the bordered box (see
+        // contextMenuSection), so its hit-test bounds must cover the whole box, not just
+        // a text-height strip at the top — otherwise right-click only works on a sliver
+        // of what visually looks like one clickable area.
+        LabelComponent contextMenuTrigger = WidgetComponents.label("Right-click anywhere in this box")
                 .secondary()
-                .sizing(Sizing.fill(), Sizing.fixed(9))
+                .centered(true)
+                .surface(Surface.outline())
+                .sizing(Sizing.fill(), Sizing.fixed(36))
                 .onRightClick(e -> contextMenu.openAt(BaseComponent.currentScreenMouseX(), BaseComponent.currentScreenMouseY()));
 
         // ── Hover card ────────────────────────────────────────
-        // HoverCard wraps the trigger inline — no separate root overlay needed.
+        // HoverCard wraps the trigger inline — no separate root overlay needed. Same
+        // sizing reasoning as the context menu trigger above: HoverCardComponent adopts
+        // the trigger's declared sizing as its own, and hover is detected against ITS
+        // bounds, so a fixed(9) trigger left most of the visible box un-hoverable.
         HoverCardComponent hoverCard = Overlays.hoverCard()
-                .wrap(WidgetComponents.label("Hover over me (500 ms delay)").sizing(Sizing.fill(), Sizing.fixed(9)))
+                .wrap(WidgetComponents.label("Hover over this box (500 ms delay)")
+                        .secondary()
+                        .centered(true)
+                        .surface(Surface.outline())
+                        .sizing(Sizing.fill(), Sizing.fixed(36)))
                 .card(Containers.vertical(Sizing.fill(), Sizing.content())
                         .padding(Insets.of(4))
                         .gap(4)
@@ -418,25 +431,22 @@ public class WidgetsTab extends Tab2 {
     }
 
     private BaseComponent<?> contextMenuSection(LabelComponent trigger, LabelComponent statusLabel) {
+        // trigger IS the bordered box (see its construction above) — no separate wrapping
+        // container, so there is no dead padding area that looks clickable but isn't.
         return section("Context Menu")
-                .child(WidgetComponents.text("Right-click the highlighted area below to open a context menu.")
+                .child(WidgetComponents.text("Right-click the box below to open a context menu.")
                         .secondary()
                         .sizing(Sizing.fill(), Sizing.content()))
-                .child(Containers.vertical(Sizing.fill(), Sizing.fixed(36))
-                        .padding(Insets.of(8))
-                        .surface(Surface.outline())
-                        .child(trigger))
+                .child(trigger)
                 .child(statusLabel);
     }
 
     private BaseComponent<?> hoverCardSection(HoverCardComponent hoverCard) {
+        // hoverCard wraps a trigger that IS the bordered box — see its construction above.
         return section("Hover Card")
-                .child(WidgetComponents.text("Hover over the label below for 500 ms to open a card. Card renders above all content via HoverCardOverlay (no scissor conflicts).")
+                .child(WidgetComponents.text("Hover over the box below for 500 ms to open a card. Card renders above all content via HoverCardOverlay (no scissor conflicts).")
                         .secondary()
                         .sizing(Sizing.fill(), Sizing.content()))
-                .child(Containers.vertical(Sizing.fill(), Sizing.fixed(36))
-                        .padding(Insets.of(8))
-                        .surface(Surface.outline())
-                        .child(hoverCard));
+                .child(hoverCard);
     }
 }

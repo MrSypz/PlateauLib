@@ -18,6 +18,16 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Tabbed container with a scrollable header strip and animated content switching.
+ * <p>
+ * Unlike vanilla's {@code TabNavigationBar} (which shrinks every tab to an equal share of the
+ * available width so the strip never overflows), tabs here keep their natural text width and
+ * the header instead scrolls horizontally — via mouse wheel over the header, or automatically
+ * into view on tab switch — once their combined width exceeds {@link #innerWidth()}.
+ *
+ * @see net.minecraft.client.gui.components.tabs.TabNavigationBar
+ */
 @Environment(EnvType.CLIENT)
 public class TabComponent extends BaseContainerComponent<TabComponent> {
 
@@ -31,6 +41,13 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
     private int contentGap = 6;
     private int tabPaddingX = 10;
     private float contentSlideSpeed = 0.35f;
+
+    // Header scroll — same target/value exponential-lerp pattern as ScrollBehavior#update,
+    // just for the header strip's horizontal axis instead of a container's vertical one.
+    /** Animated horizontal scroll offset of the header strip, in pixels. */
+    private double headerScrollX = 0;
+    /** Target {@link #headerScrollX} lerps toward each frame. */
+    private double headerScrollTarget = 0;
 
     // Per-tab hover animation — resized whenever tabs change.
     private float[] tabHoverProgress = new float[0];
@@ -64,6 +81,7 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
             UISounds.playClick();
             mountContent(tabs.get(activeIndex).content());
             if (previousIndex >= 0) mountContent(tabs.get(previousIndex).content());
+            ensureActiveTabVisible();
         }
         return this;
     }
@@ -147,10 +165,22 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
+        if (isOverHeader(mouseX, mouseY)) {
+            int maxScroll = Math.max(0, headerContentWidth() - innerWidth());
+            double delta = hAmount != 0 ? hAmount : (vAmount < 0 ? 1 : -1);
+            headerScrollTarget = Mth.clamp(headerScrollTarget + delta * 20, 0, maxScroll);
+            return true;
+        }
+
         BaseComponent<?> content = activeContent();
         return content != null
                 && content.isMouseOver(mouseX, mouseY)
                 && content.mouseScrolled(mouseX, mouseY, hAmount, vAmount);
+    }
+
+    private boolean isOverHeader(double mouseX, double mouseY) {
+        return mouseX >= innerX() && mouseX < innerX() + innerWidth()
+                && mouseY >= innerY() && mouseY < innerY() + headerHeight;
     }
 
     @Override
@@ -191,12 +221,48 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
 
     @Override
     public int determineHorizontalContentSize(int space) {
-        int total = padding.horizontal();
+        return padding.horizontal() + headerContentWidth();
+    }
+
+    /** Total natural width of every tab header button, including inter-tab gaps. */
+    private int headerContentWidth() {
+        int total = 0;
         for (int i = 0; i < tabs.size(); i++) {
             total += font.width(tabs.get(i).title()) + tabPaddingX * 2;
             if (i < tabs.size() - 1) total += headerGap;
         }
         return total;
+    }
+
+    private void clampHeaderScroll() {
+        int maxScroll = Math.max(0, headerContentWidth() - innerWidth());
+        headerScrollX = Mth.clamp(headerScrollX, 0, maxScroll);
+        headerScrollTarget = Mth.clamp(headerScrollTarget, 0, maxScroll);
+    }
+
+    /** Lerps {@link #headerScrollX} toward {@link #headerScrollTarget}, mirroring {@code ScrollBehavior#update(float)}. */
+    private void updateHeaderScrollAnimation(float delta) {
+        if (Math.abs(headerScrollX - headerScrollTarget) > 0.1) {
+            float lerpFactor = 1.0f - (float) Math.exp(-0.3f * delta);
+            headerScrollX = Mth.lerp(lerpFactor, headerScrollX, headerScrollTarget);
+        } else {
+            headerScrollX = headerScrollTarget;
+        }
+    }
+
+    /** Scrolls the header strip just far enough to bring the active tab's button into view. */
+    private void ensureActiveTabVisible() {
+        int tabX = 0;
+        int tabW = 0;
+        for (int i = 0; i <= activeIndex && i < tabs.size(); i++) {
+            tabW = font.width(tabs.get(i).title()) + tabPaddingX * 2;
+            if (i == activeIndex) break;
+            tabX += tabW + headerGap;
+        }
+
+        if (tabX < headerScrollTarget) headerScrollTarget = tabX;
+        else if (tabX + tabW > headerScrollTarget + innerWidth()) headerScrollTarget = tabX + tabW - innerWidth();
+        clampHeaderScroll();
     }
 
     @Override
@@ -261,8 +327,15 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
     }
 
     private void extractHeaders(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        int nextTabX = innerX();
-        int tabY = innerY();
+        clampHeaderScroll();
+        updateHeaderScrollAnimation(delta);
+
+        int headerX = innerX();
+        int headerY = innerY();
+        int headerW = innerWidth();
+
+        g.enableScissor(headerX, headerY, headerX + headerW, headerY + headerHeight);
+        int nextTabX = headerX - (int) Math.round(headerScrollX);
 
         for (int i = 0; i < tabs.size(); i++) {
             Tab tab = tabs.get(i);
@@ -270,7 +343,8 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
             int tabW = font.width(tab.title()) + tabPaddingX * 2;
             boolean selected = (i == activeIndex);
             boolean hovered  = mouseX >= nextTabX && mouseX < nextTabX + tabW
-                    && mouseY >= tabY && mouseY < tabY + headerHeight;
+                    && mouseX >= headerX && mouseX < headerX + headerW
+                    && mouseY >= headerY && mouseY < headerY + headerHeight;
 
             if (DragDrop.active() && hovered && !selected) {
                 active(i);
@@ -283,17 +357,19 @@ public class TabComponent extends BaseContainerComponent<TabComponent> {
             float hover = selected ? Math.max(tabHoverProgress[i], 0.65f) : tabHoverProgress[i];
             float press = selected ? 0.18f : 0f;
 
-            RenderHelper.squareButton(g, font, tab.title(), nextTabX, tabY, tabW, headerHeight,
+            RenderHelper.squareButton(g, font, tab.title(), nextTabX, headerY, tabW, headerHeight,
                     true, hover, press, true);
 
             nextTabX += tabW + headerGap;
         }
+        g.disableScissor();
     }
 
     private int tabAt(double mouseX, double mouseY) {
         if (mouseY < innerY() || mouseY >= innerY() + headerHeight) return -1;
+        if (mouseX < innerX() || mouseX >= innerX() + innerWidth()) return -1;
 
-        int nextTabX = innerX();
+        int nextTabX = innerX() - (int) Math.round(headerScrollX);
         for (int i = 0; i < tabs.size(); i++) {
             int tabW = font.width(tabs.get(i).title()) + tabPaddingX * 2;
             if (mouseX >= nextTabX && mouseX < nextTabX + tabW) return i;

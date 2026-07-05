@@ -27,6 +27,12 @@ import org.jspecify.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Word-wrapping, non-editable rich text display with clickable/hoverable {@link Style} runs.
+ *
+ * @see net.minecraft.client.gui.components.MultiLineTextWidget
+ * @see net.minecraft.client.gui.components.MultiLineLabel
+ */
 @Environment(EnvType.CLIENT)
 public class TextComponent extends BaseComponent<TextComponent> {
 
