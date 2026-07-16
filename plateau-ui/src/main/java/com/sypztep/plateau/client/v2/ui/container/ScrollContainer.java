@@ -257,6 +257,18 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
     public void resetScroll()     { scroll.resetScroll(); }
     public ScrollBehavior getScrollBehavior() { return scroll; }
 
+    /**
+     * Is (contentX, contentY) — already in this container's content-space, e.g. the coordinates
+     * passed to a child's own {@code isMouseOver} — also within the viewport's visible screen
+     * rectangle? {@link #hitTest} only checks a child's own stored bounds, which stay full-size
+     * even when scrolled past the clipped edge, so a custom child that does its own hover/tooltip
+     * logic should gate on {@code scrollContainer.isInViewport(mouseX, mouseY) && child.isMouseOver(mouseX, mouseY)}
+     * to avoid registering hover on content clipped by the scissor.
+     */
+    public boolean isInViewport(double contentX, double contentY) {
+        return isMouseOver(contentX, contentY - scroll.getScrollOffset());
+    }
+
     private static final int SCROLLBAR_RESERVED = 8;
 
     private MouseButtonEvent contentEvent(MouseButtonEvent event) {

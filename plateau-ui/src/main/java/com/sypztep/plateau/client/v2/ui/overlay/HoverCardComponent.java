@@ -33,6 +33,16 @@ import org.jspecify.annotations.Nullable;
  *
  * {@link HoverCardOverlay} is driven automatically by {@link BaseComponent#extractRenderState};
  * no separate overlay component needs to be added to the screen root.
+ *
+ * <p><b>Dense lists:</b> the default {@code closeDelay} keeps a card open for a grace period after
+ * the mouse leaves the trigger, which is what you want for one isolated trigger with open space
+ * around it. But {@link #extract} re-schedules the card every frame it's still open, anchored at
+ * the CURRENT mouse position rather than the trigger — so for many {@code HoverCardComponent}s
+ * wrapping small rows packed tightly in a list, the lingering card visibly follows the cursor into
+ * whatever row or gap it moves to next, reading as a ghost tooltip. If wrapping many small,
+ * densely-packed triggers (e.g. rows in a list), use {@code openDelay(0).closeDelay(0)}, or drive
+ * {@link HoverCardOverlay#schedule} directly once per frame from the row's own current-frame hover
+ * state instead of one {@code HoverCardComponent} per row.
  */
 @Environment(EnvType.CLIENT)
 public class HoverCardComponent extends BaseContainerComponent<HoverCardComponent> {

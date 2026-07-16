@@ -8,6 +8,7 @@ import com.sypztep.plateau.client.v2.ui.Overlays;
 import com.sypztep.plateau.client.v2.ui.Panels;
 import com.sypztep.plateau.client.v2.ui.WidgetComponents;
 import com.sypztep.plateau.client.v2.ui.container.PanelComponent;
+import com.sypztep.plateau.client.v2.ui.container.ScrollContainer;
 import com.sypztep.plateau.client.v2.ui.core.BaseComponent;
 import com.sypztep.plateau.client.v2.ui.core.Insets;
 import com.sypztep.plateau.client.v2.ui.core.Sizing;
@@ -156,6 +157,8 @@ public class WidgetsTab extends Tab2 {
                         .child(inputDialogSection(inputDialog, inputResult))
                         .child(contextMenuSection(contextMenuTrigger, contextMenuStatus))
                         .child(hoverCardSection(hoverCard))
+                        .child(denseListSection())
+                        .child(responsiveSection())
                         .child(searchableDropdownSection())
                         .child(childInChildSection(clickStatus))
                         .child(rowSection())
@@ -448,5 +451,70 @@ public class WidgetsTab extends Tab2 {
                         .secondary()
                         .sizing(Sizing.fill(), Sizing.content()))
                 .child(hoverCard);
+    }
+
+    private BaseComponent<?> denseListSection() {
+        // Regression coverage for two bugs only visible with MANY packed rows in a
+        // clipped ScrollContainer:
+        //  1. hitTest has no scissor awareness — a row scrolled so it's half past the
+        //     viewport's top/bottom edge keeps its full un-clipped bounds, so hovering
+        //     the visually-empty clipped strip still highlights/tooltips it. The list
+        //     height (130) is short enough relative to 20 rows that clipped edges are
+        //     easy to find while scrolling.
+        //  2. HoverCardComponent's default closeDelay lets a card "follow" the cursor
+        //     into whatever row/gap it moves to next when rows are packed with no gap —
+        //     reads as a ghost tooltip. Compare rows 1-10 (default delays) against
+        //     11-20 (openDelay(0).closeDelay(0), per the dense-list javadoc note).
+
+        ScrollContainer list = Containers.scrollable(Sizing.fill(), Sizing.fixed(130))
+                .child(WidgetComponents.text("Filler row above the list so the first list row starts mid-scroll once you scroll down a little.")
+                        .secondary()
+                        .sizing(Sizing.fill(), Sizing.content()));
+
+        for (int i = 1; i <= 20; i++) {
+            boolean instantDelays = i > 10;
+            PanelComponent row = Panels.fixed("Row " + i)
+                    .headerHeight(0)
+                    .bodyPadding(Insets.of(2, 6))
+                    .sizing(Sizing.fill(), Sizing.fixed(20));
+
+            HoverCardComponent wrapped = Overlays.hoverCard()
+                    .wrap(row)
+                    .card(WidgetComponents.text(instantDelays
+                                    ? "Row " + i + " (instant delays — no ghost-follow)"
+                                    : "Row " + i + " (default 500/200 ms delays)")
+                            .secondary()
+                            .sizing(Sizing.fill(), Sizing.content()))
+                    .cardWidth(180);
+            if (instantDelays) wrapped.openDelay(0).closeDelay(0);
+
+            list.child(wrapped);
+        }
+
+        return section("Dense List (scroll clip + hover-card stress test)")
+                .child(WidgetComponents.text("20 packed rows in a short ScrollContainer. Scroll so a row sits half past the top/bottom edge and hover the empty clipped strip — it should NOT highlight. Rows 1-10 use default hover-card delays (may ghost-follow between rows); 11-20 use openDelay(0).closeDelay(0).")
+                        .secondary()
+                        .sizing(Sizing.fill(), Sizing.content()))
+                .child(list);
+    }
+
+    private BaseComponent<?> responsiveSection() {
+        return section("Responsive Container")
+                .child(WidgetComponents.text("Resize the window (or change GUI Scale) narrower than ~300px wide to see this swap from a side-by-side row to a stacked column. The breakpoint function reruns on every remount, not per frame.")
+                        .secondary()
+                        .sizing(Sizing.fill(), Sizing.content()))
+                .child(Containers.responsive(Sizing.fill(), Sizing.fixed(60))
+                        .surface(Surface.outline())
+                        .breakpoint(width -> width < 300
+                                ? Containers.vertical(Sizing.fill(), Sizing.fill())
+                                        .padding(Insets.of(4))
+                                        .gap(2)
+                                        .child(WidgetComponents.label("Compact (< 300px)").sizing(Sizing.fill(), Sizing.fixed(9)))
+                                        .child(WidgetComponents.label("Stacked column").secondary().sizing(Sizing.fill(), Sizing.fixed(9)))
+                                : Containers.horizontal(Sizing.fill(), Sizing.fill())
+                                        .padding(Insets.of(4))
+                                        .gap(4)
+                                        .child(WidgetComponents.label("Wide (>= 300px)").sizing(Sizing.fill(), Sizing.fixed(9)))
+                                        .child(WidgetComponents.label("Side-by-side row").secondary().sizing(Sizing.fill(), Sizing.fixed(9)))));
     }
 }

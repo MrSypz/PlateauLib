@@ -4,6 +4,7 @@ import com.sypztep.plateau.client.v2.ui.core.Sizing;
 import com.sypztep.plateau.client.v2.ui.container.ScrollContainer;
 import com.sypztep.plateau.client.v2.ui.container.TabComponent;
 import com.sypztep.plateau.client.v2.ui.layout.FlowLayout;
+import com.sypztep.plateau.client.v2.ui.layout.ResponsiveContainer;
 import com.sypztep.plateau.client.v2.ui.layout.SplitLayout;
 import com.sypztep.plateau.client.v2.ui.layout.StackLayout;
 import net.fabricmc.api.EnvType;
@@ -76,5 +77,10 @@ public final class Containers {
 
     public static TabComponent tabs() {
         return new TabComponent();
+    }
+
+    /** Rebuilds its entire child subtree from {@code layoutBuilder} on every (re)mount, based on the width offered. See {@link ResponsiveContainer}. */
+    public static ResponsiveContainer responsive(Sizing horizontal, Sizing vertical) {
+        return new ResponsiveContainer(horizontal, vertical);
     }
 }
