@@ -8,6 +8,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.util.Mth;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
@@ -132,9 +133,25 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
 
     @Override
     public void mouseMoved(double mouseX, double mouseY) {
+        // Children mount at a fixed content-space Y regardless of scroll (see layoutChildren),
+        // so adjustedY can coincidentally land inside some child's bounds even when the real
+        // on-screen mouseX/mouseY isn't over this container at all. Only forward real coordinates
+        // to ordinary children when the mouse is actually within our own viewport; otherwise they
+        // see the suppressed sentinel, same as a mouse that left the screen entirely. Children
+        // that opted out of clipping (rendersAboveSiblings, e.g. an open dropdown list extending
+        // past our bottom edge) always get real coordinates - they may legitimately be hovered
+        // outside our own bounds.
+        boolean inViewport = bounds().containsPoint(Mth.floor(mouseX), Mth.floor(mouseY));
         double adjustedY = mouseY + scroll.getScrollOffset();
+        double dispatchX = inViewport ? mouseX : hoverSuppressedMouse();
+        double dispatchY = inViewport ? adjustedY : hoverSuppressedMouse();
         for (BaseComponent<?> child : children) {
-            if (child.isVisible()) child.mouseMoved(mouseX, adjustedY);
+            if (!child.isVisible()) continue;
+            if (child.rendersAboveSiblings()) {
+                child.mouseMoved(mouseX, adjustedY);
+            } else {
+                child.mouseMoved(dispatchX, dispatchY);
+            }
         }
     }
 
@@ -222,12 +239,21 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
         int scrollOffset = scroll.getScrollOffset();
         int adjustedMouseY = mouseY + scrollOffset;
 
+        // Children mount at a fixed content-space Y regardless of scroll (see layoutChildren),
+        // so adjustedMouseY can coincidentally fall inside some child's bounds purely because of
+        // how far the list is scrolled, even when the real on-screen mouseX/mouseY isn't over
+        // this container at all (e.g. the cursor sits over a section below the scroll box while
+        // the wheel keeps scrolling it). Every child must see the suppressed sentinel in that
+        // case — this is what makes isInViewport()-style gating automatic instead of something
+        // each custom row/child has to remember to check itself.
+        boolean inViewport = bounds().containsPoint(Mth.floor(mouseX), Mth.floor(mouseY));
+
         g.pose().pushMatrix();
         g.pose().translate(0f, -(float) scrollOffset);
 
         for (BaseComponent<?> child : children) {
             if (child.isVisible() && !child.rendersAboveSiblings()) {
-                boolean hoverBlocked = isMouseBlockedByTopChild(child, mouseX, adjustedMouseY);
+                boolean hoverBlocked = !inViewport || isMouseBlockedByTopChild(child, mouseX, adjustedMouseY);
                 child.extractRenderState(g,
                         hoverBlocked ? hoverSuppressedMouse() : mouseX,
                         hoverBlocked ? hoverSuppressedMouse() : adjustedMouseY,
@@ -237,6 +263,10 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
 
         for (BaseComponent<?> child : children) {
             if (child.isVisible() && child.rendersAboveSiblings()) {
+                // Not gated by inViewport: this child has explicitly opted out of scissor
+                // clipping (e.g. an open dropdown list scrolled near the bottom edge, whose
+                // expanded list legitimately extends past this container's own bounds) and must
+                // stay hoverable there.
                 boolean hoverBlocked = isMouseBlockedByTopChild(child, mouseX, adjustedMouseY);
                 child.extractRenderState(g,
                         hoverBlocked ? hoverSuppressedMouse() : mouseX,
@@ -261,9 +291,16 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
      * Is (contentX, contentY) — already in this container's content-space, e.g. the coordinates
      * passed to a child's own {@code isMouseOver} — also within the viewport's visible screen
      * rectangle? {@link #hitTest} only checks a child's own stored bounds, which stay full-size
-     * even when scrolled past the clipped edge, so a custom child that does its own hover/tooltip
-     * logic should gate on {@code scrollContainer.isInViewport(mouseX, mouseY) && child.isMouseOver(mouseX, mouseY)}
-     * to avoid registering hover on content clipped by the scissor.
+     * even when scrolled past the clipped edge.
+     *
+     * <p>Normal children (extract/mouseMoved dispatch, the default for any child added via
+     * {@code .child(...)}) never need to call this directly — {@link #extract} and
+     * {@link #mouseMoved} already suppress hover automatically for out-of-viewport children before
+     * dispatching to them, including children whose own bounds never even scroll near the clipped
+     * edge but whose content-space Y coincidentally matches the current scroll offset. This method
+     * remains public for a child that bypasses that dispatch (e.g. a custom
+     * {@code mouseClicked}/{@code mouseScrolled} override reading raw coordinates itself), where it
+     * should still gate on {@code scrollContainer.isInViewport(mouseX, mouseY) && child.isMouseOver(mouseX, mouseY)}.
      */
     public boolean isInViewport(double contentX, double contentY) {
         return isMouseOver(contentX, contentY - scroll.getScrollOffset());

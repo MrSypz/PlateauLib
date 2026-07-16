@@ -2,6 +2,7 @@ package com.sypztep.plateau.test.screen;
 
 import com.sypztep.plateau.client.PlateauUIClient;
 import com.sypztep.plateau.client.v1.ui.screen.TabContext;
+import com.sypztep.plateau.client.v1.ui.theme.UITheme;
 import com.sypztep.plateau.client.v1.ui.theme.UIThemeRegistry;
 import com.sypztep.plateau.client.v2.ui.Containers;
 import com.sypztep.plateau.client.v2.ui.Overlays;
@@ -25,6 +26,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.resources.Identifier;
 
 import java.net.URI;
 
@@ -159,6 +161,7 @@ public class WidgetsTab extends Tab2 {
                         .child(hoverCardSection(hoverCard))
                         .child(denseListSection())
                         .child(responsiveSection())
+                        .child(themeTokensSection())
                         .child(searchableDropdownSection())
                         .child(childInChildSection(clickStatus))
                         .child(rowSection())
@@ -516,5 +519,27 @@ public class WidgetsTab extends Tab2 {
                                         .gap(4)
                                         .child(WidgetComponents.label("Wide (>= 300px)").sizing(Sizing.fill(), Sizing.fixed(9)))
                                         .child(WidgetComponents.label("Side-by-side row").secondary().sizing(Sizing.fill(), Sizing.fixed(9)))));
+    }
+
+    private BaseComponent<?> themeTokensSection() {
+        // Read once at build time, matching how the swatch colors below are also fixed at
+        // build time — switch theme via the Theme section, then re-open this tab to refresh.
+        UITheme theme = UITheme.current();
+        int demoAccent = theme.color(UITestClient.id("demo-accent"), 0xFFFF00FF);
+        float demoRadius = theme.scalar(UITestClient.id("demo-radius"), -1f);
+        int undefinedToken = theme.color(Identifier.fromNamespaceAndPath("leklai", "accent-200"), 0xFF808080);
+
+        return section("Theme Tokens (Identifier-keyed extension)")
+                .child(WidgetComponents.text("Color/scalar tokens are looked up by Identifier, namespaced like any Minecraft registry key, so one mod's tokens can't collide with plateau-ui's or another mod's. dark.json defines \"plateau-ui-testmod:demo-accent\" and \"...:demo-radius\" (top swatch); \"leklai:accent-200\" is never defined anywhere, so it always falls back to the gray swatch below. Switch to the Legacy theme (see the Theme section further down) and reopen this tab to see the top swatch fall back too, since legacy.json doesn't define it.")
+                        .secondary()
+                        .sizing(Sizing.fill(), Sizing.content()))
+                .child(WidgetComponents.separator().color(demoAccent).sizing(Sizing.fill(), Sizing.fixed(16)))
+                .child(WidgetComponents.label("color(\"plateau-ui-testmod:demo-accent\", fallback) -- scalar(\"...:demo-radius\", -1) = " + demoRadius)
+                        .secondary()
+                        .sizing(Sizing.fill(), Sizing.fixed(9)))
+                .child(WidgetComponents.separator().color(undefinedToken).sizing(Sizing.fill(), Sizing.fixed(16)))
+                .child(WidgetComponents.label("color(\"leklai:accent-200\", fallback) -- undefined, always shows the fallback")
+                        .secondary()
+                        .sizing(Sizing.fill(), Sizing.fixed(9)));
     }
 }

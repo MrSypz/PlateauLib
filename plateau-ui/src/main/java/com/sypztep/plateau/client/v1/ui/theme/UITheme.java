@@ -4,9 +4,29 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.resources.Identifier;
 
 import java.util.Map;
 
+/**
+ * The typed fields ({@link #panel()}, {@link #text()}, ...) are the framework's core palette —
+ * built-in widgets read these directly, so they stay compile-checked and autocomplete-friendly.
+ *
+ * {@link #colorTokens()} and {@link #scalarTokens()} are an open, Tailwind-style extension point
+ * for anything outside that core surface (a consumer mod's own widgets, one-off accents, etc.).
+ * Tokens are keyed by {@link Identifier} exactly like any other Minecraft registry key, so a mod
+ * "leklai" defining its own scale doesn't collide with plateau-ui's own tokens or another mod's:
+ *
+ * <pre>{@code
+ * // theme JSON:
+ * // "color_tokens": { "leklai:accent-200": "#FFC8A96A" }
+ *
+ * Identifier key = Identifier.fromNamespaceAndPath("leklai", "accent-200");
+ * int accent200 = UITheme.current().color(key, 0xFFFFFFFF);
+ * // or, equivalently:
+ * int accent200 = UITheme.current().color("leklai", "accent-200", 0xFFFFFFFF);
+ * }</pre>
+ */
 @Environment(EnvType.CLIENT)
 public record UITheme(
         int screenBackground,
@@ -16,15 +36,31 @@ public record UITheme(
         Nav nav,
         Progress progress,
         Animation animation,
-        Map<String, Integer> extras
+        Map<Identifier, Integer> colorTokens,
+        Map<Identifier, Float> scalarTokens
 ) {
     public static UITheme current() {
         return UIThemeRegistry.INSTANCE.current();
     }
 
-    /** Look up an extra color token by key. Returns {@code fallback} if the key is absent. */
-    public int color(String key, int fallback) {
-        return extras.getOrDefault(key, fallback);
+    /** Look up a color token by key. Returns {@code fallback} if the key is absent. */
+    public int color(Identifier key, int fallback) {
+        return colorTokens.getOrDefault(key, fallback);
+    }
+
+    /** Shorthand for {@code color(Identifier.fromNamespaceAndPath(namespace, path), fallback)}. */
+    public int color(String namespace, String path, int fallback) {
+        return color(Identifier.fromNamespaceAndPath(namespace, path), fallback);
+    }
+
+    /** Look up a scalar token (radius, spacing, animation speed, ...) by key. */
+    public float scalar(Identifier key, float fallback) {
+        return scalarTokens.getOrDefault(key, fallback);
+    }
+
+    /** Shorthand for {@code scalar(Identifier.fromNamespaceAndPath(namespace, path), fallback)}. */
+    public float scalar(String namespace, String path, float fallback) {
+        return scalar(Identifier.fromNamespaceAndPath(namespace, path), fallback);
     }
 
     public static final Codec<Integer> COLOR_CODEC = Codec.STRING.xmap(
@@ -32,8 +68,11 @@ public record UITheme(
             UITheme::formatColor
     );
 
-    private static final Codec<Map<String, Integer>> EXTRAS_CODEC =
-            Codec.unboundedMap(Codec.STRING, COLOR_CODEC);
+    private static final Codec<Map<Identifier, Integer>> COLOR_TOKENS_CODEC =
+            Codec.unboundedMap(Identifier.CODEC, COLOR_CODEC);
+
+    private static final Codec<Map<Identifier, Float>> SCALAR_TOKENS_CODEC =
+            Codec.unboundedMap(Identifier.CODEC, Codec.FLOAT);
 
     public static final Codec<UITheme> CODEC = RecordCodecBuilder.create(i -> i.group(
             COLOR_CODEC.fieldOf("screen_background").forGetter(UITheme::screenBackground),
@@ -43,7 +82,8 @@ public record UITheme(
             Nav.CODEC.fieldOf("nav").forGetter(UITheme::nav),
             Progress.CODEC.fieldOf("progress").forGetter(UITheme::progress),
             Animation.CODEC.fieldOf("animation").forGetter(UITheme::animation),
-            EXTRAS_CODEC.optionalFieldOf("extras", Map.of()).forGetter(UITheme::extras)
+            COLOR_TOKENS_CODEC.optionalFieldOf("color_tokens", Map.of()).forGetter(UITheme::colorTokens),
+            SCALAR_TOKENS_CODEC.optionalFieldOf("scalar_tokens", Map.of()).forGetter(UITheme::scalarTokens)
     ).apply(i, UITheme::new));
 
     public record Panel(

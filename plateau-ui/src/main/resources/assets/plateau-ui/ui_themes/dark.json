@@ -65,5 +65,12 @@
   "animation": {
     "hover_speed": 1.0,
     "hover_speed_fast": 0.2
+  },
+
+  "color_tokens": {
+    "plateau-ui-testmod:demo-accent": "#FF7FD9C4"
+  },
+  "scalar_tokens": {
+    "plateau-ui-testmod:demo-radius": 6.0
   }
 }
