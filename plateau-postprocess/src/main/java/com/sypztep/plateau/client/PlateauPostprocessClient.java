@@ -1,9 +1,11 @@
 package com.sypztep.plateau.client;
 
-import com.sypztep.plateau.client.v1.postprocess.PostEffectManager;
-import com.sypztep.plateau.client.v1.postprocess.PostEffectManagerAccess;
+import com.sypztep.plateau.client.v1.vfx.VfxLevelPhase;
+import com.sypztep.plateau.client.v1.vfx.VfxManager;
+import com.sypztep.plateau.client.v1.vfx.VfxManagerAccess;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,8 +14,20 @@ public class PlateauPostprocessClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        LOGGER.info("[Postprocess] Initialize post process module (API v{})", PostEffectManager.API_VERSION);
+        LOGGER.info("[Postprocess] Initialize post process module (API v{})", VfxManager.API_VERSION);
+
+        // One listener per supported prepare phase — the manager fans out to
+        // effects that declared the phase, in priority order.
+        LevelRenderEvents.AFTER_SOLID_FEATURES.register(ctx
+                -> VfxManagerAccess.dispatchPrepare(VfxLevelPhase.AFTER_SOLID_FEATURES, ctx));
+        LevelRenderEvents.BEFORE_TRANSLUCENT_TERRAIN.register(ctx
+                -> VfxManagerAccess.dispatchPrepare(VfxLevelPhase.BEFORE_TRANSLUCENT_TERRAIN, ctx));
+        LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN.register(ctx
+                -> VfxManagerAccess.dispatchPrepare(VfxLevelPhase.AFTER_TRANSLUCENT_TERRAIN, ctx));
+        LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register(ctx
+                -> VfxManagerAccess.dispatchPrepare(VfxLevelPhase.AFTER_TRANSLUCENT_FEATURES, ctx));
+
         ClientPlayConnectionEvents.DISCONNECT.register((_, client)
-                -> client.execute(PostEffectManagerAccess::closeAll));
+                -> client.execute(VfxManagerAccess::closeAll));
     }
 }

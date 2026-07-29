@@ -1,6 +1,6 @@
 package com.sypztep.plateau.mixin.postprocess;
 
-import com.sypztep.plateau.client.v1.postprocess.PostEffectManagerAccess;
+import com.sypztep.plateau.client.v1.vfx.VfxManagerAccess;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.DeltaTracker;
@@ -24,6 +24,6 @@ public class GameRendererMixin {
             shift = At.Shift.AFTER))
     private void onAfterRenderLevel(DeltaTracker deltaTracker, boolean advanceGameTime, CallbackInfo ci) {
         float partialTick = deltaTracker.getGameTimeDeltaPartialTick(false);
-        PostEffectManagerAccess.applyAll(minecraft, partialTick);
+        VfxManagerAccess.applyAll(minecraft, partialTick);
     }
 }
