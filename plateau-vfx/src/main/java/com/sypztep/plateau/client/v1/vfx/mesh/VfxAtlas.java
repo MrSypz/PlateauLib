@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 /**
- * A dedicated GPU texture atlas for {@link EnKreta} textures, entirely
+ * A dedicated GPU texture atlas for {@link Anicca} textures, entirely
  * separate from vanilla's {@code minecraft:textures/atlas/blocks.png} atlas
  * — mesh-particle textures never compete for space in (or bloat) the atlas
  * every actual block/item in the game shares. Same mechanism vanilla itself
@@ -34,7 +34,7 @@ import java.util.concurrent.Executor;
  * point a {@code "minecraft:directory"} source at {@code "vfx_mesh"} with
  * prefix {@code "vfx_mesh/"} so texture files under
  * {@code assets/<ns>/textures/vfx_mesh/*.png} become sprites named
- * {@code <ns>:vfx_mesh/<name>} — the identifier a {@code EnKreta}'s model
+ * {@code <ns>:vfx_mesh/<name>} — the identifier an {@code Anicca}'s model
  * JSON should reference in its {@code "textures"} map.
  *
  * <p>No mipmaps (0 levels) — VFX meshes are typically close to the camera
@@ -62,7 +62,7 @@ public final class VfxAtlas {
         ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(RELOAD_LISTENER_ID, new AtlasReloadListener());
     }
 
-    /** The render type {@link EnKreta} draws through — same cutout/cull entity pipeline vanilla block items use, bound to this atlas instead of `blocks.png`. */
+    /** The render type {@link Anicca} draws through — same cutout/cull entity pipeline vanilla block items use, bound to this atlas instead of `blocks.png`. */
     public static RenderType renderType() {
         return RenderTypes.entityCutoutCull(LOCATION);
     }

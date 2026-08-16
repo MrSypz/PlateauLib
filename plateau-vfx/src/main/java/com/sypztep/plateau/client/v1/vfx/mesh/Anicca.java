@@ -39,7 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * EnKreta — plateau-vfx's non-procedural mesh particle system: a
+ * Anicca — plateau-vfx's non-procedural mesh particle system: a
  * vanilla-schema block model JSON (the same {@code elements}/{@code faces}/
  * {@code textures} format used by blocks/items — author it in Blockbench
  * with the "Minecraft: Java Block/Item" project type and export as-is)
@@ -86,8 +86,8 @@ import java.util.Optional;
  * larger than that no matter how this class's own code changes, only
  * vanilla's parser could lift it. Flagging this now since it hasn't caused
  * a problem yet: a VFX mesh wanting to span more than ~3 blocks per element
- * needs multiple elements (still one model/one {@code EnKreta}) or multiple
- * {@code EnKreta} instances composed by the caller — revisit if that ever
+ * needs multiple elements (still one model/one {@code Anicca}) or multiple
+ * {@code Anicca} instances composed by the caller — revisit if that ever
  * becomes a real constraint (would mean writing a from-scratch element
  * parser instead of reusing {@link CuboidModel}, a real scope increase).
  *
@@ -105,12 +105,12 @@ import java.util.Optional;
  * (small elements share exact corner coordinates and, usually, one
  * material) so the cached quad list doesn't carry duplicate small objects;
  * the interning maps themselves are call-scoped, not kept as fields.
- * {@link #draw} reuses one {@link QuadInstance} per {@code EnKreta}
+ * {@link #draw} reuses one {@link QuadInstance} per {@code Anicca}
  * instead of allocating one per particle per frame.
  */
 @Environment(EnvType.CLIENT)
-public final class EnKreta {
-    private static final Logger LOGGER = LoggerFactory.getLogger("PlateauVfx/EnKreta");
+public final class Anicca {
+    private static final Logger LOGGER = LoggerFactory.getLogger("PlateauVfx/Anicca");
     private static final FileToIdConverter MODEL_FILES = FileToIdConverter.json("vfx_mesh");
 
     private final Identifier modelId;
@@ -118,7 +118,7 @@ public final class EnKreta {
     private ResourceManager lastResourceManager;
     private List<BakedQuad> quads = List.of();
 
-    private EnKreta(Identifier modelId) {
+    private Anicca(Identifier modelId) {
         this.modelId = modelId;
     }
 
@@ -129,8 +129,8 @@ public final class EnKreta {
      * this module's own {@code vfx_mesh/} root, and read directly from the
      * resource pack, never through the blockstate graph.
      */
-    public static EnKreta of(Identifier modelId) {
-        return new EnKreta(modelId);
+    public static Anicca of(Identifier modelId) {
+        return new Anicca(modelId);
     }
 
     /**
@@ -169,7 +169,7 @@ public final class EnKreta {
         Identifier fileLocation = MODEL_FILES.idToFile(modelId);
         Optional<Resource> resource = resourceManager.getResource(fileLocation);
         if (resource.isEmpty()) {
-            LOGGER.warn("[EnKreta] {} not found (looked for {})", modelId, fileLocation);
+            LOGGER.warn("[Anicca] {} not found (looked for {})", modelId, fileLocation);
             return List.of();
         }
 
@@ -181,13 +181,13 @@ public final class EnKreta {
             // catch, not as a crash.
             model = CuboidModel.fromStream(reader);
         } catch (IOException | RuntimeException e) {
-            LOGGER.error("[EnKreta] failed to parse {}", fileLocation, e);
+            LOGGER.error("[Anicca] failed to parse {}", fileLocation, e);
             return List.of();
         }
 
         UnbakedGeometry geometry = model.geometry();
         if (!(geometry instanceof UnbakedCuboidGeometry cuboidGeometry)) {
-            LOGGER.warn("[EnKreta] {} has no 'elements'", modelId);
+            LOGGER.warn("[Anicca] {} has no 'elements'", modelId);
             return List.of();
         }
 
@@ -195,7 +195,7 @@ public final class EnKreta {
         if (blockAtlas == null) {
             // VfxAtlas.register() hasn't been called yet, or this is running
             // before its first reload has stitched anything.
-            LOGGER.warn("[EnKreta] {}: VfxAtlas not ready yet", modelId);
+            LOGGER.warn("[Anicca] {}: VfxAtlas not ready yet", modelId);
             return List.of();
         }
         TextureSlots textures = new TextureSlots.Resolver().addLast(model.textureSlots()).resolve(modelId::toString);
@@ -235,15 +235,15 @@ public final class EnKreta {
                         ? blockAtlas.getSprite(material.sprite())
                         : blockAtlas.missingSprite();
                 if (material == null) {
-                    LOGGER.warn("[EnKreta] {}: unresolved texture reference '{}', using missing-texture sprite",
+                    LOGGER.warn("[Anicca] {}: unresolved texture reference '{}', using missing-texture sprite",
                             modelId, face.texture());
                 } else if (sprite == blockAtlas.missingSprite()) {
-                    LOGGER.warn("[EnKreta] {}: texture '{}' not found (looked for {}), using missing-texture sprite",
+                    LOGGER.warn("[Anicca] {}: texture '{}' not found (looked for {}), using missing-texture sprite",
                             modelId, face.texture(), material.sprite());
                 }
                 if (!loggedSprite) {
                     loggedSprite = true;
-                    LOGGER.info("[EnKreta] {}: face texture '{}' -> sprite {}",
+                    LOGGER.info("[Anicca] {}: face texture '{}' -> sprite {}",
                             modelId, face.texture(), sprite.contents().name());
                 }
 
@@ -259,7 +259,7 @@ public final class EnKreta {
             }
         }
 
-        LOGGER.info("[EnKreta] {} baked: {} quad(s)", modelId, result.size());
+        LOGGER.info("[Anicca] {} baked: {} quad(s)", modelId, result.size());
         return List.copyOf(result);
     }
 

@@ -1,7 +1,7 @@
 package com.sypztep.plateau.test;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.sypztep.plateau.client.v1.vfx.mesh.EnKreta;
+import com.sypztep.plateau.client.v1.vfx.mesh.Anicca;
 import com.sypztep.plateau.client.v1.vfx.mesh.PrimitiveMeshes;
 import com.sypztep.plateau.client.v1.vfx.mesh.VfxAtlas;
 import com.sypztep.plateau.client.v1.vfx.particle.ExternalForcesModule;
@@ -53,7 +53,7 @@ public class VfxTestClient implements ClientModInitializer {
     private ParticleSystem system;
     private float referenceAge = 0f;
     private LevelRenderContext currentCtx;
-    private EnKreta testMesh;
+    private Anicca testMesh;
 
     @Override
     public void onInitializeClient() {
@@ -69,10 +69,10 @@ public class VfxTestClient implements ClientModInitializer {
         // against this lifetime.
         system.spawn(new Matrix4f(), 1, 1_000_000f, 1f);
 
-        // EnKreta must be created before the client's first resource
+        // Anicca must be created before the client's first resource
         // reload finishes — doing it here in onInitializeClient() (not
         // lazily on first draw) satisfies that.
-        testMesh = EnKreta.of(Identifier.fromNamespaceAndPath("plateau-vfx-testmod", "block/test_mesh"));
+        testMesh = Anicca.of(Identifier.fromNamespaceAndPath("plateau-vfx-testmod", "block/test_mesh"));
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (mc.level == null || mc.isPaused()) return;
@@ -88,7 +88,7 @@ public class VfxTestClient implements ClientModInitializer {
 
         LOGGER.info("[VfxTestmod] Comparing ParticleSystem-driven fireball (left) "
                 + "against a hand-rolled reference (right) — they should look identical. "
-                + "Also drawing the EnKreta test asset (block/test_mesh) 4 blocks up.");
+                + "Also drawing the Anicca test asset (block/test_mesh) 4 blocks up.");
     }
 
     /** 1 block left of the player's look-anchor — re-sampled every {@link ParticleSystem#worldPosition} read. */
@@ -123,11 +123,11 @@ public class VfxTestClient implements ClientModInitializer {
     }
 
     /**
-     * Draws the {@link EnKreta} test asset ({@code block/test_mesh.json}
+     * Draws the {@link Anicca} test asset ({@code block/test_mesh.json}
      * — a Blockbench-exported "+"-cross shape) 4 blocks above the anchor
      * point. {@link VfxAtlas#renderType()} is the render type here (not
      * {@code RenderTypes.debugQuads()} like the fireballs above) because
-     * {@link EnKreta#draw} emits real UVs into {@link VfxAtlas} — it
+     * {@link Anicca#draw} emits real UVs into {@link VfxAtlas} — it
      * needs an atlas-sampling pipeline, not a flat position-color one.
      */
     private void drawTestMesh() {
@@ -145,7 +145,7 @@ public class VfxTestClient implements ClientModInitializer {
 //        poseStack.mulPose(com.mojang.math.Axis.YP.rotation(referenceAge * 0.05f));
         // No extra scale here: FaceBakery already divides every baked vertex
         // by 16 (Blockbench's 16-unit grid -> MC's 1-block-unit space), so
-        // EnKreta's quads arrive already in real block-size units.
+        // Anicca's quads arrive already in real block-size units.
         currentCtx.submitNodeCollector().submitCustomGeometry(poseStack, VfxAtlas.renderType(),
                 (pose, buffer) -> testMesh.draw(pose, buffer, 0xFFFFFFFF, LIGHT));
         poseStack.popPose();
