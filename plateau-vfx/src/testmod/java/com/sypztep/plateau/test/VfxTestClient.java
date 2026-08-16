@@ -27,8 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Target validation from {@code implementation.md}'s Phase 3 plan: reproduce
- * knella's {@code FireballRenderer} three-sphere buildup (exact same
+ * Reproduces knella's {@code FireballRenderer} three-sphere buildup (exact same
  * constants/formula/`PrimitiveMeshes` calls — see
  * {@code G:\Coding\knella-26.1\...\client\renderer\entity\FireballRenderer.java})
  * as a {@link ParticleSystem}, side by side against a hand-rolled reference

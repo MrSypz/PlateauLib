@@ -37,9 +37,8 @@ import java.util.List;
 /**
  * Cycles every built-in Vfx effect (see {@code VfxEffects}) a few seconds
  * at a time so each one can be eyeballed in a real client, plus an "N" key
- * to skip ahead on demand. Not a unit test — plateau-postprocess has none
- * (see CLAUDE.md); this is the in-game smoke test for the effect library
- * added while working through implementation.md's Phase 1 checklist.
+ * to skip ahead on demand. Not a unit test — plateau-postprocess has none;
+ * this is the in-game smoke test for the effect library.
  *
  * <p><b>Must request every rendered frame, not every tick.</b>
  * {@code VfxManager} consumes and clears each effect's request queue once
@@ -47,8 +46,8 @@ import java.util.List;
  * {@code renderLevel()}); {@code ClientTickEvents} only fires at the fixed
  * 20/s tick rate. Requesting from a tick event starved every frame that
  * wasn't itself a tick, which reads as the whole effect flickering at high
- * framerate — this bit us during actual in-game testing (see
- * implementation.md). {@link LevelRenderEvents#AFTER_TRANSLUCENT_FEATURES}
+ * framerate — this bit us during actual in-game testing.
+ * {@link LevelRenderEvents#AFTER_TRANSLUCENT_FEATURES}
  * runs inside {@code renderLevel()}, once per frame, strictly before the
  * mixin's post-renderLevel consumption point, so the request is always
  * fresh for the frame that's about to consume it.
