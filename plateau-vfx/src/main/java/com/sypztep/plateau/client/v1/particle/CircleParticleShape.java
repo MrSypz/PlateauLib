@@ -1,4 +1,4 @@
-package com.sypztep.plateau.client.v1.vfx.particle;
+package com.sypztep.plateau.client.v1.particle;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

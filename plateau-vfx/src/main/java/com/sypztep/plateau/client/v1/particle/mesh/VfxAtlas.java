@@ -1,4 +1,4 @@
-package com.sypztep.plateau.client.v1.vfx.mesh;
+package com.sypztep.plateau.client.v1.particle.mesh;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -52,13 +52,26 @@ public final class VfxAtlas {
 
     private VfxAtlas() {}
 
-    /** Call once at client init. Idempotent. */
+    /**
+     * Call once at client init. Idempotent.
+     *
+     * <p>Only registers the reload listener here — does <b>not</b>
+     * construct the {@link TextureAtlas} itself. Fabric's {@code client}
+     * entrypoints (this method's only caller, {@code PlateauVfxClient
+     * .onInitializeClient()}) run inside {@code Minecraft}'s constructor
+     * before {@code RenderSystem.initRenderer(device)}, and {@code
+     * TextureAtlas}'s own constructor unconditionally calls {@code
+     * RenderSystem.getDevice()} — confirmed by actually booting the
+     * testmod client, which crashed with "Can't getDevice() before it was
+     * initialized" right here. {@link #atlas()} creates the real atlas
+     * lazily instead, called from {@link AtlasReloadListener#reload}, which
+     * structurally can only run once resource reloading starts — always
+     * after device init.
+     */
     public static void register() {
         if (registered) return;
         registered = true;
 
-        atlas = new TextureAtlas(LOCATION);
-        Minecraft.getInstance().getTextureManager().register(LOCATION, atlas);
         ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(RELOAD_LISTENER_ID, new AtlasReloadListener());
     }
 
@@ -68,6 +81,10 @@ public final class VfxAtlas {
     }
 
     static TextureAtlas atlas() {
+        if (atlas == null) {
+            atlas = new TextureAtlas(LOCATION);
+            Minecraft.getInstance().getTextureManager().register(LOCATION, atlas);
+        }
         return atlas;
     }
 
@@ -75,6 +92,7 @@ public final class VfxAtlas {
         @Override
         public CompletableFuture<Void> reload(SharedState currentReload, Executor taskExecutor,
                                                PreparationBarrier preparationBarrier, Executor reloadExecutor) {
+            TextureAtlas atlas = atlas();
             return SpriteLoader.create(atlas)
                     .loadAndStitch(currentReload.resourceManager(), DEFINITION, 0, taskExecutor, Set.of())
                     .thenCompose(preparations -> preparations.readyForUpload().thenApply(unused -> preparations))

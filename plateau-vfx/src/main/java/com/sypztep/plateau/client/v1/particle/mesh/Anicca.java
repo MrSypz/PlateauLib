@@ -1,4 +1,4 @@
-package com.sypztep.plateau.client.v1.vfx.mesh;
+package com.sypztep.plateau.client.v1.particle.mesh;
 
 import com.mojang.blaze3d.platform.Transparency;
 import com.mojang.blaze3d.vertex.PoseStack;

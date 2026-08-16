@@ -1,12 +1,12 @@
 package com.sypztep.plateau.test;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.sypztep.plateau.client.v1.vfx.mesh.Anicca;
-import com.sypztep.plateau.client.v1.vfx.mesh.PrimitiveMeshes;
-import com.sypztep.plateau.client.v1.vfx.mesh.VfxAtlas;
-import com.sypztep.plateau.client.v1.vfx.particle.ExternalForcesModule;
-import com.sypztep.plateau.client.v1.vfx.particle.ParticleSystem;
-import com.sypztep.plateau.client.v1.vfx.particle.SimulationSpace;
+import com.sypztep.plateau.client.v1.particle.mesh.Anicca;
+import com.sypztep.plateau.client.v1.particle.mesh.PrimitiveMeshes;
+import com.sypztep.plateau.client.v1.particle.mesh.VfxAtlas;
+import com.sypztep.plateau.client.v1.particle.ExternalForcesModule;
+import com.sypztep.plateau.client.v1.particle.ParticleSystem;
+import com.sypztep.plateau.client.v1.particle.SimulationSpace;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

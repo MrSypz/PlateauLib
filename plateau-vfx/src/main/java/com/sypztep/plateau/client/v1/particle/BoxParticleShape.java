@@ -1,27 +1,27 @@
-package com.sypztep.plateau.client.v1.vfx.particle;
+package com.sypztep.plateau.client.v1.particle;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.util.RandomSource;
 import org.joml.Vector3f;
 
-/** Spawns at a uniformly random point along a line segment, with an isotropic random velocity. */
+/** Spawns at a uniformly random point inside a box volume, with an isotropic random velocity. */
 @Environment(EnvType.CLIENT)
-public final class EdgeParticleShape implements ParticleShape {
-    private final Vector3f start;
-    private final Vector3f end;
+public final class BoxParticleShape implements ParticleShape {
+    private final Vector3f halfExtents;
     private final float speed;
 
-    public EdgeParticleShape(Vector3f start, Vector3f end, float speed) {
-        this.start = new Vector3f(start);
-        this.end = new Vector3f(end);
+    public BoxParticleShape(Vector3f halfExtents, float speed) {
+        this.halfExtents = new Vector3f(halfExtents);
         this.speed = speed;
     }
 
     @Override
     public void spawn(RandomSource random, Vector3f outPosition, Vector3f outVelocity) {
-        float t = random.nextFloat();
-        outPosition.set(start).lerp(end, t);
+        outPosition.set(
+                (random.nextFloat() * 2f - 1f) * halfExtents.x(),
+                (random.nextFloat() * 2f - 1f) * halfExtents.y(),
+                (random.nextFloat() * 2f - 1f) * halfExtents.z());
 
         float theta = random.nextFloat() * (float) Math.PI;
         float phi = random.nextFloat() * 2f * (float) Math.PI;
