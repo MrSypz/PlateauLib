@@ -1,4 +1,5 @@
 #version 330
+#moj_import <plateau-postprocess:vfx_common.glsl>
 
 uniform sampler2D InSampler;
 
@@ -30,10 +31,5 @@ void main(){
     vec2 dir = normalize(centered + 1e-5);
     vec2 offset = dir * falloff * Strength * 0.02;
 
-    float r = texture(InSampler, texCoord + offset).r;
-    float g = texture(InSampler, texCoord).g;
-    float b = texture(InSampler, texCoord - offset).b;
-    float a = texture(InSampler, texCoord).a;
-
-    fragColor = vec4(r, g, b, a);
+    fragColor = vfxChromaSplit(InSampler, texCoord, offset);
 }

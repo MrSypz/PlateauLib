@@ -1,4 +1,5 @@
 #version 330
+#moj_import <plateau-postprocess:vfx_common.glsl>
 
 uniform sampler2D InSampler;
 
@@ -25,8 +26,7 @@ void main(){
     color += Brightness;
     color = (color - 0.5) * Contrast + 0.5;
 
-    float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-    color = mix(vec3(luma), color, Saturation);
+    color = mix(vec3(vfxLuma(color)), color, Saturation);
 
     color.r += Temperature * 0.1;
     color.b -= Temperature * 0.1;

@@ -1,4 +1,5 @@
 #version 330
+#moj_import <plateau-postprocess:vfx_common.glsl>
 
 uniform sampler2D InSampler;
 uniform sampler2D InDepthSampler;
@@ -23,14 +24,7 @@ void main(){
     vec4 diffuseColor = texture(InSampler, texCoord);
     vec2 oneTexel = (1.0 / InSize) * max(Thickness, 1.0);
 
-    float center = texture(InDepthSampler, texCoord).r;
-    float left  = texture(InDepthSampler, texCoord - vec2(oneTexel.x, 0.0)).r;
-    float right = texture(InDepthSampler, texCoord + vec2(oneTexel.x, 0.0)).r;
-    float up    = texture(InDepthSampler, texCoord - vec2(0.0, oneTexel.y)).r;
-    float down  = texture(InDepthSampler, texCoord + vec2(0.0, oneTexel.y)).r;
-
-    float edge = abs(center - left) + abs(center - right) + abs(center - up) + abs(center - down);
-    edge = clamp(edge * DepthSensitivity, 0.0, 1.0);
+    float edge = vfxDepthEdge(InDepthSampler, texCoord, oneTexel, DepthSensitivity);
 
     // Restrict the edge to pixels the caller actually drew into the mask
     // group — VfxMaskGroups.draw() is the only thing that writes here.

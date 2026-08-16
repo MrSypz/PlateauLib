@@ -1,5 +1,6 @@
 #version 330
 #moj_import <minecraft:globals.glsl>
+#moj_import <plateau-postprocess:vfx_common.glsl>
 
 uniform sampler2D InSampler;
 
@@ -24,11 +25,7 @@ float hash(vec2 p) {
 void main(){
     vec4 diffuseColor = texture(InSampler, texCoord);
 
-    // See glitch.fsh: GameTime is a day-cycle fraction (wraps every 20 real
-    // minutes), not a seconds counter — recover the actual tick count by
-    // multiplying back by 24000 so the grain re-randomizes every tick
-    // instead of drifting almost imperceptibly slowly.
-    float ticks = GameTime * 24000.0;
+    float ticks = vfxTicksFromGameTime(GameTime);
 
     vec2 grainCoord = texCoord * OutSize / max(Size, 0.01);
     float grain = hash(grainCoord + ticks * 9.77) - 0.5;
