@@ -3,6 +3,8 @@ package com.sypztep.plateau.client;
 import com.sypztep.plateau.client.v1.vfx.VfxLevelPhase;
 import com.sypztep.plateau.client.v1.vfx.VfxManager;
 import com.sypztep.plateau.client.v1.vfx.VfxManagerAccess;
+import com.sypztep.plateau.client.v1.vfx.VfxMaskGroups;
+import com.sypztep.plateau.client.v1.vfx.effects.VfxEffects;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
@@ -15,6 +17,9 @@ public class PlateauPostprocessClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         LOGGER.info("[Postprocess] Initialize post process module (API v{})", VfxManager.API_VERSION);
+
+        VfxMaskGroups.register();
+        VfxEffects.registerAll();
 
         // One listener per supported prepare phase — the manager fans out to
         // effects that declared the phase, in priority order.

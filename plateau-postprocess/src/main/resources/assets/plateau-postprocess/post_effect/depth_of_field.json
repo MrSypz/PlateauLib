@@ -1,0 +1,68 @@
+{
+    "targets": {
+        "blur_h": {},
+        "blurred": {},
+        "composite": {}
+    },
+    "passes": [
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "plateau-postprocess:post/box_blur_h",
+            "inputs": [
+                { "sampler_name": "In", "target": "minecraft:main", "bilinear": true }
+            ],
+            "output": "blur_h",
+            "uniforms": {
+                "BlurHConfig": [
+                    { "name": "Radius", "type": "float", "value": 4.0 }
+                ]
+            }
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "plateau-postprocess:post/box_blur_v",
+            "inputs": [
+                { "sampler_name": "In", "target": "blur_h", "bilinear": true }
+            ],
+            "output": "blurred",
+            "uniforms": {
+                "BlurVConfig": [
+                    { "name": "Radius", "type": "float", "value": 4.0 }
+                ]
+            }
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "plateau-postprocess:post/dof_composite",
+            "inputs": [
+                { "sampler_name": "Main", "target": "minecraft:main" },
+                { "sampler_name": "MainDepth", "target": "plateau-postprocess:dof_depth_snapshot", "use_depth_buffer": true },
+                { "sampler_name": "Blurred", "target": "blurred" }
+            ],
+            "output": "composite",
+            "uniforms": {
+                "DepthOfFieldConfig": [
+                    { "name": "Near", "type": "float", "value": 0.05 },
+                    { "name": "Far", "type": "float", "value": 768.0 },
+                    { "name": "FocusDistance", "type": "float", "value": 8.0 },
+                    { "name": "Aperture", "type": "float", "value": 2.8 },
+                    { "name": "Strength", "type": "float", "value": 1.0 },
+                    { "name": "AutoFocus", "type": "float", "value": 1.0 }
+                ]
+            }
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "minecraft:post/blit",
+            "inputs": [
+                { "sampler_name": "In", "target": "composite" }
+            ],
+            "output": "minecraft:main",
+            "uniforms": {
+                "BlitConfig": [
+                    { "name": "ColorModulate", "type": "vec4", "value": [1.0, 1.0, 1.0, 1.0] }
+                ]
+            }
+        }
+    ]
+}

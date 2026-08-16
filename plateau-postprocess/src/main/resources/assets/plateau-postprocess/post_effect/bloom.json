@@ -1,0 +1,75 @@
+{
+    "targets": {
+        "bright": {},
+        "bright_blur": {},
+        "composite": {}
+    },
+    "passes": [
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "plateau-postprocess:post/bloom_threshold",
+            "inputs": [
+                { "sampler_name": "In", "target": "minecraft:main" }
+            ],
+            "output": "bright",
+            "uniforms": {
+                "BloomThresholdConfig": [
+                    { "name": "Threshold", "type": "float", "value": 0.8 }
+                ]
+            }
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "plateau-postprocess:post/box_blur_h",
+            "inputs": [
+                { "sampler_name": "In", "target": "bright", "bilinear": true }
+            ],
+            "output": "bright_blur",
+            "uniforms": {
+                "BlurHConfig": [
+                    { "name": "Radius", "type": "float", "value": 4.0 }
+                ]
+            }
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "plateau-postprocess:post/box_blur_v",
+            "inputs": [
+                { "sampler_name": "In", "target": "bright_blur", "bilinear": true }
+            ],
+            "output": "bright",
+            "uniforms": {
+                "BlurVConfig": [
+                    { "name": "Radius", "type": "float", "value": 4.0 }
+                ]
+            }
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "plateau-postprocess:post/bloom_composite",
+            "inputs": [
+                { "sampler_name": "Main", "target": "minecraft:main" },
+                { "sampler_name": "Bloom", "target": "bright" }
+            ],
+            "output": "composite",
+            "uniforms": {
+                "BloomCompositeConfig": [
+                    { "name": "Intensity", "type": "float", "value": 1.0 }
+                ]
+            }
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "minecraft:post/blit",
+            "inputs": [
+                { "sampler_name": "In", "target": "composite" }
+            ],
+            "output": "minecraft:main",
+            "uniforms": {
+                "BlitConfig": [
+                    { "name": "ColorModulate", "type": "vec4", "value": [1.0, 1.0, 1.0, 1.0] }
+                ]
+            }
+        }
+    ]
+}

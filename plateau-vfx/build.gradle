@@ -1,0 +1,52 @@
+// ── plateau-vfx submodule ────────────────────────────────────
+// DO NOT add a publishing {} block here.
+// DO NOT add java {}, processResources {}, or jar {} here.
+// Root's allprojects {} and subprojects {} handle all of that.
+
+base {
+    archivesName = "Vfx"
+}
+
+sourceSets {
+    testmod {
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath
+    }
+}
+
+loom {
+    mods {
+        "plateau-vfx" {
+            sourceSet sourceSets.main
+        }
+        "plateau-vfx-testmod" {
+            sourceSet sourceSets.testmod
+        }
+    }
+
+    runs {
+        testmodClient {
+            client()
+            ideConfigGenerated = true
+            name = "Vfx Testmod Client"
+            source sourceSets.testmod
+            runDir "run-testmod"
+        }
+    }
+}
+
+dependencies {
+    api project(":")
+    api fabricApi.module("fabric-rendering-v1", project.fabric_version)
+    api fabricApi.module("fabric-resource-loader-v1", project.fabric_version)
+
+    testmodImplementation sourceSets.main.output
+    testmodImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
+
+tasks.register("testmodJar", Jar) {
+    from sourceSets.testmod.output
+    archiveClassifier = "testmod"
+}
+
+build.dependsOn testmodJar

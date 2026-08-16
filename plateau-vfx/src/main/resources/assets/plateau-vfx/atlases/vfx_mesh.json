@@ -1,0 +1,9 @@
+{
+    "sources": [
+        {
+            "type": "minecraft:directory",
+            "source": "vfx_mesh",
+            "prefix": "vfx_mesh/"
+        }
+    ]
+}

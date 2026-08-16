@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "plateau-vfx-testmod",
+  "version": "${version}",
+
+  "name": "PlateauLib Vfx Testmod",
+  "description": "In-game smoke test for plateau-vfx's ParticleSystem/PrimitiveMeshes",
+
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.sypztep.plateau.test.VfxTestClient"
+    ]
+  },
+
+  "depends": {
+    "fabricloader": ">=0.18.5",
+    "minecraft": ">=26.1-",
+    "java": ">=25",
+    "plateau-vfx": "*"
+  }
+}

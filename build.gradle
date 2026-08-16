@@ -13,7 +13,13 @@ allprojects {
     version = (injected && injected != "unspecified") ? injected : project.mod_version
 
     repositories {
-        // add shared repos here if needed
+        maven {
+            name = "Modrinth"
+            url = "https://api.modrinth.com/maven"
+            content {
+                includeGroup 'maven.modrinth'
+            }
+        }
     }
 
     dependencies {

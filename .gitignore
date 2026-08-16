@@ -1,4 +1,6 @@
 # Project exclude paths
-/.gradle/
-/build/
+.gradle/
+build/
+run/
+run-testmod/
 /.idea/

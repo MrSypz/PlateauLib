@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "plateau-vfx",
+  "version": "${version}",
+
+  "name": "PlateauLib (Vfx)",
+  "description": "Particle simulation, force fields, and mesh/shape rendering for plateau",
+
+  "authors": ["MrSypz"],
+  "contact": {},
+
+  "license": "All-Rights-Reserved",
+
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.sypztep.plateau.client.PlateauVfxClient"
+    ]
+  },
+
+  "depends": {
+    "fabricloader": ">=0.18.5",
+    "minecraft": ">=26.1-",
+    "java": ">=25",
+    "plateau": ">=${version}"
+  },
+  "custom": {
+    "modmenu": {
+      "parent": "plateau"
+    }
+  }
+}

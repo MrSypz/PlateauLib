@@ -7,8 +7,57 @@ base {
     archivesName = "PostProcess"
 }
 
+sourceSets {
+    testmod {
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath
+    }
+}
+
+loom {
+    mods {
+        "plateau-postprocess" {
+            sourceSet sourceSets.main
+        }
+        "plateau-postprocess-testmod" {
+            sourceSet sourceSets.testmod
+        }
+    }
+
+    runs {
+        testmodClient {
+            client()
+            ideConfigGenerated = true
+            name = "PostProcess Testmod Client"
+            source sourceSets.testmod
+            runDir "run-testmod"
+        }
+    }
+}
+
 dependencies {
     api project(":")
     api fabricApi.module("fabric-networking-api-v1", project.fabric_version)
     api fabricApi.module("fabric-rendering-v1", project.fabric_version)
+
+    // Iris compat (VfxIris*) - compileOnly so the internal bridge impl can import
+    // net.irisshaders.iris.** directly (only ever loaded reflectively when Iris is present).
+    compileOnly "maven.modrinth:iris:${project.iris_version}"
+    // localRuntime iris disabled for now: the pinned iris_version (1.11.2+26.1-fabric)
+    // hard-depends on sodium "0.9.x" via its fabric.mod.json, but Modrinth only has
+    // sodium 0.8.x published for MC 26.1 — that dependency is currently unsatisfiable,
+    // so leaving this enabled hard-crashes every dev client launch for this module
+    // (confirmed while setting up the postprocess-testmod smoke test). Re-enable once
+    // a matching sodium 0.9.x build exists for 26.1, or pin an older iris release.
+    // localRuntime "maven.modrinth:iris:${project.iris_version}"
+
+    testmodImplementation sourceSets.main.output
+    testmodImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 }
+
+tasks.register("testmodJar", Jar) {
+    from sourceSets.testmod.output
+    archiveClassifier = "testmod"
+}
+
+build.dependsOn testmodJar

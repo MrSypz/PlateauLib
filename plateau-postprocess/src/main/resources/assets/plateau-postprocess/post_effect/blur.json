@@ -1,0 +1,41 @@
+{
+    "targets": {
+        "swap": {}
+    },
+    "passes": [
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "plateau-postprocess:post/box_blur_h",
+            "inputs": [
+                {
+                    "sampler_name": "In",
+                    "target": "minecraft:main",
+                    "bilinear": true
+                }
+            ],
+            "output": "swap",
+            "uniforms": {
+                "BlurHConfig": [
+                    { "name": "Radius", "type": "float", "value": 2.0 }
+                ]
+            }
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "plateau-postprocess:post/box_blur_v",
+            "inputs": [
+                {
+                    "sampler_name": "In",
+                    "target": "swap",
+                    "bilinear": true
+                }
+            ],
+            "output": "minecraft:main",
+            "uniforms": {
+                "BlurVConfig": [
+                    { "name": "Radius", "type": "float", "value": 2.0 }
+                ]
+            }
+        }
+    ]
+}

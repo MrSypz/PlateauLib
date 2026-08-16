@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "plateau-postprocess-testmod",
+  "version": "1.0.0",
+
+  "name": "PlateauLib PostProcess Testmod",
+  "description": "Manual/automated visual smoke test for the built-in Vfx effect library",
+
+  "authors": ["MrSypz"],
+  "contact": {},
+
+  "license": "All-Rights-Reserved",
+
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.sypztep.plateau.test.PostprocessTestClient"
+    ]
+  },
+
+  "depends": {
+    "fabricloader": ">=0.18.5",
+    "minecraft": ">=26.1-",
+    "java": ">=25",
+    "plateau-postprocess": "*"
+  }
+}
