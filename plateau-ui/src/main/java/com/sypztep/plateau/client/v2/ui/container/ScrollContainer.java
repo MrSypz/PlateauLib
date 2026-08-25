@@ -92,14 +92,18 @@ public class ScrollContainer extends BaseContainerComponent<ScrollContainer> {
     public boolean mouseReleased(@NonNull MouseButtonEvent event) {
         setDragging(false);
         scroll.mouseReleased(event);
-        if (getFocused() != null) getFocused().mouseReleased(event);
+        if (getFocused() != null) getFocused().mouseReleased(contentEvent(event));
         return false;
     }
 
     @Override
     public boolean mouseDragged(@NonNull MouseButtonEvent event, double dx, double dy) {
         if (scroll.mouseDragged(event)) return true;
-        return getFocused() != null && isDragging() && getFocused().mouseDragged(event, dx, dy);
+        // Children's bounds (and anything they captured from mouseClicked, e.g. a DragSource's
+        // press point) live in this container's content-space, same as mouseClicked below —
+        // forwarding the raw screen-space event here would mismatch that frame by exactly the
+        // current scroll offset as soon as this container is scrolled.
+        return getFocused() != null && isDragging() && getFocused().mouseDragged(contentEvent(event), dx, dy);
     }
 
     @Override

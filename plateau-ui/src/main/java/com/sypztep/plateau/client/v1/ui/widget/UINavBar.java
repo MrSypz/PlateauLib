@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
@@ -42,6 +43,13 @@ public class UINavBar extends UIComponent {
     // Per-item hover animation
     private final Map<Integer, Float> hoverAnimations = new HashMap<>();
 
+    // Horizontal overflow scroll — content can exceed the bar's width.
+    // Vertical-only ScrollBehavior doesn't fit this axis, so it's inlined here (see plateau-ui-v1 skill).
+    private double scrollOffset = 0;
+    private double scrollTarget = 0;
+    private double maxScroll = 0;
+    private static final double SCROLL_SENSITIVITY = 30.0;
+
     public UINavBar(int x, int y, int width, int height) {
         super(x, y, width, height);
     }
@@ -60,6 +68,7 @@ public class UINavBar extends UIComponent {
             if (items.get(i).id.equals(id)) {
                 selectedIndex = i;
                 updateSelectionTarget();
+                ensureSelectionVisible();
                 break;
             }
         }
@@ -115,23 +124,60 @@ public class UINavBar extends UIComponent {
         selectionAnimPos += (selectionTargetPos - selectionAnimPos) * 0.15f;
         selectionAnimSize += (selectionTargetSize - selectionAnimSize) * 0.15f;
 
+        updateMaxScroll();
+        scrollOffset += (scrollTarget - scrollOffset) * 0.2f;
+        if (Math.abs(scrollTarget - scrollOffset) < 0.1) scrollOffset = scrollTarget;
+
         updateHoverAnimations(mouseX, mouseY);
 
         UITheme theme = UITheme.current();
         graphics.fill(x, y, x + width, y + height, theme.nav().bg());
 
+        graphics.enableScissor(x, y, x + width, y + height);
         if (horizontal) {
             renderHorizontal(graphics, mouseX, mouseY, theme);
         } else {
             renderVertical(graphics, mouseX, mouseY, theme);
         }
+        graphics.disableScissor();
 
-        renderFocusRing(graphics);
+        // No renderFocusRing() here: the selection indicator already communicates active
+        // state, and this component stays focused after any click (vanilla never clears
+        // it), which made the accent-colored ring around the whole bar glow permanently
+        // right on the nav/content boundary.
+    }
+
+    private void updateMaxScroll() {
+        if (!horizontal || items.isEmpty()) {
+            maxScroll = 0;
+            scrollTarget = 0;
+            return;
+        }
+        int contentWidth = -itemSpacing;
+        for (NavItem item : items) contentWidth += getItemWidth(item) + itemSpacing;
+        int available = width - itemPadding * 2;
+        maxScroll = Math.max(0, contentWidth - available);
+        scrollTarget = Mth.clamp(scrollTarget, 0, maxScroll);
+    }
+
+    private void ensureSelectionVisible() {
+        updateMaxScroll();
+        if (!horizontal || maxScroll <= 0) return;
+
+        int available = width - itemPadding * 2;
+        double left = selectionTargetPos - (x + itemPadding);
+        double right = left + selectionTargetSize;
+
+        if (left < scrollTarget) {
+            scrollTarget = Math.max(0, left);
+        } else if (right > scrollTarget + available) {
+            scrollTarget = Math.min(maxScroll, right - available);
+        }
     }
 
     private void updateHoverAnimations(int mouseX, int mouseY) {
         if (horizontal) {
-            int ix = x + itemPadding;
+            int ix = x + itemPadding - (int) scrollOffset;
             for (int i = 0; i < items.size(); i++) {
                 int w = getItemWidth(items.get(i));
                 boolean hovered = mouseX >= ix && mouseX < ix + w
@@ -162,11 +208,11 @@ public class UINavBar extends UIComponent {
     }
 
     private void renderHorizontal(GuiGraphicsExtractor graphics, int mouseX, int mouseY, UITheme theme) {
-        int ix = x + itemPadding;
+        int ix = x + itemPadding - (int) scrollOffset;
         int ih = height - itemPadding * 2;
 
-        graphics.fill((int) selectionAnimPos, y + height - 3,
-                (int) (selectionAnimPos + selectionAnimSize), y + height,
+        graphics.fill((int) (selectionAnimPos - scrollOffset), y + height - 3,
+                (int) (selectionAnimPos + selectionAnimSize - scrollOffset), y + height,
                 theme.nav().indicator());
 
         for (int i = 0; i < items.size(); i++) {
@@ -268,7 +314,7 @@ public class UINavBar extends UIComponent {
         double mx = event.x(), my = event.y();
 
         if (horizontal) {
-            int ix = x + itemPadding;
+            int ix = x + itemPadding - (int) scrollOffset;
 
             for (int i = 0; i < items.size(); i++) {
                 NavItem item = items.get(i);
@@ -298,6 +344,13 @@ public class UINavBar extends UIComponent {
         }
 
         return false;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
+        if (!horizontal || maxScroll <= 0 || !isMouseOver(mouseX, mouseY)) return false;
+        scrollTarget = Mth.clamp(scrollTarget - vAmount * SCROLL_SENSITIVITY, 0, maxScroll);
+        return true;
     }
 
     @Override
@@ -352,6 +405,7 @@ public class UINavBar extends UIComponent {
         if (index == selectedIndex) return;
         selectedIndex = index;
         updateSelectionTarget();
+        ensureSelectionVisible();
 
         UISounds.playTabSwitch();
 
