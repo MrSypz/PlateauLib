@@ -2,6 +2,10 @@ name: Tag Release
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 4.0.4+26.1). Leave blank to use mod_version from gradle.properties."
+        required: false
 
 jobs:
   tag:
@@ -11,10 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Read version from gradle.properties
+      - name: Resolve version
         id: version
         run: |
-          RAW=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2)
+          RAW="${{ inputs.version }}"
+          if [ -z "$RAW" ]; then
+            RAW=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2)
+          fi
           TAG="${RAW//+/-}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
@@ -24,3 +31,8 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag "${{ steps.version.outputs.tag }}"
           git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Trigger JitPack build
+        run: |
+          echo "Requesting JitPack build for ${{ steps.version.outputs.tag }}..."
+          curl -s "https://jitpack.io/api/builds/com.github.MrSypz/PlateauLib/${{ steps.version.outputs.tag }}"
