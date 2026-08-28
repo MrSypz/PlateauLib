@@ -261,6 +261,12 @@ public class DetachablePanel extends BaseComponent<DetachablePanel> {
         return !isFloatingActive() && dockChild != null && dockChild.keyPressed(event);
     }
 
+    @Override
+    public boolean charTyped(@NonNull CharacterEvent event) {
+        BaseComponent<?> dockChild = dockChild();
+        return !isFloatingActive() && dockChild != null && dockChild.charTyped(event);
+    }
+
     public void open() {
         if (isFloatingActive()) return;
         animatedBounds = dockBounds();
