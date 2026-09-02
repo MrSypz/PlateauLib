@@ -4,3 +4,8 @@ build/
 run/
 run-testmod/
 /.idea/
+
+# Docs (VitePress)
+node_modules/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
